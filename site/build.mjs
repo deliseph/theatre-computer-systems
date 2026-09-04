@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import { render, esc, slugify } from './lib/markdown.mjs';
 import { flowCards, flowMeta, faultScenarios, selfTest, readiness } from './data/interactive.mjs';
 
@@ -137,6 +138,32 @@ function glossaryCards(md) {
   return cards;
 }
 
+
+// Build stamp.
+//
+// On a git-connected Vercel deployment the platform sets VERCEL_GIT_COMMIT_SHA
+// and VERCEL_GIT_COMMIT_REF. Publishing them means you can tell, by looking at
+// the live site, exactly which commit is serving and whether it arrived through
+// the git integration or a manual upload. That answers "did my push deploy?"
+// without needing the dashboard.
+function buildStamp() {
+  const env = process.env;
+  let sha = env.VERCEL_GIT_COMMIT_SHA || '';
+  if (!sha) {
+    try {
+      sha = execSync('git rev-parse HEAD', { cwd: HERE, stdio: ['ignore', 'pipe', 'ignore'] })
+        .toString().trim();
+    } catch { sha = ''; }
+  }
+  return {
+    commit: sha ? sha.slice(0, 7) : 'unknown',
+    branch: env.VERCEL_GIT_COMMIT_REF || null,
+    builtAt: new Date().toISOString(),
+    source: env.VERCEL_GIT_COMMIT_SHA ? 'git' : env.VERCEL ? 'manual upload' : 'local',
+  };
+}
+const STAMP = buildStamp();
+
 // ---------------------------------------------------------------------------
 // Page shell
 // ---------------------------------------------------------------------------
@@ -202,6 +229,8 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
     <div class="side-foot">
       <p>18 taught hours across 5 classes. The production visit and the practical exam sit in the
       full module pack and are not published here.</p>
+      <p class="side-build" title="Which commit is serving, and how it got here">
+        build <code>${STAMP.commit}</code>${STAMP.branch ? ` · ${esc(STAMP.branch)}` : ''} · via ${STAMP.source}</p>
     </div>
   </nav>
   <main id="main">${body}</main>
@@ -687,6 +716,7 @@ fs.writeFileSync(path.join(OUT, 'assets', 'data.json'), JSON.stringify({
 fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex));
 
 fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
+fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify(STAMP, null, 2));
 
 const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/teaching-guide',
   ...CLASSES.map((c) => `/class/${c.n}`), ...CLASSES.map((c) => `/teach/${c.n}`)];
@@ -697,5 +727,6 @@ console.log(`  drill cards    : ${drillCards.length}`);
 console.log(`  glossary cards : ${glossCards.length}`);
 console.log(`  flow cards     : ${flowCards.length}`);
 console.log(`  fault cases    : ${faultScenarios.length}`);
+console.log(`  build          : ${STAMP.commit} via ${STAMP.source}${STAMP.branch ? ` (${STAMP.branch})` : ''}`);
 console.log(`  explainers     : ${animRendered}${animRendered === animExpected ? '' : ` of ${animExpected} EXPECTED`}`);
 if (animRendered !== animExpected) process.exitCode = 1;
