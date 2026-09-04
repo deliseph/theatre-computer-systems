@@ -1,5 +1,5 @@
 # Session 3: The Machine
-**4 hours. Content.**
+**Content.**
 
 *What is a show computer, and why is it configured differently from every other computer they
 have ever used?*
@@ -12,7 +12,7 @@ careers.
 
 ## Before this class
 
-**Time needed: 60 minutes, and the software install is not optional.** This class has a lab, and
+This class has a lab, and
 a student whose machine is not ready spends it watching someone else.
 
 ### What you must already be able to do
@@ -65,23 +65,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Length | Block | Title |
-|------|-------|-------|
-| 5 min | | Numbers quiz |
-| 50 min | A | What a show computer actually is |
-| 10 min | | Break |
-| 50 min | B | The operating system as a traffic cop |
-| 10 min | | Break |
-| 50 min | C | How sound, light and pictures become numbers, and the files that carry them |
-| 10 min | | Break |
-| 50 min | D | Lab: measure your machine, then spec a show machine |
-| 5 min | | Wrap and homework |
+| Block | Title |
+|-------|-------|
+| — | Numbers quiz |
+| A | What a show computer actually is |
+| — | Break |
+| B | The operating system as a traffic cop |
+| — | Break |
+| C | How sound, light and pictures become numbers, and the files that carry them |
+| — | Break |
+| D | Lab: measure your machine, then spec a show machine |
+| — | Wrap and homework |
 
-*If splitting into two 2 hour blocks, split after Block B.*
+*If the class is split across two shorter meetings, split after Block B.*
 
 ---
 
-## Block A: What a show computer actually is (50 min)
+## Block A: What a show computer actually is
 
 Open with a comparison, on screen: an office laptop specification next to a media server
 specification. Same price bracket is not required, the point is which numbers are large.
@@ -150,7 +150,7 @@ Put this on the board and leave it up:
 
 ---
 
-## Block B: The operating system as a traffic cop (50 min)
+## Block B: The operating system as a traffic cop
 
 ### Why a general purpose OS cannot promise you anything
 
@@ -222,7 +222,7 @@ Ask: which of these did you see obeyed or broken at the venue last week? Good li
 
 ---
 
-## Block C: How sound, light and pictures become numbers (50 min)
+## Block C: How sound, light and pictures become numbers
 
 The conceptual heart of the module. Everything is sampling and quantising, in every domain.
 
@@ -364,7 +364,7 @@ why a media server can play many layers at once. Worth one sentence, not more, a
 
 ---
 
-## Block D: Lab (50 min)
+## Block D: Lab
 
 Two parts. Part 1 is individual and diagnostic. Part 2 is the assessed exercise.
 

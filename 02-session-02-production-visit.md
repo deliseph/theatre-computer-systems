@@ -1,7 +1,7 @@
 # Session 2: Production Visit
-**2 hours. Site visit.**
+**Site visit.**
 
-The visit exists to give every abstract idea in the remaining 16 hours a physical referent.
+The visit exists to give every abstract idea in the rest of the module a physical referent.
 When you say "amp room" in session 6, they should be able to smell it.
 
 A visit without a task is a tour. This session is built around a hunt.
@@ -44,7 +44,7 @@ need a different cable.
 
 Send this ahead. It takes them five minutes and doubles the value of the visit.
 
-> We are bringing 20 first year audio, lighting and video students for 2 hours. They know almost
+> We are bringing 20 first year audio, lighting and video students for one session. They know almost
 > nothing yet. We are not looking for a tour of the fixtures. We would like to see, and stand
 > next to, the following: your main network switch or rack, wherever your DMX or sACN nodes live,
 > your amplifier or DSP room, your video or projection position, and wherever your show computers
@@ -58,18 +58,18 @@ the whole module and no lecturer can manufacture it.
 
 ## Route and timing
 
-Two hours including travel contingency. Adjust to the building. Split the class into two groups
+Allow travel contingency. Adjust the route to the building. Split the class into two groups
 running the route in opposite directions if the spaces are small, which they will be.
 
-| Length | Location | Focus | Prompt to give them |
-|------|----------|-------|---------------------|
-| 10 min | Arrival, front of house or stalls | Safety brief, group split, sheets out | "Everything you see today is one of the Four Flows. Label it." |
-| 20 min | Control position / FOH | Consoles as computers, operator positions, comms | "What is this console actually connected to? Follow the cables out of the back." |
-| 20 min | Machine room / comms rack | Switches, patch panels, fibre, labelling, UPS | "Find the switch. Count the ports in use. Find one label that is wrong." |
-| 20 min | Amplifier or DSP room | Audio over IP in the wild, clocking, redundancy | "Where does the network become an analogue speaker cable?" |
-| 20 min | Stage and grid | Nodes, DMX runs, fixture data, power and data adjacency | "Find where one Cat lead turns into DMX for many fixtures." |
-| 15 min | Video / projection position | Media servers, processors, screen feeds | "How many pixels is that screen, and what is feeding it?" |
-| 15 min | Regroup, debrief | Structured debrief, questions to the host | See debrief prompts below |
+| Location | Focus | Prompt to give them |
+|----------|-------|---------------------|
+| Arrival, front of house or stalls | Safety brief, group split, sheets out | "Everything you see today is one of the Four Flows. Label it." |
+| Control position / FOH | Consoles as computers, operator positions, comms | "What is this console actually connected to? Follow the cables out of the back." |
+| Machine room / comms rack | Switches, patch panels, fibre, labelling, UPS | "Find the switch. Count the ports in use. Find one label that is wrong." |
+| Amplifier or DSP room | Audio over IP in the wild, clocking, redundancy | "Where does the network become an analogue speaker cable?" |
+| Stage and grid | Nodes, DMX runs, fixture data, power and data adjacency | "Find where one Cat lead turns into DMX for many fixtures." |
+| Video / projection position | Media servers, processors, screen feeds | "How many pixels is that screen, and what is feeding it?" |
+| Regroup, debrief | Structured debrief, questions to the host | See debrief prompts below |
 
 ---
 

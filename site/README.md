@@ -52,8 +52,9 @@ prefers over `../` when it exists.
 ## Adding a class
 
 1. Write the markdown alongside the others.
-2. Add an entry to `CLASSES` in `build.mjs`: file, title, hours, the study-guide and
+2. Add an entry to `CLASSES` in `build.mjs`: file, title, the study-guide and
    reference-card section keys, and which tools and practice widgets the class page should carry.
 
-Block headings carry their planned window, for example `## Block B: Addressing (1:05 to 1:55)`.
-Teach mode parses that to drive the block timer, so keep the format.
+Teach mode splits at every `##` and `###`, one section per screen, and its clock is a plain
+stopwatch you start when a block starts. The course deliberately carries no fixed schedule:
+blocks are an order of work, not a timetable.

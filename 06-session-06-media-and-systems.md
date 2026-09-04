@@ -1,5 +1,5 @@
 # Session 6: Media Over IP, and Thinking in Systems
-**4 hours. Content.**
+**Content.**
 
 *How does the sound and the picture itself travel over the network, and how do we build a system
 that survives contact with a real show?*
@@ -11,7 +11,7 @@ rehearsal for the practical exam, so protect its full run.
 
 ## Before this class
 
-**Time needed: 60 minutes.** The final content class pulls on all four before it, so the
+The final content class pulls on all four before it, so the
 preparation is mostly revision rather than new material.
 
 ### What you must already be able to do
@@ -57,23 +57,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Length | Block | Title |
-|------|-------|-------|
-| 5 min | | Numbers quiz |
-| 50 min | A | Audio over IP, and the tyranny of clock |
-| 10 min | | Break |
-| 50 min | B | Video over IP and the pixel pipeline |
-| 10 min | | Break |
-| 50 min | C | Designing for failure, and the paperwork that makes it real |
-| 10 min | | Break |
-| 50 min | D | Studio: design a system, present it |
-| 5 min | | Wrap, and the exam brief |
+| Block | Title |
+|-------|-------|
+| — | Numbers quiz |
+| A | Audio over IP, and the tyranny of clock |
+| — | Break |
+| B | Video over IP and the pixel pipeline |
+| — | Break |
+| C | Designing for failure, and the paperwork that makes it real |
+| — | Break |
+| D | Studio: design a system, present it |
+| | Wrap, and the exam brief |
 
-*If splitting into two 2 hour blocks, split after Block B. Block D must run whole.*
+*If the class is split across two shorter meetings, split after Block B. Block D must run whole.*
 
 ---
 
-## Block A: Audio over IP, and the tyranny of clock (50 min)
+## Block A: Audio over IP, and the tyranny of clock
 
 ### Why it happened
 
@@ -168,7 +168,7 @@ It is a bridge, not a merger. Plan interop links deliberately and test them earl
 
 ---
 
-## Block B: Video over IP and the pixel pipeline (50 min)
+## Block B: Video over IP and the pixel pipeline
 
 ### The baseline: SDI
 
@@ -259,7 +259,7 @@ and PTP increasingly does both jobs. Draw that parallel explicitly, it consolida
 
 ---
 
-## Block C: Designing for failure, and the paperwork (50 min)
+## Block C: Designing for failure, and the paperwork
 
 ### The single point of failure audit
 
@@ -356,7 +356,7 @@ Naming conventions, three rules, and they are the most portable thing in this se
 
 ---
 
-## Block D: Studio, design a system, present it (50 min)
+## Block D: Studio, design a system, present it
 
 **Assessed, 15 percent.** This is the dress rehearsal for the practical exam. Say that.
 

@@ -94,7 +94,7 @@ headset.
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
 | Network | 網路（港：網絡） | Devices sharing a communication medium. The show backbone. |
-| Packet | 封包 | A chunk of data with an address on it. Everything travels as packets. |
+| Packet | 封包 | The **layer 3** unit, carrying IP addresses. Survives unchanged across every hop of a journey. |
 | Protocol | 通訊協定 | The agreed rules for a conversation. sACN, Dante, NDI and OSC are all protocols. |
 | Ethernet | 乙太網路 | The dominant wired networking standard. The Cat lead and the switch. |
 | Cat5e / Cat6 / Cat6a | Cat5e／Cat6／Cat6a | Copper cable grades. Cat5e handles 1 Gbit, Cat6a handles 10 Gbit to 100 m. |
@@ -107,10 +107,25 @@ headset.
 | Multi mode | 多模光纖 | Fibre for in building runs, hundreds of metres. |
 | Single mode | 單模光纖 | Fibre for long runs, kilometres. |
 | SFP | SFP 模組 | A swappable transceiver that turns a switch port into a fibre port. |
-| Switch | 交換器 | The box that connects devices on a network and decides where each packet goes. |
+| Switch | 交換器 | A **layer 2** box connecting devices on one network. Forwards by MAC address, passes broadcasts on within the VLAN, and cannot reach another network. |
 | Managed switch | 網管型交換器 | A switch with configuration: VLANs, IGMP snooping, QoS. More capable and more dangerous. |
 | Unmanaged switch | 非網管型交換器 | A switch with no configuration. On a small dedicated network this is often the safer choice. |
-| Router | 路由器 | Connects different networks together. Show networks often have none, deliberately. |
+| Router | 路由器 | A **layer 3** box joining different networks. Forwards by IP, builds a new frame at every hop, and stops broadcasts. Show networks often have none, deliberately. |
+| Access point | 無線基地台 | A **layer 2** box bridging wireless devices onto an existing wired network. It does not create a network, and it does not route. Operator tablets, never show critical control. |
+| Layer 3 switch | 三層交換器 | A switch that can also route between its own VLANs. The sensible middle ground on a large permanent installation. |
+| NAT | 網路位址轉換 | Network address translation, rewriting addresses between an inside and an outside network. Present in every domestic router, and almost never wanted on a show. |
+| Frame | 訊框 | The **layer 2** unit, carrying MAC addresses. Cannot cross a router: it is rebuilt with new MAC addresses at every hop. |
+| Segment / datagram | 區段／資料包 | The **layer 4** unit. Segment for TCP, datagram for UDP. Carries the port numbers. |
+| Broadcast domain | 廣播網域 | Everything that must receive a broadcast. One VLAN is one broadcast domain, and a router is where it stops. |
+| ARP | 位址解析協定 | How a device finds the MAC address for an IP address, by asking the whole network. The bridge between layer 2 and layer 3, and why a duplicate IP is so confusing. |
+| TTL | 存活時間 | A hop counter in every packet, decreasing by one at each router. At zero the packet is discarded, so a routing mistake dies rather than circling forever. It is also how traceroute works. |
+| ICMP | 網際網路控制訊息協定 | The layer 3 messenger. `ping` and `traceroute` are ICMP, and so are errors like "destination host unreachable". |
+| MTU | 最大傳輸單元 | The largest payload a frame will carry, normally 1500 bytes. Every device on the path must agree, or large transfers fail while small ones work. |
+| Jumbo frame | 巨型訊框 | A frame carrying about 9000 bytes instead of 1500, used on some professional media networks. Enable it everywhere on the path or nowhere. |
+| Port number | 通訊埠 | A **layer 4** number, 0 to 65,535, saying which program on a device should receive the data. sACN is 5568, Art-Net 6454, PTP 319 and 320. |
+| Socket | 通訊端 | An IP address plus a port number. What a program actually listens on. |
+| OUI | 製造商識別碼 | The first three bytes of a MAC address, identifying the manufacturer. Useful when working out which device is on which switch port. |
+| Frame check sequence | 訊框檢查碼 | A checksum on every frame. A frame that fails it is discarded silently, which is why a marginal cable gives you missing data rather than corrupted data. |
 | Port | 埠 | A physical socket on a switch, or a numbered software endpoint such as 5568 for sACN. |
 | Link light | 連線指示燈 | The LED that means electricity is flowing. It does **not** mean the network is working. |
 | MAC address | MAC 位址／實體位址 | A hardware identifier burned into the device. You look it up, you do not set it. |

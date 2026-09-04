@@ -1,5 +1,5 @@
 # Session 5: Control
-**4 hours. Content.**
+**Content.**
 
 *How does a computer tell a light, a speaker or a screen what to do, and how do we make three
 departments fire on one cue?*
@@ -11,7 +11,7 @@ students discover that show control is a shared discipline.
 
 ## Before this class
 
-**Time needed: 45 minutes.** Lighter than Class 3, but the lab is a build, so arrive able to set
+Lighter than Class 3, but the lab is a build, so arrive able to set
 an IP address without looking it up.
 
 ### What you must already be able to do
@@ -59,23 +59,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Length | Block | Title |
-|------|-------|-------|
-| 5 min | | Numbers quiz |
-| 50 min | A | The anatomy of a control message |
-| 10 min | | Break |
-| 50 min | B | The lighting family: DMX, Art-Net, sACN |
-| 10 min | | Break |
-| 50 min | C | The show control family: OSC, MIDI, serial, timecode |
-| 10 min | | Break |
-| 50 min | D | Lab: build a cross department trigger chain |
-| 5 min | | Wrap and homework |
+| Block | Title |
+|-------|-------|
+| — | Numbers quiz |
+| A | The anatomy of a control message |
+| — | Break |
+| B | The lighting family: DMX, Art-Net, sACN |
+| — | Break |
+| C | The show control family: OSC, MIDI, serial, timecode |
+| — | Break |
+| D | Lab: build a cross department trigger chain |
+| — | Wrap and homework |
 
-*If splitting into two 2 hour blocks, split after Block B.*
+*If the class is split across two shorter meetings, split after Block B.*
 
 ---
 
-## Block A: The anatomy of a control message (50 min)
+## Block A: The anatomy of a control message
 
 ### Callback to session 1
 
@@ -134,7 +134,7 @@ addressing.
 
 ---
 
-## Block B: The lighting family (50 min)
+## Block B: The lighting family
 
 ### DMX512, physically
 
@@ -236,7 +236,7 @@ count, node port count and processing. Bandwidth is not the enemy here. Configur
 
 ---
 
-## Block C: The show control family (50 min)
+## Block C: The show control family
 
 ### OSC
 
@@ -335,7 +335,7 @@ module in one example.
 
 ---
 
-## Block D: Lab, build a cross department trigger chain (50 min)
+## Block D: Lab, build a cross department trigger chain
 
 **Assessed, 20 percent.** The largest formative piece before the exam.
 

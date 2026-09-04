@@ -1,5 +1,5 @@
 # Session 4: The Network
-**4 hours. Content.**
+**Content.**
 
 *How does a packet get from a console to a fixture, and what are all the ways that goes wrong?*
 
@@ -7,14 +7,14 @@ The most directly employable session in the module. A first year who leaves this
 calculate a subnet, plan a set of VLANs and diagnose a dead link is already useful on a get in.
 
 This session carries three skills that need genuine repetition to stick: the OSI model as a
-diagnostic ladder, subnet arithmetic, and VLAN separation. The classroom hours introduce them.
+diagnostic ladder, subnet arithmetic, and VLAN separation. The class introduces them.
 The drill happens on the platform, outside class, and it is not optional.
 
 ---
 
 ## Before this class
 
-**Time needed: 90 minutes, spread over several days.** This is the heaviest preparation in the
+This is the heaviest preparation in the
 module, and the one that most changes how much you get out of the class. Subnetting does not
 absorb in one sitting.
 
@@ -55,35 +55,40 @@ By the end of this session a student can:
 
 1. Name the seven OSI layers, say what lives at each on a show, and use the model as a fault
    finding ladder rather than as a list to recite.
-2. Convert between CIDR prefix and dotted decimal mask, and calculate the network address,
+2. Explain what happens at layers 2, 3 and 4: frames and MAC addresses, packets and IP addresses,
+   and ports, including what changes and what stays the same at every hop.
+3. Distinguish a switch, a router and an access point by the layer each works at and the job each
+   does, and say what is actually inside the box at home that is labelled "router".
+4. Convert between CIDR prefix and dotted decimal mask, and calculate the network address,
    broadcast address, usable host range and host count for any given address and mask.
-3. Divide an address range into a stated number of subnets and write the resulting scheme down.
-4. Explain what a VLAN is, distinguish access from trunk ports, and design a VLAN scheme that
+5. Divide an address range into a stated number of subnets and write the resulting scheme down.
+6. Explain what a VLAN is, distinguish access from trunk ports, and design a VLAN scheme that
    separates lighting, audio, video and management.
-5. Distinguish unicast, broadcast and multicast, and explain why IGMP snooping matters on a show.
-6. Diagnose a broken network systematically, from the bottom of the stack upwards.
+7. Distinguish unicast, broadcast and multicast, and explain why IGMP snooping matters on a show.
+8. Diagnose a broken network systematically, from the bottom of the stack upwards.
 
 ---
 
 ## Block plan
 
-| Length | Block | Title |
-|------|-------|-------|
-| 5 min | | Numbers quiz |
-| 50 min | A | The OSI model, and the layers you can touch |
-| 10 min | | Break |
-| 50 min | B | Addressing and subnet arithmetic |
-| 10 min | | Break |
-| 50 min | C | Switching, VLANs and segmentation |
-| 10 min | | Break |
-| 50 min | D | Lab, build it, subnet it, break it, fix it |
-| 5 min | | Wrap and homework |
+| Block | Title |
+|-------|-------|
+| — | Numbers quiz |
+| A | The OSI model, and the layers you can touch |
+| B | Layers 2, 3 and 4, and the three boxes |
+| — | Break |
+| C | Addressing and subnet arithmetic |
+| — | Break |
+| D | Switching, VLANs and segmentation |
+| — | Break |
+| E | Lab, build it, subnet it, break it, fix it |
+| — | Wrap and homework |
 
-*If splitting into two 2 hour blocks, split after Block B.*
+*If the class is split across two shorter meetings, split after Block C.*
 
 ---
 
-## Block A: The OSI model, and the layers you can touch (50 min)
+## Block A: The OSI model, and the layers you can touch
 
 ### Why a first year should learn the OSI model properly
 
@@ -184,21 +189,225 @@ software first has spent forty minutes to arrive back at rung 1.
 The trap worth naming: a switch has a **total** PoE budget, not just a per port rating. Eight
 ports rated 30 W does not mean 240 W is available.
 
-### Layer 2: MAC addresses and what a switch actually does
+### Layer 2, in one line before we go deep
 
-- A **MAC address** is burned into the hardware, six bytes, written `00:1D:C1:0A:2B:3C`. You look
-  it up, you do not set it.
-- A **switch** learns which MAC address is on which port by watching traffic, and builds a table.
-  After that it forwards a frame only to the port where that MAC lives.
-- This is why a switch is not a hub. A hub repeated everything to everyone. A switch is selective,
-  and that selectivity is what makes a modern show network possible.
+A **switch** learns which device is on which port by watching traffic, then forwards a frame only
+where it needs to go. A hub repeated everything to everyone; a switch is selective, and that
+selectivity is what makes a modern show network possible.
 
 <!--anim:switch-learning-->
-- **VLAN tags live here**, at layer 2. That matters in Block C.
+
+Block B takes this apart properly, along with layers 3 and 4.
 
 ---
 
-## Block B: Addressing and subnet arithmetic (50 min)
+## Block B: Layers 2, 3 and 4, and the three boxes
+
+Block A gave you the ladder. This block is the three rungs you will actually spend your working
+life on, and the three boxes that live on them.
+
+### Why these three and not the others
+
+Layer 1 is the cable, and you met it above. Layer 7 is just the name of the protocol: sACN, Dante,
+NDI. Layers 5 and 6 you will almost never touch by name.
+
+**Everything you configure lives at 2, 3 and 4.** Every setting on a switch, every address you
+type, every port number in a manual. Learn these three properly and the rest of networking is
+vocabulary.
+
+| Layer | Unit of data | The question it answers | What carries it |
+|-------|-------------|------------------------|-----------------|
+| 4 Transport | segment / datagram | **Which program** on that device? | Port numbers |
+| 3 Network | packet | **Which device**, anywhere? | IP addresses |
+| 2 Data link | frame | **Which device on this wire?** | MAC addresses |
+
+Read that bottom to top and it is one sentence: get it across this wire, get it to that machine,
+give it to the right program.
+
+<!--anim:layer-stack-->
+
+### Layer 2: the frame, and the local wire
+
+The unit is a **frame**. A frame can only travel within one local network. It cannot cross a
+router, and that single fact explains most of what follows.
+
+**MAC address.** Six bytes, written in hex: `00:1D:C1:0A:2B:3C`. Burned into the hardware at the
+factory. The first three bytes identify the manufacturer, so `00:1D:C1` tells you who made it,
+which is genuinely useful when you are staring at a switch table trying to work out which device
+is on port 14.
+
+**How a switch forwards.** It watches the source address of every frame and records which port
+that device is on. After that it sends a frame only to the port where the destination lives. A
+frame to an address it has not learned yet is flooded to every port, once, and then it learns.
+
+**Error detection, and why a bad cable loses data rather than corrupting it.** Every frame carries
+a checksum. If it does not match, the switch **discards the frame silently**. Nothing repairs it
+and nothing at layer 2 asks for it again. So a marginal cable does not give you wrong colours or
+distorted audio, it gives you *missing* data: dropped packets, a stuttering fixture, a click. That
+is why "it looks fine but it is glitching" points at the cable.
+
+**Broadcast domain.** A broadcast is a frame addressed to everybody. Every device on the same
+layer 2 network must receive it, look at it, and decide it does not care. A VLAN divides one
+switch into several broadcast domains; a router stops broadcasts entirely. Everything within one
+broadcast domain competes for the same attention, which is why show networks are kept small and
+divided.
+
+**MTU.** The largest frame the network will carry, normally **1500 bytes** of payload. Some
+professional media networks use **jumbo frames** of around 9000 bytes to carry more per frame.
+The rule: every device on the path must agree. One device at 1500 in a path set to 9000 does not
+negotiate down, it drops what it cannot carry, and you get a fault that only appears on large
+transfers.
+
+**ARP, the bridge between layers 2 and 3.** You configure IP addresses, but the wire only moves
+frames addressed to MAC addresses. So before a device can send to `10.101.10.50`, it shouts
+"who has 10.101.10.50?" as a broadcast, and the owner answers with its MAC. That exchange is
+**ARP**, and the answers are cached in an ARP table.
+
+Two practical consequences worth knowing now:
+- A device that has just changed IP can be unreachable for a minute while a stale ARP entry
+  expires. Not a fault. Wait, or clear the table.
+- Duplicate IP addresses are so confusing precisely because ARP answers arrive from two different
+  machines, and whichever answered last wins, moment to moment.
+
+### Layer 3: the packet, and getting off your own wire
+
+The unit is a **packet**. A packet can cross routers, which is the whole point of layer 3.
+
+**The address is assigned, not burned in**, and it splits into a network part and a host part, as
+Class 3's subnet work covers in detail. What matters here is the consequence: **an IP address says
+which network you are on, and therefore whether a router has to be involved at all.**
+
+**What a router actually does.** It has an interface in two or more networks. A packet arrives, the
+router reads the destination IP, decides which of its interfaces leads there, and sends it out —
+**inside a brand new frame, with new MAC addresses.** The IP addresses never change. The MAC
+addresses change at every single hop.
+
+That is the most commonly misunderstood thing in networking, so it is worth stating as a rule:
+
+> **Across a whole journey, the IP addresses stay the same and the MAC addresses are rewritten at
+> every hop.** Layer 3 is the destination. Layer 2 is only ever the next step.
+
+<!--anim:hop-by-hop-->
+
+**Default gateway.** The router's address on your network, and it means one thing: *"anything not
+on my own network, send here."* A device with no gateway can talk to its own network and nowhere
+else, which on a deliberately isolated show network is exactly what you want.
+
+**TTL.** Every packet carries a hop counter that decreases by one at each router. At zero it is
+discarded. It exists so a routing mistake produces a packet that dies rather than one that circles
+forever. It is also how `traceroute` works: send packets with TTL 1, then 2, then 3, and each
+router in turn reports the death.
+
+**ICMP** is the layer 3 messenger. `ping` and `traceroute` are ICMP, and so are the errors:
+*destination host unreachable* means a router had nowhere to send it; *request timed out* means
+nothing came back, which is a different thing and often means a one-way problem.
+
+**Multicast lives here too.** Addresses in `239.0.0.0` to `239.255.255.255` are multicast, which
+is where sACN's `239.255.x.x` comes from, and IGMP is the layer 3 protocol devices use to join and
+leave those groups.
+
+### Layer 4: the port, and which program gets it
+
+Layer 3 got the packet to the machine. Something has to decide **which program on that machine**
+receives it, because a media server may be running a video player, a control listener and a remote
+desktop at once. That is the **port number**.
+
+- Ports run 0 to 65,535.
+- An IP address plus a port is a **socket**, and that pair is what a program actually listens on.
+- The port is how one device runs many services on one address.
+
+The ports you will meet on a show, worth recognising in a Wireshark capture:
+
+| Port | Protocol | What it is |
+|------|----------|-----------|
+| 5568 | UDP | sACN (E1.31) lighting |
+| 6454 | UDP | Art-Net lighting |
+| 319, 320 | UDP | PTP, clock |
+| 4440 to 4455 | UDP | Dante audio and control |
+| 5353 | UDP | mDNS, how devices discover each other by name |
+| 53 | UDP | DNS |
+| 22 | TCP | SSH |
+| 80, 443 | TCP | Web, including switch configuration pages |
+
+**TCP and UDP are both layer 4**, and the difference is the whole of Class 4's argument in one
+place:
+
+| | TCP | UDP |
+|---|-----|-----|
+| Sets up a connection first | Yes | No |
+| Numbers everything and confirms arrival | Yes | No |
+| Re-sends what was lost | Yes | No |
+| Puts things back in order | Yes | No |
+| Costs | Latency, and a connection to maintain | Nothing |
+| Right for | A file, a command that must confirm | Anything with a deadline |
+
+Show media runs on UDP, and that is a deliberate choice rather than a compromise. Class 4 explains
+why with a working model.
+
+**The layer 4 fault to recognise:** the traffic is visibly arriving, Wireshark shows it, and the
+application sees nothing. That is almost always a port problem — the wrong port configured, or a
+firewall on the receiving machine quietly discarding it.
+
+### The three boxes
+
+Three devices, three layers, three jobs. Students conflate all three, mostly because the box at
+home does all of them at once.
+
+| | **Switch** | **Router** | **Access point** |
+|---|-----------|-----------|-----------------|
+| Works at | Layer 2 | Layer 3 | Layer 1 and 2 |
+| Forwards by | MAC address | IP address | MAC address |
+| Joins | Devices on **one** network | **Different** networks | Wireless devices to a wired network |
+| Broadcasts | **Passes them on** within the VLAN | **Stops them** | Passes them on |
+| Gives out addresses | No | Sometimes, if it runs DHCP | No |
+| On a show | Everywhere | Rarely, and deliberately | Operator tablets only |
+
+**A switch** connects devices that are already on the same network. It is the workhorse, and on
+most show networks it is the only one of the three you need.
+
+**A router** is the boundary between networks. It is the thing that makes two subnets able to talk,
+and equally the thing that stops a broadcast storm in one department reaching another. On a show
+network you often want **no router at all**, because the departments are supposed to be isolated.
+Adding one is a decision, not a default.
+
+**An access point** does not create a network. It extends an existing wired network to devices
+without cables, bridging wireless frames onto the wire. It is a layer 2 device, and everything
+from Class 3 about wireless applies: a shared, contended medium with no delivery guarantee.
+
+<!--anim:device-roles-->
+
+### What is actually inside the box you call a router
+
+This one clarification saves more confusion than anything else in the block.
+
+The box from a shop labelled "router" is **five devices in one case**:
+
+1. A **router**, joining your network to the one upstream.
+2. A **switch**, which is what those four sockets on the back are.
+3. An **access point**, for the wireless.
+4. A **firewall and NAT**, deciding what may cross.
+5. A **DHCP server**, handing out addresses.
+
+When someone says "just use a router", they usually mean that box. On a show, three of those five
+functions are actively unwanted: you do not want DHCP handing out addresses that change, you do
+not want NAT between your console and your nodes, and you very often do not want wireless at all.
+
+**This is why show networks use plain switches.** Not because a router is worse, but because four
+fifths of that box is solving a problem you do not have and creating three you did not want.
+
+**A layer 3 switch** is the one sensible middle ground: a switch that can also route between its
+own VLANs. You will meet them on large permanent installations, where lighting and video genuinely
+need one controlled path between them.
+
+### The rule that ties the block together
+
+> **Same network?** A switch is enough. Layer 2 does it.
+> **Different networks?** You need a router. That is layer 3, by definition.
+> **No cable?** An access point joins wireless devices to a wired network. It does not make a new one.
+
+---
+
+## Block C: Addressing and subnet arithmetic
 
 The hardest 50 minutes in the module for a first year, and the most valuable. Go slowly, do
 everything on the board, and make them calculate out loud.
@@ -378,7 +587,7 @@ address you cannot write on a piece of paper.**
 
 ---
 
-## Block C: Switching, VLANs and segmentation (50 min)
+## Block D: Switching, VLANs and segmentation
 
 ### Managed versus unmanaged
 
@@ -567,7 +776,7 @@ need it.
 
 ---
 
-## Block D: Lab, build it, subnet it, break it, fix it (50 min)
+## Block E: Lab, build it, subnet it, break it, fix it
 
 Prepare the faults in advance. This lab lives or dies on preparation.
 

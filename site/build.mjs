@@ -33,31 +33,31 @@ const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
 const CLASSES = [
   {
     n: 1, slug: 'why-this-class-exists', file: '01-session-01-intro.md',
-    title: 'Why This Class Exists', hours: 2, studyKey: 'Session 1', numbersKey: 'Block 1',
+    title: 'Why This Class Exists', studyKey: 'Session 1', numbersKey: 'Block 1',
     strap: 'The argument, the Four Flows, and the two calculations that run through everything.',
     tools: ['units', 'datarate', 'latency', 'delaytime'], practice: ['flows', 'selftest'],
   },
   {
     n: 2, slug: 'the-machine', file: '03-session-03-the-machine.md',
-    title: 'The Machine', hours: 4, studyKey: 'Session 3', numbersKey: 'Block 2',
+    title: 'The Machine', studyKey: 'Session 3', numbersKey: 'Block 2',
     strap: 'What a show computer is, why it is configured differently, and how sound and light become numbers.',
     tools: ['units', 'datarate', 'storage', 'buffer', 'ledwall'], practice: ['drill', 'selftest'],
   },
   {
     n: 3, slug: 'the-network', file: '04-session-04-the-network.md',
-    title: 'The Network', hours: 4, studyKey: 'Session 4', numbersKey: 'Block 3',
+    title: 'The Network', studyKey: 'Session 4', numbersKey: 'Block 3',
     strap: 'The OSI model as a diagnostic ladder, subnet arithmetic, and separating departments with VLANs.',
     tools: ['binhex', 'subnet', 'split', 'vlan', 'poe'], practice: ['subnetdrill', 'faults', 'selftest'],
   },
   {
     n: 4, slug: 'control', file: '05-session-05-control.md',
-    title: 'Control', hours: 4, studyKey: 'Session 5', numbersKey: 'Block 4',
+    title: 'Control', studyKey: 'Session 5', numbersKey: 'Block 4',
     strap: 'State against event, DMX512, Art-Net against sACN, universe maths, OSC, MIDI and timecode.',
     tools: ['universe', 'dmx', 'timecode'], practice: ['drill', 'selftest'],
   },
   {
     n: 5, slug: 'media-over-ip', file: '06-session-06-media-and-systems.md',
-    title: 'Media Over IP and Systems', hours: 4, studyKey: 'Session 6', numbersKey: 'Block 5',
+    title: 'Media Over IP and Systems', studyKey: 'Session 6', numbersKey: 'Block 5',
     strap: 'Audio and video over the network, the tyranny of clock, designing for failure, and the paperwork.',
     tools: ['datarate', 'latency', 'storage', 'ledwall', 'timecode'], practice: ['drill', 'selftest'],
   },
@@ -182,7 +182,7 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
     (c) => `<a class="nv${active === `class-${c.n}` ? ' on' : ''}" href="/class/${c.n}">
         <span class="nv-n">${c.n}</span>
         <span class="nv-t">${esc(c.title)}</span>
-        <span class="nv-h">${c.hours}h</span></a>`
+        </a>`
   ).join('');
 
   const navRes = NAV_RESOURCES.map(
@@ -226,8 +226,8 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
     <p class="side-h">Resources</p>
     ${navRes}
     <div class="side-foot">
-      <p>18 taught hours across 5 classes. The production visit and the practical exam sit in the
-      full module pack and are not published here.</p>
+      <p>Five taught classes. The production visit and the practical exam sit in the lecturer's
+      own pack and are not published here.</p>
       <p class="side-build" title="Which commit is serving, and how it got here">
         build <code>${STAMP.commit}</code>${STAMP.branch ? ` · ${esc(STAMP.branch)}` : ''} · via ${STAMP.source}</p>
     </div>
@@ -381,7 +381,7 @@ for (const c of classData) {
   const body = `
 <article class="doc">
   <header class="page-head">
-    <p class="eyebrow"><span class="pill">Class ${c.n} of 5</span><span class="pill pill-q">${c.hours} hours</span></p>
+    <p class="eyebrow"><span class="pill">Class ${c.n} of 5</span></p>
     <h1>${esc(c.title)}</h1>
     <p class="strap">${esc(c.strap)}</p>
     <div class="head-actions">
@@ -429,14 +429,14 @@ for (const c of classData) {
     .join('');
 
   const body = `
-<div class="teach" data-class="${c.n}" data-hours="${c.hours}">
+<div class="teach" data-class="${c.n}">
   <header class="teach-bar">
     <a class="teach-exit" href="/class/${c.n}" title="Exit teach mode">✕</a>
     <span class="teach-title">Class ${c.n} · ${esc(c.title)}</span>
     <span class="teach-block" id="tblock"></span>
     <span class="teach-sub" id="tsub"></span>
     <div class="teach-sp"></div>
-    <button class="teach-btn" id="tstart">▶ Start block timer</button>
+    <button class="teach-btn" id="tstart">▶ Start stopwatch</button>
     <span class="teach-clock" id="tclock">00:00</span>
     <span class="teach-pos" id="tpos"></span>
     <button class="teach-btn" id="tfull" title="Full screen">⛶</button>
@@ -558,7 +558,7 @@ write('/foundations', shell({
   title: 'Foundations',
   desc: 'Bits and bytes, powers of two, binary and hex: the number skills every other class assumes.',
   body: `<article class="doc"><header class="page-head">
-      <p class="eyebrow"><span class="pill">Do this first</span><span class="pill pill-q">About 40 minutes</span></p>
+      <p class="eyebrow"><span class="pill">Do this first</span></p>
       <h1>Foundations</h1>
       <p class="strap">Nothing here is difficult, and all of it is assumed everywhere else. A student
       who has not met it spends Class 3 fighting the arithmetic instead of learning the network.</p>
@@ -579,7 +579,7 @@ const prepCards = classData.map((c) => `<section class="prep-block">
       <span class="prep-n">${c.n}</span>
       <div>
         <h2 class="hd hd-2" id="prepare-class-${c.n}" style="margin:0;border:0;padding:0">${esc(c.title)}</h2>
-        <p class="prep-meta">Class ${c.n} · ${c.hours} hours</p>
+        <p class="prep-meta">Class ${c.n}</p>
       </div>
       <a class="btn" href="/class/${c.n}#tab=prepare">Open Class ${c.n} →</a>
     </header>
@@ -600,9 +600,9 @@ write('/prepare', shell({
         <a class="btn btn-primary" href="/foundations">Start with Foundations</a>
       </div>
     </header>
-    <div class="note" style="margin-bottom:28px"><b>The one that matters.</b> Class 3 needs about
-    ninety minutes of preparation spread over several days, because subnetting does not absorb in
-    one sitting. Everything else is lighter. If you only prepare for one class, prepare for that one.</div>
+    <div class="note" style="margin-bottom:28px"><b>The one that matters.</b> Class 3 needs its
+    preparation spread over several days, because subnetting does not absorb in one sitting.
+    Everything else is lighter. If you only prepare for one class, prepare for that one.</div>
     ${prepCards}</article>`,
   active: '/prepare',
   scripts: ['/assets/practice.js', '/assets/anim.js'],
@@ -619,7 +619,7 @@ const classCards = CLASSES.map(
     <span class="card-n">${c.n}</span>
     <h3>${esc(c.title)}</h3>
     <p>${esc(c.strap)}</p>
-    <span class="card-foot"><span class="pill pill-q">${c.hours} hours</span>
+    <span class="card-foot">
     <span class="card-go">Open →</span></span>
   </a>`
 ).join('');
@@ -633,8 +633,8 @@ write('/', shell({
     <p class="eyebrow"><span class="pill">Year one BFA</span><span class="pill pill-q">Audio · Lighting · Video</span></p>
     <h1>Computer Systems &amp; Networking<br><span class="hero-sub">for Theatre and Entertainment Arts</span></h1>
     <blockquote class="spine"><p>${spine}</p></blockquote>
-    <p class="strap">Five classes, eighteen taught hours. Everything here exists to unpack that one
-    sentence and to make it usable at 18:00 on a Friday when something has stopped working.</p>
+    <p class="strap">Five classes. Everything here exists to unpack that one sentence and to make it
+    usable at 18:00 on a Friday when something has stopped working.</p>
     <div class="head-actions">
       <a class="btn btn-primary" href="/prepare">Prepare for class</a>
       <a class="btn" href="/class/1">Start with Class 1</a>
@@ -676,8 +676,8 @@ write('/', shell({
   </div>
 
   <h2 class="hd hd-2" id="scope">A note on scope</h2>
-  <p>The full module is 24 hours: these five classes, plus a two hour production visit and a four
-  hour practical exam. The visit and the exam are not published here. Neither works as a web page,
+  <p>The full module is these five classes, plus a production visit and a practical exam. The visit
+  and the exam are not published here. Neither works as a web page,
   and publishing the exam's fault library and mark scheme would defeat the assessment. They live in
   the lecturer's own pack, along with the teaching guide.</p>
 </article>`,

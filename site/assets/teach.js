@@ -2,10 +2,10 @@
 //
 // This is not an attempt to auto-generate slides. Auto-slides made from prose
 // are worse than the prose. It is the lecturer's own notes, one section per
-// screen, at a size readable from the back of a room, with the one thing a
-// four-hour class actually needs: a block timer that says whether you are on
-// time. Timing is the hardest part of teaching a long session, and it is the
-// part no document can help with.
+// screen, at a size readable from the back of a room, plus a stopwatch you
+// start when a block starts. The course carries no fixed schedule on purpose:
+// blocks are an order of work, not a timetable, so the clock reports elapsed
+// time and leaves the judgement to the person in the room.
 
 const $ = (s) => document.querySelector(s);
 const track = $('#ttrack');
@@ -21,21 +21,13 @@ if (track) {
   const startBtn = $('#tstart');
 
   let i = 0;
-  let started = null;   // epoch ms when the current block timer began
-  let planned = 0;      // planned minutes for the current slide, 0 if untimed
+  let started = null;   // epoch ms when the current block's stopwatch began
 
   dots.innerHTML = slides
     .map((s, n) => `<button class="tdot" data-i="${n}" title="${s.dataset.title}"></button>`)
     .join('');
 
-  // Titles carry their planned length, e.g. "Block A: … (50 min)". The block
-  // plan is the only place that lives, so parse it rather than duplicate it.
-  // Blocks are timed by duration, not by a clock position, so a class that
-  // starts late or runs a block long is not fighting the tool.
-  function plannedMinutes(title) {
-    const m = /\((\d+)\s*min\)/i.exec(title);
-    return m ? +m[1] : 0;
-  }
+
 
   function show(n) {
     i = Math.max(0, Math.min(slides.length - 1, n));
@@ -47,9 +39,7 @@ if (track) {
 
     // The planned window lives on the parent h2, so a sub-section inherits it.
     const block = slides[i].dataset.block || slides[i].dataset.title;
-    planned = plannedMinutes(block);
-    const blockName = block.replace(/\s*\([^)]*\)\s*$/, '');
-    blockLbl.textContent = planned ? `${blockName} · ${planned} min` : blockName;
+    blockLbl.textContent = block;
     blockLbl.hidden = false;
 
     // How far through the current block we are, counted in slides.
@@ -73,16 +63,11 @@ if (track) {
     const ss = String(s % 60).padStart(2, '0');
     clock.textContent = `${mm}:${ss}`;
     clock.className = 'teach-clock';
-    if (planned) {
-      const frac = s / (planned * 60);
-      if (frac >= 1) clock.className = 'teach-clock over';
-      else if (frac >= 0.8) clock.className = 'teach-clock warn';
-    }
   }
   setInterval(paintClock, 1000);
 
   startBtn.addEventListener('click', () => {
-    if (started) { started = null; startBtn.textContent = '▶ Start block timer'; }
+    if (started) { started = null; startBtn.textContent = '▶ Start stopwatch'; }
     else { started = Date.now(); startBtn.textContent = '■ Stop'; }
     paintClock();
   });

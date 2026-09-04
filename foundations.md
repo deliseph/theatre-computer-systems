@@ -4,7 +4,7 @@
 Nothing here is difficult. All of it is assumed by every other class, and a student who has not
 met it will spend Class 3 fighting the arithmetic instead of learning the network.
 
-Forty minutes, done properly, once. Then it is yours.
+Done properly, once. Then it is yours.
 
 ---
 

@@ -419,3 +419,268 @@ register('multicast-igmp', (host) => {
   }
   update();
 });
+
+// ============================================================================
+// Layers 2, 3 and 4: what each one addresses
+// ============================================================================
+
+register('layer-stack', (host) => {
+  const LAYERS = [
+    {
+      n: 4, name: 'Transport', unit: 'segment / datagram', c: 'green',
+      q: 'Which program on that device?',
+      fields: [['src port', '5568'], ['dst port', '5568'], ['protocol', 'UDP']],
+      wrong: 'The traffic arrives, Wireshark shows it, and the application sees nothing. Wrong port, or a firewall on the receiving machine.',
+    },
+    {
+      n: 3, name: 'Network', unit: 'packet', c: 'cyan',
+      q: 'Which device, anywhere?',
+      fields: [['src IP', '10.101.10.20'], ['dst IP', '239.255.0.1'], ['TTL', '64']],
+      wrong: 'No route, or the wrong network entirely. Ping fails, or you get "destination host unreachable".',
+    },
+    {
+      n: 2, name: 'Data link', unit: 'frame', c: 'amber',
+      q: 'Which device on THIS wire?',
+      fields: [['src MAC', '00:1D:C1:0A:2B:3C'], ['dst MAC', '01:00:5E:7F:00:01'], ['VLAN', '10']],
+      wrong: 'Link light on, nothing reachable. Wrong VLAN, or a frame discarded for a bad checksum, which looks like missing data rather than corrupt data.',
+    },
+  ];
+  let sel = 2;
+
+  const { controls, stage, setNote } = figure(host, {
+    title: 'The three layers you actually configure',
+    sub: 'One cue leaving a lighting console. Click a layer to see what it addresses and what it looks like when it is wrong.',
+    note: '&nbsp;',
+  });
+
+  canvas(stage, {
+    height: 250,
+    animated: false,
+    draw(g, w, hgt) {
+      const p = palette();
+      const rowH = 66, x0 = 22, bw = Math.min(w - 44, 720);
+
+      LAYERS.forEach((L, i) => {
+        const y = 16 + i * rowH;
+        const col = p[L.c];
+        const on = i === sel;
+        box(g, x0, y, bw, rowH - 12, {
+          fill: on ? alpha(col, 0.16) : p.surface,
+          stroke: on ? col : p.line, r: 8, lw: on ? 2 : 1,
+        });
+        box(g, x0 + 10, y + 10, 34, 34, { fill: on ? col : p.raised, stroke: alpha(col, 0.7), r: 7 });
+        label(g, String(L.n), x0 + 27, y + 27, {
+          color: on ? p.ground : col, size: 15, weight: 700, align: 'center', mono: true,
+        });
+        label(g, L.name, x0 + 56, y + 20, { color: p.ink, size: 13.5, weight: 650 });
+        label(g, L.unit, x0 + 56, y + 38, { color: p.muted, size: 11, mono: true });
+        label(g, L.q, x0 + 200, y + 20, { color: on ? col : p.ink2, size: 12.5, weight: on ? 650 : 500 });
+
+        // Header fields, which is what the layer actually carries
+        const fx = x0 + 200;
+        label(g, L.fields.map(([k, v]) => `${k} ${v}`).join('   ·   '), fx, y + 38,
+          { color: on ? p.ink2 : p.muted, size: 10.5, mono: true });
+      });
+
+      label(g, 'Read bottom to top: get it across this wire, get it to that machine, give it to the right program.',
+        x0, hgt - 14, { color: p.muted, size: 11.5 });
+    },
+  });
+
+  const cv = stage.querySelector('canvas');
+  cv.addEventListener('click', (e) => {
+    const r = cv.getBoundingClientRect();
+    const i = Math.floor((e.clientY - r.top - 16) / 66);
+    if (i >= 0 && i < LAYERS.length) { sel = i; paint(); }
+  });
+
+  controls.append(
+    choice('Layer', LAYERS.map((L, i) => [i, `${L.n} ${L.name}`]), {
+      value: 2, on: (v) => { sel = +v; paint(); },
+    }).node
+  );
+
+  function paint() {
+    const L = LAYERS[sel];
+    setNote(`<b>Layer ${L.n}, ${L.name}.</b> The unit is a ${L.unit}, and it answers: <i>${L.q}</i><br>
+      <b>When it is wrong:</b> ${L.wrong}`);
+  }
+  paint();
+});
+
+// ============================================================================
+// What changes at every hop, and what does not
+// ============================================================================
+
+register('hop-by-hop', (host) => {
+  const HOPS = [
+    { from: 'Console', to: 'Switch A', srcMac: 'CONSOLE', dstMac: 'ROUTER-L', net: '10.101.10.0/24' },
+    { from: 'Switch A', to: 'Router', srcMac: 'CONSOLE', dstMac: 'ROUTER-L', net: '10.101.10.0/24' },
+    { from: 'Router', to: 'Switch B', srcMac: 'ROUTER-R', dstMac: 'NODE', net: '10.101.20.0/24' },
+    { from: 'Switch B', to: 'Node', srcMac: 'ROUTER-R', dstMac: 'NODE', net: '10.101.20.0/24' },
+  ];
+  const MACS = {
+    CONSOLE: '00:1D:C1:0A:2B:01', 'ROUTER-L': '00:1D:C1:0A:2B:AA',
+    'ROUTER-R': '00:1D:C1:0A:2B:BB', NODE: '00:1D:C1:0A:2B:50',
+  };
+  let hop = 0, playing = true, acc = 0;
+
+  const { controls, stage, setNote } = figure(host, {
+    title: 'What changes at every hop, and what never does',
+    sub: 'One packet from a console to a node, across a router. Watch the MAC addresses. Then watch the IP addresses.',
+    note: '&nbsp;',
+  });
+
+  canvas(stage, {
+    height: 300,
+    controls,
+    draw(g, w, hgt, t, dt) {
+      const p = palette();
+      if (playing) { acc += dt; if (acc > 1.7) { acc = 0; hop = (hop + 1) % HOPS.length; } }
+      const h = HOPS[hop];
+
+      const boxes = [
+        { n: 'Console', ip: '10.101.10.20', x: 0.02 },
+        { n: 'Switch A', ip: '', x: 0.245 },
+        { n: 'Router', ip: '.10.1 / .20.1', x: 0.47 },
+        { n: 'Switch B', ip: '', x: 0.695 },
+        { n: 'Node', ip: '10.101.20.50', x: 0.92 },
+      ];
+      const bw = Math.max(96, (w - 40) * 0.17);
+      boxes.forEach((b, i) => {
+        const x = 20 + (w - 40 - bw) * b.x;
+        const active = i === hop || i === hop + 1;
+        box(g, x, 46, bw, 52, {
+          fill: active ? alpha(p.cyan, 0.14) : p.surface,
+          stroke: i === 2 ? p.amber : active ? p.cyan : p.line, r: 8, lw: i === 2 ? 2 : 1,
+        });
+        label(g, b.n, x + bw / 2, 66, { color: p.ink, size: 11.5, weight: 650, align: 'center' });
+        if (b.ip) label(g, b.ip, x + bw / 2, 84, { color: p.muted, size: 9.5, align: 'center', mono: true });
+        if (i === 2) label(g, 'layer 3 boundary', x + bw / 2, 112, { color: p.amber, size: 9.5, align: 'center' });
+      });
+
+      // The segment currently carrying the packet
+      const segX = 20 + (w - 40 - bw) * boxes[hop].x + bw;
+      const segW = (20 + (w - 40 - bw) * boxes[hop + 1].x) - segX;
+      box(g, segX, 68, Math.max(4, segW), 8, { fill: p.cyan, stroke: 'transparent', r: 4 });
+
+      // The headers, layered
+      const hx = 24, hy = 140, hw = w - 48;
+      box(g, hx, hy, hw, 40, { fill: alpha(p.amber, 0.14), stroke: p.amber, r: 7 });
+      label(g, 'LAYER 2 FRAME — rewritten every hop', hx + 12, hy + 13,
+        { color: p.amber, size: 9.5, weight: 700 });
+      label(g, `src ${MACS[h.srcMac]}   →   dst ${MACS[h.dstMac]}`, hx + 12, hy + 29,
+        { color: p.ink, size: 12, weight: 600, mono: true });
+
+      box(g, hx + 16, hy + 46, hw - 32, 38, { fill: alpha(p.cyan, 0.14), stroke: p.cyan, r: 7 });
+      label(g, 'LAYER 3 PACKET — never changes', hx + 28, hy + 58, { color: p.cyan, size: 9.5, weight: 700 });
+      label(g, 'src 10.101.10.20   →   dst 10.101.20.50', hx + 28, hy + 74,
+        { color: p.ink, size: 12, weight: 600, mono: true });
+
+      box(g, hx + 32, hy + 90, hw - 64, 34, { fill: alpha(p.green, 0.14), stroke: p.green, r: 7 });
+      label(g, 'LAYER 4 — never changes', hx + 44, hy + 101, { color: p.green, size: 9.5, weight: 700 });
+      label(g, 'src port 49152   →   dst port 5568', hx + 44, hy + 116,
+        { color: p.ink, size: 12, weight: 600, mono: true });
+
+      label(g, `Hop ${hop + 1} of ${HOPS.length}: ${h.from} → ${h.to}   ·   on ${h.net}`,
+        hx, hgt - 12, { color: p.ink2, size: 12, weight: 600 });
+    },
+  });
+
+  controls.append(
+    button('◀', () => { playing = false; hop = (hop + HOPS.length - 1) % HOPS.length; }).node,
+    button('Step ▶', () => { playing = false; hop = (hop + 1) % HOPS.length; }).node,
+    toggle('Auto', { value: true, on: (v) => { playing = v; } }).node
+  );
+
+  setNote('<b>The amber row changes at every single hop. The cyan and green rows never change at all.</b> The MAC addresses only ever name the next step on this wire, so the router strips the old frame and builds a new one. The IP addresses name the final destination and survive the whole journey, and the ports name the program at the far end. This is why layer 2 is "which device on this wire" and layer 3 is "which device anywhere", and why a router is the boundary between the two.');
+});
+
+// ============================================================================
+// Switch, router, access point: three boxes, three jobs
+// ============================================================================
+
+register('device-roles', (host) => {
+  const state = { dev: 'switch', msg: 'broadcast' };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'Switch, router, access point',
+    sub: 'Same three messages through each box. The differences are the whole reason all three exist.',
+    note: '&nbsp;',
+  });
+
+  let pulse = 0, sending = false;
+
+  canvas(stage, {
+    height: 260,
+    draw(g, w, hgt, t, dt) {
+      const p = palette();
+      if (sending) { pulse += dt; if (pulse > 2.4) { sending = false; pulse = 0; } }
+
+      const cx = w / 2, cy = 112;
+      const col = state.dev === 'switch' ? p.cyan : state.dev === 'router' ? p.amber : p.green;
+      const nameMap = { switch: 'SWITCH', router: 'ROUTER', ap: 'ACCESS POINT' };
+      const layerMap = { switch: 'layer 2', router: 'layer 3', ap: 'layer 2' };
+
+      box(g, cx - 84, cy - 30, 168, 60, { fill: alpha(col, 0.16), stroke: col, r: 10, lw: 2 });
+      label(g, nameMap[state.dev], cx, cy - 8, { color: col, size: 14, weight: 700, align: 'center' });
+      label(g, layerMap[state.dev], cx, cy + 12, { color: p.muted, size: 10.5, align: 'center', mono: true });
+
+      // Left: same network. Right: different network (or wireless for an AP)
+      const leftLbl = '10.101.10.0/24';
+      const rightLbl = state.dev === 'router' ? '10.101.20.0/24'
+        : state.dev === 'ap' ? 'wireless clients' : '10.101.10.0/24';
+      [[60, leftLbl, -1], [w - 60, rightLbl, 1]].forEach(([x, lbl, side]) => {
+        box(g, x - 56, cy - 26, 112, 52, { fill: p.surface, stroke: p.line, r: 8 });
+        label(g, side < 0 ? 'Console' : state.dev === 'ap' ? 'Tablet' : 'Node',
+          x, cy - 6, { color: p.ink2, size: 11.5, weight: 600, align: 'center' });
+        label(g, lbl, x, cy + 12, { color: p.muted, size: 9.5, align: 'center', mono: true });
+        line(g, side < 0 ? x + 56 : cx + 84, side < 0 ? cy : cy, side < 0 ? cx - 84 : x - 56, cy,
+          { color: alpha(p.line, 1), lw: 5, dash: state.dev === 'ap' && side > 0 ? [4, 4] : null });
+      });
+
+      // Outcome
+      let verdict, vcol;
+      if (state.msg === 'broadcast') {
+        if (state.dev === 'router') { verdict = 'STOPPED. A router does not forward broadcasts. This is its most useful property.'; vcol = p.amber; }
+        else { verdict = 'PASSED ON. Everything in this broadcast domain has to receive it and decide it does not care.'; vcol = p.cyan; }
+      } else if (state.msg === 'same') {
+        verdict = state.dev === 'router'
+          ? 'Never reaches the router. Same network, so the switch handles it and the router is not involved.'
+          : 'DELIVERED, by MAC address, straight to the port where that device lives.';
+        vcol = p.green;
+      } else {
+        if (state.dev === 'router') { verdict = 'ROUTED. New frame, new MAC addresses, same IP addresses. This is the only box that can do this.'; vcol = p.green; }
+        else { verdict = 'DROPPED. Different network, and this box cannot reach it. No cable fixes this.'; vcol = p.red; }
+      }
+
+      if (sending && pulse > 0.2) {
+        const reach = !(state.msg === 'broadcast' && state.dev === 'router')
+          && !(state.msg === 'other' && state.dev !== 'router');
+        const x = 116 + (w - 232) * Math.min(1, (pulse - 0.2) / 1.1) * (reach ? 1 : 0.42);
+        box(g, x, cy - 6, 14, 12, { fill: reach ? p.green : p.red, stroke: 'transparent', r: 3 });
+        if (!reach && pulse > 0.9) label(g, '✕', cx, cy - 44, { color: p.red, size: 20, weight: 700, align: 'center' });
+      }
+
+      label(g, verdict, w / 2, hgt - 34, { color: vcol, size: 12.5, weight: 600, align: 'center' });
+      label(g, 'A switch joins one network. A router joins two. An access point adds wireless to one.',
+        w / 2, hgt - 12, { color: p.muted, size: 11, align: 'center' });
+    },
+  });
+
+  controls.append(
+    choice('Box', [['switch', 'Switch'], ['router', 'Router'], ['ap', 'Access point']],
+      { value: 'switch', on: (v) => { state.dev = v; sending = true; pulse = 0; update(); } }).node,
+    choice('Send', [['broadcast', 'A broadcast'], ['same', 'To the same network'], ['other', 'To another network']],
+      { value: 'broadcast', on: (v) => { state.msg = v; sending = true; pulse = 0; update(); } }).node
+  );
+
+  function update() {
+    const notes = {
+      switch: 'A <b>switch</b> connects devices that are already on the same network, forwarding by MAC address. It passes broadcasts on within the VLAN, and it cannot reach another network at all. On most show networks this is the only box you need.',
+      router: 'A <b>router</b> is the boundary between networks. It forwards by IP address, builds a new frame at every hop, and <b>stops broadcasts</b>. On a show you often want no router, because the departments are supposed to be isolated. Adding one is a decision, not a default.',
+      ap: 'An <b>access point</b> does not create a network. It bridges wireless devices onto an existing wired one, at layer 2, and everything about wireless applies: a shared, contended medium with no delivery guarantee. Operator tablets, not show critical control.',
+    };
+    setNote(notes[state.dev]);
+  }
+  update();
+});

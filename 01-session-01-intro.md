@@ -1,5 +1,5 @@
 # Session 1: Why This Class Exists
-**2 hours. Content.**
+**Content.**
 
 The whole module is won or lost here. The goal is not to teach a protocol. The goal is that a
 year one lighting student leaves the room believing that a computing class is *their* class,
@@ -9,7 +9,7 @@ not something bolted on by the curriculum committee.
 
 ## Before this class
 
-**Time needed: 15 minutes.** This is the first class, so there is almost nothing to prepare. Come
+This is the first class, so there is almost nothing to prepare. Come
 with the right expectation rather than the right knowledge.
 
 ### What you must already be able to do
@@ -49,19 +49,19 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Length | Block | Mode |
-|------|-------|------|
-| 15 min | Cold open: the rig, live, then killed | Demo |
-| 20 min | The argument: why you are here | Lecture, high energy |
-| 25 min | The Four Flows | Lecture plus card sort |
-| 10 min | Break | |
-| 25 min | The two numbers, and latency versus jitter | Demo plus worked maths |
-| 15 min | Course map, assessment, expectations | Admin, brisk |
-| 10 min | Visit briefing and team allocation | Admin |
+| Block | Mode |
+|-------|------|
+| Cold open: the rig, live, then killed | Demo |
+| The argument: why you are here | Lecture, high energy |
+| The Four Flows | Lecture plus card sort |
+| Break | |
+| The two numbers, and latency versus jitter | Demo plus worked maths |
+| Course map, assessment, expectations | Admin, brisk |
+| Visit briefing and team allocation | Admin |
 
 ---
 
-## Block 1: Cold open (15 min)
+## Block 1: Cold open
 
 Say nothing about the syllabus. Do not introduce yourself yet. Start with the rig running.
 
@@ -92,7 +92,7 @@ the video freezes on a frame. Point it out now without explaining it. Promise it
 
 ---
 
-## Block 2: The argument (20 min)
+## Block 2: The argument
 
 ### The three claims
 
@@ -147,7 +147,7 @@ reason this module exists.
 
 ---
 
-## Block 3: The Four Flows (25 min)
+## Block 3: The Four Flows
 
 Introduce the model on the board, then make them use it immediately.
 
@@ -186,11 +186,11 @@ across three weeks is good pedagogy.
 
 ---
 
-## Break (10 min)
+## Break
 
 ---
 
-## Block 4: The two numbers (25 min)
+## Block 4: The two numbers
 
 ### Data rate maths
 
@@ -278,7 +278,7 @@ catch it three times faster. This is a good example of a technical spec derived 
 
 ---
 
-## Block 5: Course map and expectations (15 min)
+## Block 5: Course map and expectations
 
 Brisk. Put the seven session table on screen. Cover:
 
@@ -292,7 +292,7 @@ Brisk. Put the seven session table on screen. Cover:
 
 ---
 
-## Block 6: Visit briefing (10 min)
+## Block 6: Visit briefing
 
 - Venue, meeting point, travel time, arrival time. Arrive early, a production visit does not wait.
 - Dress: closed shoes, dark clothing, no loose jewellery. Bring a torch if they own one.
