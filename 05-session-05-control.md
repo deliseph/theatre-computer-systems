@@ -59,23 +59,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Time | Block | Title |
+| Length | Block | Title |
 |------|-------|-------|
-| 0:00 to 0:05 | | Numbers quiz |
-| 0:05 to 0:55 | A | The anatomy of a control message |
-| 0:55 to 1:05 | | Break |
-| 1:05 to 1:55 | B | The lighting family: DMX, Art-Net, sACN |
-| 1:55 to 2:05 | | Break |
-| 2:05 to 2:55 | C | The show control family: OSC, MIDI, serial, timecode |
-| 2:55 to 3:05 | | Break |
-| 3:05 to 3:55 | D | Lab: build a cross department trigger chain |
-| 3:55 to 4:00 | | Wrap and homework |
+| 5 min | | Numbers quiz |
+| 50 min | A | The anatomy of a control message |
+| 10 min | | Break |
+| 50 min | B | The lighting family: DMX, Art-Net, sACN |
+| 10 min | | Break |
+| 50 min | C | The show control family: OSC, MIDI, serial, timecode |
+| 10 min | | Break |
+| 50 min | D | Lab: build a cross department trigger chain |
+| 5 min | | Wrap and homework |
 
 *If splitting into two 2 hour blocks, split after Block B.*
 
 ---
 
-## Block A: The anatomy of a control message (0:05 to 0:55)
+## Block A: The anatomy of a control message (50 min)
 
 ### Callback to session 1
 
@@ -134,7 +134,7 @@ addressing.
 
 ---
 
-## Block B: The lighting family (1:05 to 1:55)
+## Block B: The lighting family (50 min)
 
 ### DMX512, physically
 
@@ -236,7 +236,7 @@ count, node port count and processing. Bandwidth is not the enemy here. Configur
 
 ---
 
-## Block C: The show control family (2:05 to 2:55)
+## Block C: The show control family (50 min)
 
 ### OSC
 
@@ -335,7 +335,7 @@ module in one example.
 
 ---
 
-## Block D: Lab, build a cross department trigger chain (3:05 to 3:55)
+## Block D: Lab, build a cross department trigger chain (50 min)
 
 **Assessed, 20 percent.** The largest formative piece before the exam.
 

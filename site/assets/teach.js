@@ -28,14 +28,13 @@ if (track) {
     .map((s, n) => `<button class="tdot" data-i="${n}" title="${s.dataset.title}"></button>`)
     .join('');
 
-  // Titles carry their planned window, e.g. "Block A: … (0:05 to 0:55)".
-  // That is the only place the plan lives, so parse it rather than duplicate it.
+  // Titles carry their planned length, e.g. "Block A: … (50 min)". The block
+  // plan is the only place that lives, so parse it rather than duplicate it.
+  // Blocks are timed by duration, not by a clock position, so a class that
+  // starts late or runs a block long is not fighting the tool.
   function plannedMinutes(title) {
-    const m = /\((\d+):(\d+)\s+to\s+(\d+):(\d+)\)/.exec(title);
-    if (!m) return 0;
-    const from = +m[1] * 60 + +m[2];
-    const to = +m[3] * 60 + +m[4];
-    return Math.max(0, to - from);
+    const m = /\((\d+)\s*min\)/i.exec(title);
+    return m ? +m[1] : 0;
   }
 
   function show(n) {

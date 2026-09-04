@@ -49,19 +49,19 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Time | Block | Mode |
+| Length | Block | Mode |
 |------|-------|------|
-| 0:00 to 0:15 | Cold open: the rig, live, then killed | Demo |
-| 0:15 to 0:35 | The argument: why you are here | Lecture, high energy |
-| 0:35 to 1:00 | The Four Flows | Lecture plus card sort |
-| 1:00 to 1:10 | Break | |
-| 1:10 to 1:35 | The two numbers, and latency versus jitter | Demo plus worked maths |
-| 1:35 to 1:50 | Course map, assessment, expectations | Admin, brisk |
-| 1:50 to 2:00 | Visit briefing and team allocation | Admin |
+| 15 min | Cold open: the rig, live, then killed | Demo |
+| 20 min | The argument: why you are here | Lecture, high energy |
+| 25 min | The Four Flows | Lecture plus card sort |
+| 10 min | Break | |
+| 25 min | The two numbers, and latency versus jitter | Demo plus worked maths |
+| 15 min | Course map, assessment, expectations | Admin, brisk |
+| 10 min | Visit briefing and team allocation | Admin |
 
 ---
 
-## Block 1: Cold open (0:00 to 0:15)
+## Block 1: Cold open (15 min)
 
 Say nothing about the syllabus. Do not introduce yourself yet. Start with the rig running.
 
@@ -92,7 +92,7 @@ the video freezes on a frame. Point it out now without explaining it. Promise it
 
 ---
 
-## Block 2: The argument (0:15 to 0:35)
+## Block 2: The argument (20 min)
 
 ### The three claims
 
@@ -147,7 +147,7 @@ reason this module exists.
 
 ---
 
-## Block 3: The Four Flows (0:35 to 1:00)
+## Block 3: The Four Flows (25 min)
 
 Introduce the model on the board, then make them use it immediately.
 
@@ -186,11 +186,11 @@ across three weeks is good pedagogy.
 
 ---
 
-## Break (1:00 to 1:10)
+## Break (10 min)
 
 ---
 
-## Block 4: The two numbers (1:10 to 1:35)
+## Block 4: The two numbers (25 min)
 
 ### Data rate maths
 
@@ -278,7 +278,7 @@ catch it three times faster. This is a good example of a technical spec derived 
 
 ---
 
-## Block 5: Course map and expectations (1:35 to 1:50)
+## Block 5: Course map and expectations (15 min)
 
 Brisk. Put the seven session table on screen. Cover:
 
@@ -292,7 +292,7 @@ Brisk. Put the seven session table on screen. Cover:
 
 ---
 
-## Block 6: Visit briefing (1:50 to 2:00)
+## Block 6: Visit briefing (10 min)
 
 - Venue, meeting point, travel time, arrival time. Arrive early, a production visit does not wait.
 - Dress: closed shoes, dark clothing, no loose jewellery. Bring a torch if they own one.

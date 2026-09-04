@@ -61,15 +61,15 @@ the whole module and no lecturer can manufacture it.
 Two hours including travel contingency. Adjust to the building. Split the class into two groups
 running the route in opposite directions if the spaces are small, which they will be.
 
-| Time | Location | Focus | Prompt to give them |
+| Length | Location | Focus | Prompt to give them |
 |------|----------|-------|---------------------|
-| 0:00 to 0:10 | Arrival, front of house or stalls | Safety brief, group split, sheets out | "Everything you see today is one of the Four Flows. Label it." |
-| 0:10 to 0:30 | Control position / FOH | Consoles as computers, operator positions, comms | "What is this console actually connected to? Follow the cables out of the back." |
-| 0:30 to 0:50 | Machine room / comms rack | Switches, patch panels, fibre, labelling, UPS | "Find the switch. Count the ports in use. Find one label that is wrong." |
-| 0:50 to 1:10 | Amplifier or DSP room | Audio over IP in the wild, clocking, redundancy | "Where does the network become an analogue speaker cable?" |
-| 1:10 to 1:30 | Stage and grid | Nodes, DMX runs, fixture data, power and data adjacency | "Find where one Cat lead turns into DMX for many fixtures." |
-| 1:30 to 1:45 | Video / projection position | Media servers, processors, screen feeds | "How many pixels is that screen, and what is feeding it?" |
-| 1:45 to 2:00 | Regroup, debrief | Structured debrief, questions to the host | See debrief prompts below |
+| 10 min | Arrival, front of house or stalls | Safety brief, group split, sheets out | "Everything you see today is one of the Four Flows. Label it." |
+| 20 min | Control position / FOH | Consoles as computers, operator positions, comms | "What is this console actually connected to? Follow the cables out of the back." |
+| 20 min | Machine room / comms rack | Switches, patch panels, fibre, labelling, UPS | "Find the switch. Count the ports in use. Find one label that is wrong." |
+| 20 min | Amplifier or DSP room | Audio over IP in the wild, clocking, redundancy | "Where does the network become an analogue speaker cable?" |
+| 20 min | Stage and grid | Nodes, DMX runs, fixture data, power and data adjacency | "Find where one Cat lead turns into DMX for many fixtures." |
+| 15 min | Video / projection position | Media servers, processors, screen feeds | "How many pixels is that screen, and what is feeding it?" |
+| 15 min | Regroup, debrief | Structured debrief, questions to the host | See debrief prompts below |
 
 ---
 

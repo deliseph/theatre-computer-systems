@@ -65,23 +65,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Time | Block | Title |
+| Length | Block | Title |
 |------|-------|-------|
-| 0:00 to 0:05 | | Numbers quiz |
-| 0:05 to 0:55 | A | What a show computer actually is |
-| 0:55 to 1:05 | | Break |
-| 1:05 to 1:55 | B | The operating system as a traffic cop |
-| 1:55 to 2:05 | | Break |
-| 2:05 to 2:55 | C | How sound, light and pictures become numbers, and the files that carry them |
-| 2:55 to 3:05 | | Break |
-| 3:05 to 3:55 | D | Lab: measure your machine, then spec a show machine |
-| 3:55 to 4:00 | | Wrap and homework |
+| 5 min | | Numbers quiz |
+| 50 min | A | What a show computer actually is |
+| 10 min | | Break |
+| 50 min | B | The operating system as a traffic cop |
+| 10 min | | Break |
+| 50 min | C | How sound, light and pictures become numbers, and the files that carry them |
+| 10 min | | Break |
+| 50 min | D | Lab: measure your machine, then spec a show machine |
+| 5 min | | Wrap and homework |
 
 *If splitting into two 2 hour blocks, split after Block B.*
 
 ---
 
-## Block A: What a show computer actually is (0:05 to 0:55)
+## Block A: What a show computer actually is (50 min)
 
 Open with a comparison, on screen: an office laptop specification next to a media server
 specification. Same price bracket is not required, the point is which numbers are large.
@@ -150,7 +150,7 @@ Put this on the board and leave it up:
 
 ---
 
-## Block B: The operating system as a traffic cop (1:05 to 1:55)
+## Block B: The operating system as a traffic cop (50 min)
 
 ### Why a general purpose OS cannot promise you anything
 
@@ -222,7 +222,7 @@ Ask: which of these did you see obeyed or broken at the venue last week? Good li
 
 ---
 
-## Block C: How sound, light and pictures become numbers (2:05 to 2:55)
+## Block C: How sound, light and pictures become numbers (50 min)
 
 The conceptual heart of the module. Everything is sampling and quantising, in every domain.
 
@@ -364,7 +364,7 @@ why a media server can play many layers at once. Worth one sentence, not more, a
 
 ---
 
-## Block D: Lab (3:05 to 3:55)
+## Block D: Lab (50 min)
 
 Two parts. Part 1 is individual and diagnostic. Part 2 is the assessed exercise.
 

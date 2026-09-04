@@ -57,23 +57,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Time | Block | Title |
+| Length | Block | Title |
 |------|-------|-------|
-| 0:00 to 0:05 | | Numbers quiz |
-| 0:05 to 0:55 | A | Audio over IP, and the tyranny of clock |
-| 0:55 to 1:05 | | Break |
-| 1:05 to 1:55 | B | Video over IP and the pixel pipeline |
-| 1:55 to 2:05 | | Break |
-| 2:05 to 2:55 | C | Designing for failure, and the paperwork that makes it real |
-| 2:55 to 3:05 | | Break |
-| 3:05 to 3:55 | D | Studio: design a system, present it |
-| 3:55 to 4:00 | | Wrap, and the exam brief |
+| 5 min | | Numbers quiz |
+| 50 min | A | Audio over IP, and the tyranny of clock |
+| 10 min | | Break |
+| 50 min | B | Video over IP and the pixel pipeline |
+| 10 min | | Break |
+| 50 min | C | Designing for failure, and the paperwork that makes it real |
+| 10 min | | Break |
+| 50 min | D | Studio: design a system, present it |
+| 5 min | | Wrap, and the exam brief |
 
 *If splitting into two 2 hour blocks, split after Block B. Block D must run whole.*
 
 ---
 
-## Block A: Audio over IP, and the tyranny of clock (0:05 to 0:55)
+## Block A: Audio over IP, and the tyranny of clock (50 min)
 
 ### Why it happened
 
@@ -168,7 +168,7 @@ It is a bridge, not a merger. Plan interop links deliberately and test them earl
 
 ---
 
-## Block B: Video over IP and the pixel pipeline (1:05 to 1:55)
+## Block B: Video over IP and the pixel pipeline (50 min)
 
 ### The baseline: SDI
 
@@ -259,7 +259,7 @@ and PTP increasingly does both jobs. Draw that parallel explicitly, it consolida
 
 ---
 
-## Block C: Designing for failure, and the paperwork (2:05 to 2:55)
+## Block C: Designing for failure, and the paperwork (50 min)
 
 ### The single point of failure audit
 
@@ -356,7 +356,7 @@ Naming conventions, three rules, and they are the most portable thing in this se
 
 ---
 
-## Block D: Studio, design a system, present it (3:05 to 3:55)
+## Block D: Studio, design a system, present it (50 min)
 
 **Assessed, 15 percent.** This is the dress rehearsal for the practical exam. Say that.
 

@@ -37,9 +37,10 @@ manners, and putting it on a show VLAN is the most common self-inflicted wound i
 | 5 | Media over IP and systems | 4 | How does the picture itself travel, and how do we stop it failing? |
 | — | Practical exam | 4 | Can you build, diagnose and document a small system? |
 
-The web platform publishes the **five taught classes**. The production visit and the practical
-exam live in this repo as documents, because neither works as a web page: one is an observation
-sheet used in a venue, the other is a station rotation.
+The web platform publishes the **five taught classes** and the production visit's observation
+sheet. The **practical exam and the teaching guide are deliberately not in this repository**:
+publishing the exam's fault library and mark scheme would defeat the assessment, and the teaching
+guide is the lecturer's own working document. Both live in a private pack.
 
 ---
 
@@ -66,10 +67,8 @@ sheet used in a venue, the other is a station rotation.
 | Path | What |
 |------|------|
 | `foundations.md` | Bits and bytes, powers of two, binary, hex. The primer everything assumes. |
-| `00-teaching-guide.md` | Course architecture, sequencing trade-offs, assessment map, kit list |
 | `01`, `03`–`06` | The five taught classes |
 | `02-session-02-production-visit.md` | The venue visit, with observation sheet |
-| `07-session-07-practical-exam.md` | Practical exam, draft skeleton |
 | `study-guide.md` | Student facing, per class, with self tests |
 | `glossary.md` | 225 terms, EN and 繁中 |
 | `numbers-to-know.md` | The reference card |

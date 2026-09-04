@@ -175,7 +175,6 @@ const NAV_RESOURCES = [
   ['/practice', 'Practice', 'Drills, sorting, fault diagnosis'],
   ['/glossary', 'Glossary', 'Bilingual term list'],
   ['/numbers', 'Numbers', 'The reference card'],
-  ['/teaching-guide', 'Teaching guide', 'For the lecturer'],
 ];
 
 function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] }) {
@@ -275,7 +274,6 @@ const addSearch = (route, title, section, text) => {
 const studyMd = renumber(read('study-guide.md'));
 const numbersMd = renumber(read('numbers-to-know.md'));
 const glossaryMd = read('glossary.md');
-const guideMd = renumber(read('00-teaching-guide.md'));
 
 const drillCards = [];
 for (const c of CLASSES) {
@@ -421,7 +419,7 @@ for (const c of classData) {
       // The block chip in the toolbar already shows the planned window, so drop
       // it from the projected heading: at this size it costs a whole line.
       const html = b.html.replace(
-        /(<h2 [^>]*>)([\s\S]*?)\s*\(\d+:\d+ to \d+:\d+\)(<a class="anchor")/,
+        /(<h2 [^>]*>)([\s\S]*?)\s*\(\d+\s*min\)(<a class="anchor")/i,
         '$1$2$3'
       );
       return `<section class="slide" data-i="${i}" data-title="${esc(b.title)}"
@@ -482,20 +480,6 @@ function selfTestHtml(n) {
 }
 
 // --- Resource pages ---------------------------------------------------------
-
-const guideDoc = render(guideMd.replace(/^#\s+[^\n]*\n/, '').replace(/^##\s+Computer Systems[^\n]*\n/m, ''));
-write('/teaching-guide', shell({
-  title: 'Teaching guide',
-  desc: 'Course architecture, sequencing, assessment and delivery notes for the lecturer.',
-  body: `<article class="doc"><header class="page-head">
-      <p class="eyebrow"><span class="pill">For the lecturer</span></p>
-      <h1>Teaching guide</h1>
-      <p class="strap">Course architecture, sequencing options with their trade offs, the assessment
-      map, kit list and delivery notes. Written for whoever is running the room.</p>
-    </header>${guideDoc.html}</article>`,
-  active: '/teaching-guide',
-}));
-for (const b of guideDoc.blocks) addSearch('/teaching-guide', 'Teaching guide', b.title, b.html);
 
 const numbersDoc = render(numbersMd.replace(/^#\s+[^\n]*\n/, ''));
 write('/numbers', shell({
@@ -689,15 +673,13 @@ write('/', shell({
     every examinable number.</p></a>
     <a class="card" href="/glossary"><h3>${glossCards.length} terms, bilingual</h3><p>English and
     繁體中文, grouped by domain, with a live filter and a flashcard mode.</p></a>
-    <a class="card" href="/teaching-guide"><h3>The teaching guide</h3><p>Course architecture,
-    sequencing trade offs, assessment map, kit list and delivery notes for whoever runs the room.</p></a>
   </div>
 
   <h2 class="hd hd-2" id="scope">A note on scope</h2>
   <p>The full module is 24 hours: these five classes, plus a two hour production visit and a four
-  hour practical exam. The visit and the exam are deliberately not published here, because neither
-  works as a web page. They live in the module pack alongside the observation sheet, the fault
-  library and the exam station design.</p>
+  hour practical exam. The visit and the exam are not published here. Neither works as a web page,
+  and publishing the exam's fault library and mark scheme would defeat the assessment. They live in
+  the lecturer's own pack, along with the teaching guide.</p>
 </article>`,
   active: '/',
   scripts: ['/assets/practice.js'],
@@ -718,7 +700,7 @@ fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex
 fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
 fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify(STAMP, null, 2));
 
-const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/teaching-guide',
+const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers',
   ...CLASSES.map((c) => `/class/${c.n}`), ...CLASSES.map((c) => `/teach/${c.n}`)];
 
 console.log(`Built ${routes.length} routes`);

@@ -67,23 +67,23 @@ By the end of this session a student can:
 
 ## Block plan
 
-| Time | Block | Title |
+| Length | Block | Title |
 |------|-------|-------|
-| 0:00 to 0:05 | | Numbers quiz |
-| 0:05 to 0:55 | A | The OSI model, and the layers you can touch |
-| 0:55 to 1:05 | | Break |
-| 1:05 to 1:55 | B | Addressing and subnet arithmetic |
-| 1:55 to 2:05 | | Break |
-| 2:05 to 2:55 | C | Switching, VLANs and segmentation |
-| 2:55 to 3:05 | | Break |
-| 3:05 to 3:55 | D | Lab, build it, subnet it, break it, fix it |
-| 3:55 to 4:00 | | Wrap and homework |
+| 5 min | | Numbers quiz |
+| 50 min | A | The OSI model, and the layers you can touch |
+| 10 min | | Break |
+| 50 min | B | Addressing and subnet arithmetic |
+| 10 min | | Break |
+| 50 min | C | Switching, VLANs and segmentation |
+| 10 min | | Break |
+| 50 min | D | Lab, build it, subnet it, break it, fix it |
+| 5 min | | Wrap and homework |
 
 *If splitting into two 2 hour blocks, split after Block B.*
 
 ---
 
-## Block A: The OSI model, and the layers you can touch (0:05 to 0:55)
+## Block A: The OSI model, and the layers you can touch (50 min)
 
 ### Why a first year should learn the OSI model properly
 
@@ -198,7 +198,7 @@ ports rated 30 W does not mean 240 W is available.
 
 ---
 
-## Block B: Addressing and subnet arithmetic (1:05 to 1:55)
+## Block B: Addressing and subnet arithmetic (50 min)
 
 The hardest 50 minutes in the module for a first year, and the most valuable. Go slowly, do
 everything on the board, and make them calculate out loud.
@@ -378,7 +378,7 @@ address you cannot write on a piece of paper.**
 
 ---
 
-## Block C: Switching, VLANs and segmentation (2:05 to 2:55)
+## Block C: Switching, VLANs and segmentation (50 min)
 
 ### Managed versus unmanaged
 
@@ -567,7 +567,7 @@ need it.
 
 ---
 
-## Block D: Lab, build it, subnet it, break it, fix it (3:05 to 3:55)
+## Block D: Lab, build it, subnet it, break it, fix it (50 min)
 
 Prepare the faults in advance. This lab lives or dies on preparation.
 
