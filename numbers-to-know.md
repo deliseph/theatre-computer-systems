@@ -42,6 +42,14 @@ video  =  width × height × frame rate × bits per pixel
 | Round trip latency | roughly **twice the buffer**, plus converter time |
 | Dynamic range per bit | **6.02 dB**, so 16 bit is about 96 dB and 24 bit about 144 dB |
 | Nyquist | you can only capture frequencies **below half the sample rate** |
+| One byte in hex | `00` to `FF`, which is 0 to **255** |
+| 16 bit signed sample range | **−32,768 to +32,767**, silence at 0 |
+| Luma weights | **0.299 R + 0.587 G + 0.114 B**. Green dominates, blue barely counts. |
+| `52 49 46 46` | `RIFF`, so a WAV file. The header is the truth, the extension is a hint. |
+| `FF D8 FF` | always a JPEG |
+| `89 50 4E 47` | always a PNG |
+| The lossy steps in a codec | **chroma subsampling** and **quantisation**. Quantisation is the quality slider. |
+| What sets bitrate | how **predictable** the picture is, not the resolution alone |
 
 **Bits to bytes:** divide by 8. A 2.5 Gbit/s video stream is about 312 MB/s of storage throughput.
 Getting this the wrong way round is the most common mistake in the exam.

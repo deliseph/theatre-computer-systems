@@ -1,7 +1,7 @@
 # Glossary 詞彙表
 ## Computer Systems & Networking for Theatre and Entertainment Arts
 
-Roughly 190 terms, grouped by domain. Bring it to every session. Add to it.
+Roughly 260 terms, grouped by domain. Bring it to every session. Add to it.
 
 **On the Chinese:** 繁中 terms follow Taiwan convention, with common Hong Kong variants noted
 where they differ meaningfully. Learn the **English** term as the operational one, because every
@@ -31,6 +31,12 @@ headset.
 | DAC | 數位類比轉換器 | Digital to analogue converter. Where numbers become sound again. |
 | Analogue | 類比 | A continuously varying signal. Voltage that looks like the waveform. |
 | Digital | 數位（港：數碼） | A signal represented as numbers. Copyable without loss, and requiring a clock. |
+| Hexadecimal (hex) | 十六進位 | Base 16, digits 0 to F. One byte is exactly two hex digits, `00` to `FF`, which is the only reason it is used. |
+| Two's complement | 二補數 | How a signed number is stored in bytes. At 16 bit it gives the range −32,768 to +32,767, with silence at 0. |
+| Endianness | 位元組順序 | Whether the low byte or the high byte is written first. WAV is little endian, AIFF and PNG are big endian. Read one as the other and you get full scale noise. |
+| Magic number | 檔案識別碼 | The fixed first bytes that say what a file really is. `FF D8 FF` is always a JPEG, whatever the extension says. |
+| Header | 檔頭 | The block at the start of a file describing what follows: rate, channels, size, resolution. A player reads it before it can play anything. |
+| Checksum / CRC | 校驗碼 | A value computed over data so a reader can tell it arrived intact. The difference between knowing a file is corrupt and guessing. |
 | CPU | 中央處理器 | The general purpose processor. Limits how much work fits between two deadlines. |
 | Core | 核心 | One independent processing unit inside a CPU. More cores helps parallel work, not serial work. |
 | Clock speed | 時脈速度 | How fast a processor cycles. Matters most for a single serial chain, such as one audio channel of plugins. |
@@ -85,6 +91,23 @@ headset.
 | Tearing | 畫面撕裂 | A visible horizontal split when a frame changes mid draw. A genlock problem. |
 | Interlaced | 交錯掃描 | Half the lines per field, an old broadcast technique. Marked `i`, as in 1080i. |
 | Progressive | 逐行掃描 | Every line, every frame. Marked `p`, as in 1080p. What you want. |
+| PCM | 脈衝編碼調變 | Uncompressed audio. Each sample is simply a whole number saying where the waveform was. Nothing clever, and nothing lost. |
+| Luma (Y) | 亮度 | The brightness plane, `0.299 R + 0.587 G + 0.114 B`. The weights are a measurement of the eye, not a convention. |
+| Chroma (Cb, Cr) | 色度 | The two colour difference planes. They carry far less detail than luma, which is what makes subsampling almost invisible. |
+| Lossless compression | 無失真壓縮 | Smaller, and every original byte comes back exactly. PNG and FLAC. Safe for masters, and useless on content with no repetition. |
+| Lossy compression | 失真壓縮 | Smaller by discarding information permanently. Every delivery format you receive. |
+| Run length encoding (RLE) | 遊程編碼 | Storing a repeat as a count plus a value. Enormous on a title card, and actually larger than the original on film grain. |
+| Entropy coding | 熵編碼 | Short codes for common symbols, long codes for rare ones. The same idea as Morse giving `E` one dot. Lossless. |
+| DCT | 離散餘弦轉換 | The transform that rewrites an 8 × 8 block as coefficients from coarse to fine. Reversible on its own; it only sets up the step that is not. |
+| Quantisation table | 量化表 | The 64 divisors applied to those coefficients before rounding. This table *is* the quality setting, and it is stored in the file. |
+| Macroblock | 巨集區塊 | The block a codec works on. The squares you see when a stream fails were always there; the failure only made them visible. |
+| Motion vector | 運動向量 | An instruction saying a block is the one from over there, shifted. Cheaper than resending the block, and it is why predictable motion is cheap. |
+| I frame / keyframe | 關鍵影格 | A complete picture, compressed on its own. The only place an inter frame codec can start decoding. |
+| P frame | 預測影格 | Stores only what changed since the previous frame. |
+| B frame | 雙向預測影格 | Looks both backwards and forwards, and stores least of all. Also why decoding order is not display order. |
+| GOP | 影像群組 | Group of pictures. The repeating I, P, B pattern. A long GOP is small and slow to seek in. |
+| CBR / VBR | 固定／變動位元率 | Constant bitrate spends the same data every second. Variable bitrate spends it where the picture is hard. VBR looks better; CBR is predictable on a fixed link. |
+| Bitrate | 位元率 | Data per second of video. It does not depend on resolution alone: confetti at 1080p can cost more than a locked-off shot at 4K. |
 | Canvas | 畫布 | The total pixel area a media server is producing across all outputs. |
 
 ---

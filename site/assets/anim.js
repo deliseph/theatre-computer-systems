@@ -8,6 +8,7 @@ import './anim-network.js';
 import './anim-control.js';
 import './anim-media.js';
 import './anim-foundations.js';
+import './anim-file.js';
 
 mountAll();
 mountVideos();

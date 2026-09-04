@@ -1,7 +1,7 @@
 # Computer Systems & Networking for Theatre and Entertainment Arts
 
-An interactive teaching platform for a **24 contact hour module** taught to year one BFA students
-specialising in **audio, lighting and video**.
+An interactive teaching platform for a module taught to year one BFA students specialising in
+**audio, lighting and video**: five taught classes, a production visit and a practical exam.
 
 It answers one question, repeatedly, from different angles:
 
@@ -27,15 +27,15 @@ manners, and putting it on a show VLAN is the most common self-inflicted wound i
 
 ## The module
 
-| # | Class | Hours | Core question |
-|---|-------|-------|---------------|
-| 1 | Why this class exists | 2 | Why is an ALV artist in a computing class? |
-| — | Production visit | 2 | Where do these systems physically live? |
-| 2 | The machine | 4 | What is a show computer, and why is it configured differently? |
-| 3 | The network | 4 | How does a packet get from a console to a fixture? |
-| 4 | Control | 4 | How does a computer tell a light or a speaker what to do? |
-| 5 | Media over IP and systems | 4 | How does the picture itself travel, and how do we stop it failing? |
-| — | Practical exam | 4 | Can you build, diagnose and document a small system? |
+| # | Class | Core question |
+|---|-------|---------------|
+| 1 | Why this class exists | Why is an ALV artist in a computing class? |
+| — | Production visit | Where do these systems physically live? |
+| 2 | The machine | What is a show computer, and why is it configured differently? |
+| 3 | The network | How does a packet get from a console to a fixture? |
+| 4 | Control | How does a computer tell a light or a speaker what to do? |
+| 5 | Media over IP and systems | How does the picture itself travel, and how do we stop it failing? |
+| — | Practical exam | Can you build, diagnose and document a small system? |
 
 The web platform publishes the **five taught classes** and the production visit's observation
 sheet. The **practical exam and the teaching guide are deliberately not in this repository**:
@@ -49,7 +49,7 @@ guide is the lecturer's own working document. Both live in a private pack.
 - **A preparation path.** Every class states what you must already be able to do and where to get
   it, three concrete tasks, and what to bring. A five question readiness check tests the
   prerequisite rather than the content, and names the exact thing to go and fix.
-- **25 interactive explainers**, placed inline where each idea is taught. Every one shows a real
+- **34 interactive explainers**, placed inline where each idea is taught. Every one shows a real
   mechanism with the numbers used in the prose, and the controls exist to break it: starve the
   clock with a file copy, drag a subnet boundary through 32 bits, contain a broadcast inside a
   VLAN, watch IGMP memberships time out hours after everything looked fine.
@@ -58,7 +58,7 @@ guide is the lecturer's own working document. Both live in a private pack.
   planned duration from the block plan.
 - **Practice**: an endless subnetting trainer, a fault diagnosis simulator scored on the order you
   investigate in, the Four Flows sort, and flashcards generated from the reference tables.
-- **A bilingual glossary**, 225 terms, English and 繁體中文.
+- **A bilingual glossary**, 263 terms, English and 繁體中文.
 
 ---
 
@@ -67,10 +67,10 @@ guide is the lecturer's own working document. Both live in a private pack.
 | Path | What |
 |------|------|
 | `foundations.md` | Bits and bytes, powers of two, binary, hex. The primer everything assumes. |
-| `01`, `03`–`06` | The five taught classes |
+| `01`, `03` to `06` | The five taught classes |
 | `02-session-02-production-visit.md` | The venue visit, with observation sheet |
 | `study-guide.md` | Student facing, per class, with self tests |
-| `glossary.md` | 225 terms, EN and 繁中 |
+| `glossary.md` | 263 terms, EN and 繁中 |
 | `numbers-to-know.md` | The reference card |
 | `site/` | The static site generator and the platform itself |
 

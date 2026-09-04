@@ -113,12 +113,19 @@ check your notes. The gap between the two is your actual learning.
 - Calculate raw data rate for audio, video and lighting.
 - Explain buffer size, latency and dropouts with numbers.
 - Distinguish a codec from a container and choose a playback codec.
+- Read a file as bytes: say what hex is, recognise a format from its magic number, and say what a
+  PCM sample is as a number.
+- State the luma weights and explain why colour can be thinned and brightness cannot.
+- Describe the steps a lossy codec runs and name the one that is the quality setting.
+- Explain why confetti costs more bitrate than a locked-off shot.
 - Write a defensible show machine specification.
 
 ### Key terms
 CPU, core, RAM, storage, sustained throughput, NVMe, GPU, decode, render, output, PCIe, driver,
 ASIO, Core Audio, buffer, dropout, sample rate, bit depth, Nyquist, raster, frame rate, chroma
-subsampling, codec, container, intra frame, inter frame
+subsampling, codec, container, intra frame, inter frame, hex, magic number, header, PCM,
+endianness, luma, chroma, run length encoding, entropy coding, quantisation, motion vector, GOP,
+I frame, P frame, B frame, CBR, VBR
 
 ### Numbers
 `numbers-to-know.md` Block 2.
@@ -137,11 +144,25 @@ performance for the guarantee that the next frame arrives on time, for three hou
 4. Why do we transcode delivered H.264 into HAP or ProRes before a show?
 5. A video cue stutters the first time it plays and is perfect the second time. What is happening?
 6. Why is 8 bit dimming visibly stepped on a slow fade to black at low level, and what fixes it?
+7. A file arrives named `plate.wav`. Its first three bytes are `FF D8 FF`. What is it really, and
+   how do you know?
+8. One 16 bit audio sample sits at 62 percent of full scale on the positive side. What integer is
+   stored, and what two bytes appear in a WAV file, in what order?
+9. Write out the luma equation with its three weights. Why is the green weight the largest, and
+   what does that fact allow a codec to do?
+10. A codec runs six steps. Name the two that lose information, and say which one the quality
+    slider controls.
+11. Your client's show file is 12 Mbit/s and looks flawless until the confetti drop, where it goes
+    to blocks. Explain the mechanism in two sentences, and give two ways to fix it.
+12. Why does an intra frame codec make a file three times larger and a cue jump instant?
 
 ### Common traps
 - Confusing burst speed with sustained speed on storage.
 - Confusing bits and bytes. Divide by 8 to go from bit/s to byte/s.
 - Assuming a faster machine is a better show machine.
+- Believing the file extension. It is a hint. The header is the truth.
+- Thinking 4:2:2 means half the picture is gone. The brightness plane is untouched.
+- Thinking bitrate is set by resolution alone. It is set by how predictable the picture is.
 
 ---
 

@@ -33,7 +33,9 @@ assumed by everything below.
 2. **Find your own machine's numbers** before you arrive: how much RAM, what storage, what
    graphics. Five minutes in system information. You will measure the rest in the lab.
 3. **Look at one media file you already own** and try to find out what codec is inside it, not
-   just its file extension. You will probably fail, and that failure is the point of Block C.
+   just its file extension. You will probably fail, and that failure is the point of Block D.
+   If you want to arrive ahead: open the same file in a hex viewer and write down the first eight
+   bytes. We will read them together.
 
 ### Bring
 
@@ -59,7 +61,12 @@ By the end of this session a student can:
    brightness from colour.
 6. Distinguish a container from a codec, and uncompressed from lossless from lossy, and choose an
    appropriate playback format for a given job.
-7. Write a defensible specification for a show computer against a production brief.
+7. Read a file as bytes: explain what hex is, identify a format from its magic number, and say what
+   a PCM audio sample actually is as a number.
+8. Explain the luma and chroma weights, and why video compression is built on them.
+9. Describe the steps a lossy codec runs, name the two that lose information and the one that is
+   the quality setting, and explain why confetti destroys a bitrate that a locked-off shot does not.
+10. Write a defensible specification for a show computer against a production brief.
 
 ---
 
@@ -72,9 +79,10 @@ By the end of this session a student can:
 | — | Break |
 | B | The operating system as a traffic cop |
 | — | Break |
-| C | How sound, light and pictures become numbers, and the files that carry them |
+| C | How sound, light and pictures become numbers |
+| D | What a file actually is, and how a codec works |
 | — | Break |
-| D | Lab: measure your machine, then spec a show machine |
+| E | Lab: measure your machine, then spec a show machine |
 | — | Wrap and homework |
 
 *If the class is split across two shorter meetings, split after Block B.*
@@ -299,31 +307,7 @@ one frame  =  width × height × channels × bit depth ÷ 8   bytes
 data rate  =  that × frame rate
 ```
 
-### Media files: container, codec, lossless and lossy
-
-Two words students use interchangeably and should not.
-
-- **Container** is the box: `.mov`, `.mp4`, `.mkv`, `.wav`. It says how the parts are packed
-  together, and it can usually hold many different things.
-- **Codec** is the method: H.264, HAP, ProRes, PCM, FLAC. It says how the content is compressed.
-- A `.mov` file can contain almost anything. "It is a .mov" tells you nothing useful. Ask what is
-  inside it.
-
-The three compression families, and this is the distinction that decides what you can do with a file:
-
-| Family | What it does | Examples | On a show |
-|--------|-------------|----------|-----------|
-| **Uncompressed** | Stores every sample and every pixel | WAV/PCM, BMP, TIFF, SDI, ST 2110 | Truth, and enormous |
-| **Lossless** | Smaller, and every original number comes back exactly | FLAC, ALAC, PNG, ZIP | Archive, masters, graphics with hard edges |
-| **Lossy** | Throws information away permanently for a much smaller file | MP3, AAC, JPEG, H.264, H.265 | Delivery and streaming, never your master |
-
-**Lossy is a one way door.** Decompressing an MP3 and re-encoding it does not restore what was
-discarded, it discards more. This is why every generation of a re-encoded file is worse, and why
-you keep masters.
-
-<!--anim:lossy-compression-->
-
-The formats you will actually meet, by domain:
+### The formats you will actually meet, by domain
 
 | Domain | Container | Common codecs | Note |
 |--------|-----------|---------------|------|
@@ -364,7 +348,197 @@ why a media server can play many layers at once. Worth one sentence, not more, a
 
 ---
 
-## Block D: Lab
+## Block D: What a file actually is, and how a codec works
+
+Block C turned the world into numbers. This block is about what happens to those numbers once
+they have to be stored, and it answers the question every ALV student eventually asks: *what is
+actually inside the file?*
+
+### A file is a sequence of bytes. That is all it is.
+
+Not a picture, not a sound. A long row of numbers, each one 0 to 255.
+
+**Hex** is how humans read those numbers. One byte is exactly two hex digits, so a byte is
+`00` to `FF`. That is the whole reason hex exists in this context: it lines up perfectly with
+bytes in a way decimal does not.
+
+| Byte value | Decimal | Hex | Binary |
+|-----------|---------|-----|--------|
+| smallest | 0 | `00` | `00000000` |
+| | 15 | `0F` | `00001111` |
+| | 128 | `80` | `10000000` |
+| largest | 255 | `FF` | `11111111` |
+
+### The extension is a hint. The header is the truth.
+
+Every media format starts with a **magic number**: a few fixed bytes that say what the file
+really is. Rename a JPEG to `.wav` and the extension lies, but the first bytes do not.
+
+| First bytes (hex) | As text | Format |
+|------------------|---------|--------|
+| `52 49 46 46` … `57 41 56 45` | `RIFF` … `WAVE` | WAV audio |
+| `46 4F 52 4D` … `41 49 46 46` | `FORM` … `AIFF` | AIFF audio |
+| `89 50 4E 47 0D 0A 1A 0A` | `‰PNG` | PNG image |
+| `FF D8 FF` | — | JPEG image |
+| `… 66 74 79 70` | `ftyp` | MP4 / MOV container |
+| `1A 45 DF A3` | — | Matroska / MKV |
+
+This is exactly why "it is a `.mov`" tells you nothing useful. The container says how the parts
+are packed. What is inside is a separate question, and the bytes are where the answer lives.
+
+<!--anim:hex-file-->
+
+**On a show this matters twice.** A file that will not play is often a file whose extension was
+changed by hand rather than transcoded. And a media server that rejects a file usually rejects
+the *codec inside*, not the container it arrived in.
+
+### Audio, byte by byte: what PCM really is
+
+Uncompressed audio is called **PCM**, pulse code modulation, and the name is grander than the
+idea. Each sample is simply a whole number describing where the waveform was at that instant.
+
+At 16 bit, that number is a **signed integer from −32,768 to +32,767.** Silence is 0. Full
+positive peak is +32,767. Each sample takes two bytes.
+
+```
+waveform value   0.62 of full scale
+  × 32,767   =   20,316
+  in hex     =   4F 5C          ← the two bytes actually written to the file
+```
+
+So a stereo 48 kHz 24 bit recording is: three bytes per sample, two channels, 48,000 times a
+second. Which is the data rate calculation from Class 1, arriving from the other direction.
+
+<!--anim:pcm-bytes-->
+
+**Two details you will meet in a manual and should not be frightened by:**
+
+- **Endianness.** Whether the low byte or the high byte comes first. WAV puts the low byte first,
+  AIFF puts the high byte first. It matters only when something reads a file wrongly, and the
+  symptom is unmistakable: loud, harsh noise rather than the recording.
+- **Signed against unsigned.** 8 bit WAV stores 0 to 255 with silence at 128; everything above
+  8 bit is signed with silence at 0. Get it wrong and you get a large DC offset and a thump.
+
+### Luma and chroma: why video splits brightness from colour
+
+Class C introduced YCbCr. Here is the actual arithmetic, because the numbers explain the reason.
+
+```
+Y   =  0.299 R  +  0.587 G  +  0.114 B     brightness
+Cb  =  the blue difference, B − Y, scaled
+Cr  =  the red  difference, R − Y, scaled
+```
+
+**Look at the weights.** Green counts for nearly 60 percent of brightness, red about 30, blue
+only 11. That is not a convention, it is a measurement of the human eye: our brightness
+perception is dominated by green and barely touched by blue.
+
+That single fact is what the whole of video compression is built on. Because we see brightness
+detail far better than colour detail, you can throw away most of the colour resolution and almost
+nobody notices. Split any picture into its three planes and it is obvious: **the Y plane looks
+like the photograph. The Cb and Cr planes look like vague coloured fog.**
+
+<!--anim:ycbcr-planes-->
+
+That is why it is **4:2:2**, never "half the pixels". The brightness is untouched. Only the
+colour is thinned.
+
+### Lossless compression: making it smaller and getting it all back
+
+Two ideas do most of the work, and neither loses anything.
+
+**Run length encoding.** Repetition is stored as a count.
+
+```
+raw    AAAAAAAABBBCCCCCCCCCC        21 bytes
+RLE    8A 3B 10C                     6 bytes
+```
+
+**Entropy coding.** Common symbols get short codes, rare symbols get long ones. The same idea as
+Morse code giving `E` a single dot.
+
+Both are perfectly reversible, so **the original bytes come back exactly.** This is what PNG and
+FLAC do, and it is why they are safe for masters.
+
+The catch, and it is the reason lossless is not the answer to everything: **compression needs
+repetition to find.** A flat colour graphic or a title card shrinks enormously. A photograph of
+foliage, or film grain, has almost no repetition and barely shrinks at all.
+
+<!--anim:lossless-compress-->
+
+### Lossy compression: the pipeline a codec actually runs
+
+Every lossy image and video codec runs roughly the same six steps. Knowing the order tells you
+what each quality setting is actually doing.
+
+| Step | What happens | Lossy? |
+|------|-------------|--------|
+| 1. Colour transform | RGB becomes YCbCr, separating brightness from colour | No |
+| 2. Chroma subsampling | Colour resolution halved, to 4:2:2 or 4:2:0 | **Yes** |
+| 3. Split into blocks | The picture is cut into 8 × 8 blocks | No |
+| 4. Transform | Each block becomes frequency coefficients, coarse to fine | No |
+| 5. **Quantisation** | Coefficients divided by a table and rounded. Fine detail rounds to zero | **Yes, and this is the main one** |
+| 6. Entropy coding | All those zeros are packed away losslessly | No |
+
+**Step 5 is the quality slider.** It is not a vague "amount of compression": it is literally how
+coarsely the numbers get rounded before they are stored. Round harder, more coefficients become
+zero, the file gets smaller, and the fine detail is gone permanently.
+
+Notice that the loss happens in only two of six steps, and the last step is lossless. That is why
+a well-set codec looks perfect and a badly-set one shows blocks: the blocks were always there,
+they only become visible when step 5 throws away the detail that was hiding them.
+
+<!--anim:codec-pipeline-->
+
+### Inter frame: the part that decides your bitrate
+
+Everything above compresses one picture. Video adds the biggest saving of all: **most of a frame
+looks like the frame before it.**
+
+- An **I frame** is a complete picture, compressed on its own. Also called a keyframe.
+- A **P frame** stores only what changed since the last frame.
+- A **B frame** looks both backwards and forwards, and stores even less.
+- The repeating pattern of them is the **GOP**, the group of pictures.
+
+The mechanism is **motion vectors**. Rather than re-sending a block that has simply moved, the
+encoder says *"this block is the one from over there, shifted eleven pixels right and two down"*,
+and then stores only the small remaining difference.
+
+<!--anim:motion-vectors-->
+
+**This is the single most useful thing to understand about video on a show**, because it explains
+bitrate behaviour that otherwise looks random:
+
+| On screen | What the encoder faces | Result |
+|-----------|----------------------|--------|
+| A locked-off shot of a set | Almost nothing changes between frames | Tiny bitrate, looks perfect |
+| A slow camera move | Everything moves, but predictably | Motion vectors cope well |
+| Confetti, water, fire, snow | Every pixel changes unpredictably, and nothing can be predicted from the last frame | **Bitrate explodes, or the picture falls apart** |
+| A hard cut | No previous frame to refer to | Forces a new I frame |
+
+So when a content designer asks why their confetti cannon looks like mud on the LED wall at the
+same bitrate that made the rest of the show look flawless, that is the answer, and it is not a
+fault in the system.
+
+**CBR against VBR.** Constant bitrate spends the same data every second whatever is on screen.
+Variable bitrate spends less on the easy shots and more on the hard ones. VBR looks better for
+the same average size; CBR is predictable, which matters when you are budgeting a fixed link.
+
+### And this is why we transcode for playback
+
+Now the rule from Block C has a mechanism behind it.
+
+Inter frame compression is superb for delivery and hostile to a show, because reaching an
+arbitrary frame means finding the last I frame and decoding forward through every P and B frame
+between. Intra frame codecs such as ProRes, HAP and DXV throw that saving away deliberately:
+every frame is complete, files are much larger, and any frame is instantly available.
+
+> **You receive inter frame. You play back intra frame.** The transcode is not tidying up. It is
+> what converts a file optimised for sending into a file optimised for cueing.
+
+---
+
+## Block E: Lab
 
 Two parts. Part 1 is individual and diagnostic. Part 2 is the assessed exercise.
 

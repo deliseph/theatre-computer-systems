@@ -313,6 +313,25 @@ The spine of any large show.
 - **MTC (MIDI Time Code)** is the same idea over MIDI.
 - Format: `hours : minutes : seconds : frames`.
 
+**What is actually in the sound.** Each frame of LTC is **80 bits**. Sixteen of them are the time
+itself, stored as BCD digits: four bits for frame units, two for frame tens, four for second
+units, and so on up to hours. Thirty two are **user bits**, free for a reel number or a date.
+The last sixteen are a **sync word**, `0011111111111101`, identical in every frame ever recorded.
+
+Three design decisions in that layout explain why LTC has outlived almost everything it was
+designed alongside:
+
+- The bits are encoded **biphase mark**: a transition at every bit boundary, and one extra in the
+  middle of the cell for a `1`. The information lives in the transitions rather than in the level,
+  so gain, polarity and a mediocre recording do not matter.
+- 25 fps at 80 bits is 2,000 bits a second. **That is audio**, so any cable, recorder, desk channel
+  or radio mic path that carries sound carries timecode.
+- The sync word is asymmetric, so a reader can tell which way round it arrived. That is how a
+  machine knows the source is **running backwards**, and it is why LTC works while a deck is
+  shuttling.
+
+<!--anim:ltc-encode-->
+
 <!--anim:dropframe-->
 - Frame rates: 24, 25, 29.97, 30. **29.97 drop frame** exists because of a colour television
   compromise from 1953 and it still bites people. One sentence, do not go down the hole.
