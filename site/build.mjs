@@ -53,7 +53,7 @@ const CLASSES = [
     n: 4, slug: 'control', file: '05-session-05-control.md',
     title: 'Control', studyKey: 'Session 5', numbersKey: 'Block 4',
     strap: 'State against event, DMX512, Art-Net against sACN, universe maths, OSC, MIDI and timecode.',
-    tools: ['universe', 'dmx', 'timecode'], practice: ['drill', 'selftest'],
+    tools: ['universe', 'dmx', 'dip', 'timecode', 'beam', 'power'], practice: ['drill', 'selftest'],
   },
   {
     n: 5, slug: 'media-over-ip', file: '06-session-06-media-and-systems.md',
@@ -302,6 +302,9 @@ const TOOL_TITLES = {
   vlan: 'VLAN planner',
   universe: 'DMX universe calculator',
   dmx: 'DMX refresh rate',
+  dip: 'DIP switch addressing',
+  beam: 'Beam size and light on stage',
+  power: 'Power load and current',
 };
 
 function toolsHtml(ids) {
@@ -565,7 +568,7 @@ write('/tools', shell({
       <h1>Tools</h1>
       <p class="strap">Every calculation the module asks for, with the working shown. Use them to
       check your own arithmetic, never to replace it. The exam asks you to show the method.</p>
-    </header>${toolsHtml(['units', 'binhex', 'subnet', 'split', 'vlan', 'poe', 'datarate', 'latency',
+    </header>${toolsHtml(['units', 'binhex', 'subnet', 'split', 'vlan', 'poe', 'dip', 'beam', 'power', 'datarate', 'latency',
       'delaytime', 'universe', 'dmx', 'ledwall', 'timecode', 'storage', 'buffer'])}</article>`,
   active: '/tools',
   scripts: ['/assets/tools.js'],
@@ -705,7 +708,7 @@ write('/', shell({
     <a class="card" href="/lineage"><h3>How we got here</h3><p>Why each of these technologies
       exists, and what it refuses to do. Audio to the network, DMX to sACN, VGA to DisplayPort,
       parallel to serial, floppy disk to NVMe.</p></a>
-    <a class="card" href="/tools"><h3>Fifteen calculators</h3><p>Subnet, VLAN plan, PoE budget,
+    <a class="card" href="/tools"><h3>Eighteen calculators</h3><p>Subnet, VLAN plan, PoE budget,
     timecode, LED wall, delay time, data rate, latency budget, universes and more. Each shows its
     working.</p></a>
     <a class="card" href="/practice"><h3>Four drills</h3><p>An endless subnetting trainer, a fault

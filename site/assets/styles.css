@@ -796,3 +796,17 @@ body.teach-mode main { padding: 0; }
 .side-build { margin-top: 8px !important; padding-top: 8px; border-top: 1px solid var(--line);
   font: 500 10.5px/1.5 var(--mono) !important; color: var(--muted); }
 .side-build code { background: none; border: 0; padding: 0; font-size: inherit; color: var(--amber); }
+
+/* DIP switch bank: nine switches, read left to right, switch 1 first. */
+.dipbank { display: flex; gap: 6px; margin: 16px 0 6px; flex-wrap: wrap; }
+.dipsw {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 44px; padding: 8px 4px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--raised);
+  font-variant-numeric: tabular-nums;
+}
+.dipsw b { font-size: 11px; color: var(--muted); font-weight: 700; }
+.dipsw span { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+.dipsw i { font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--muted); }
+.dipsw.on { border-color: var(--amber); background: var(--amber-soft); }
+.dipsw.on b, .dipsw.on i, .dipsw.on span { color: var(--amber); }

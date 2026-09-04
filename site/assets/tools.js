@@ -933,6 +933,149 @@ about ${(Math.abs((d / (331.3 + 0.606 * (temp + 10))) - (d / c)) * 1000).toFixed
   run();
 };
 
+// --- Ported from showstack -------------------------------------------------
+//
+// The arithmetic below is the same as showstack's tested implementations
+// (MIT licensed, https://github.com/deliseph/showstack, scripts/toolmath.mjs).
+// Kept identical on purpose: two copies of the same sum that drift apart is
+// worse than one copy in the wrong repository.
+
+// DMX start address to 9 way DIP switch positions. The near universal
+// convention is plain binary of the address itself, switch 1 = 1 through
+// switch 9 = 256. A minority of older fixtures use binary of (address - 1),
+// and this says so rather than silently picking one, because an address set
+// confidently and wrongly is exactly the failure the tool exists to prevent.
+function dipSwitches(address, minusOne = false) {
+  const a = Number(address);
+  if (!Number.isInteger(a) || a < 1 || a > 512) return null;
+  const v = minusOne ? a - 1 : a;
+  if (v > 511) return null;   // 512 in plain binary would need a tenth switch
+  return Array.from({ length: 9 }, (_, i) => Boolean((v >> i) & 1));
+}
+
+TOOLS.dip = (root) => {
+  root.append(h(`<p class="tool-sub">Set a fixture's address on a bank of nine switches, and read a
+    bank somebody else set. The convention is plain binary of the address, and the exception is
+    named rather than hidden.</p>`));
+  root.append(h(`<div class="fields">
+    ${field('DMX start address', inp('dp-a', '274', 'type="number" min="1" max="512"'))}
+    ${field('Fixture convention', sel('dp-m', [[0, 'Plain binary (almost all fixtures)'], [1, 'Binary of address − 1 (some older fixtures)']], 0))}
+  </div>`));
+  const out = h('<div></div>');
+  root.append(out);
+
+  const run = () => {
+    const a = Math.max(1, Math.min(512, num($('#dp-a').value, 1)));
+    const minusOne = $('#dp-m').value === '1';
+    const sw = dipSwitches(a, minusOne);
+    if (!sw) {
+      out.innerHTML = readout('Not settable',
+        `Address ${a} in plain binary needs a tenth switch. Either the fixture uses the address − 1 convention, or this address cannot be set on a nine way bank.`);
+      return;
+    }
+    const v = minusOne ? a - 1 : a;
+    const on = sw.map((s, i) => (s ? 2 ** i : 0)).filter(Boolean);
+    const cells = sw.map((s, i) => `<div class="dipsw ${s ? 'on' : ''}">
+        <b>${i + 1}</b><span>${2 ** i}</span><i>${s ? 'ON' : 'off'}</i></div>`).join('');
+    out.innerHTML = readout(
+      sw.map((s) => (s ? '1' : '0')).join(''),
+      `Switches ${on.length ? sw.map((s, i) => (s ? i + 1 : null)).filter(Boolean).join(', ') : 'none'} up. Read switch 1 first.`
+    ) + `<div class="dipbank">${cells}</div>`
+      + `<pre class="working">${minusOne ? `address − 1 = ${a} − 1 = ${v}\n` : `address     = ${v}\n`}
+  ${v} in binary  = ${v.toString(2).padStart(9, '0').split('').reverse().join('')}   (switch 1 on the left)
+  switches up   = ${on.length ? on.join(' + ') + ' = ' + on.reduce((x, y) => x + y, 0) : 'none'}</pre>`
+      + `<p class="note"><b>Check it against the fixture, not against this page.</b> Nearly every
+      fixture uses plain binary, so address 1 is switch 1 up. If a rig comes back one channel low
+      across the board, that is the other convention, and it is a five second fix once you know the
+      word for it. Arithmetic from <a href="https://showstack-inky.vercel.app/tools/">showstack</a>.</p>`;
+  };
+  root.addEventListener('input', run);
+  run();
+};
+
+// Photometrics: beam diameter d = 2 t tan(theta / 2), and the inverse square
+// law E = I / d². Works for the field angle too; you choose which you enter.
+TOOLS.beam = (root) => {
+  root.append(h(`<p class="tool-sub">How big the pool is at that distance, and how much light is in
+    it. The two questions a focus session asks over and over.</p>`));
+  root.append(h(`<div class="fields">
+    ${field('Throw distance', inp('bm-t', '8', 'type="number" min="0.5" step="0.5"'))}
+    ${field('Beam or field angle', inp('bm-a', '26', 'type="number" min="1" max="179"'))}
+    ${field('Centre intensity (candela, optional)', inp('bm-i', '150000', 'type="number" min="0"'))}
+  </div>`));
+  const out = h('<div></div>');
+  root.append(out);
+
+  const run = () => {
+    const t = Math.max(0.1, num($('#bm-t').value, 8));
+    const a = Math.max(1, Math.min(179, num($('#bm-a').value, 26)));
+    const cd = Math.max(0, num($('#bm-i').value, 0));
+    const d = 2 * t * Math.tan((a * Math.PI / 180) / 2);
+    const lux = cd > 0 ? cd / (t * t) : 0;
+    out.innerHTML = readout(
+      `${d.toFixed(2)} m across`,
+      `A ${a}° beam at ${t} m throw${cd > 0 ? `, and ${Math.round(lux)} lux in the middle of it` : ''}.`
+    ) + `<pre class="working">diameter = 2 × throw × tan(angle ÷ 2)
+
+  2 × ${t} × tan(${a}° ÷ 2)   = 2 × ${t} × ${Math.tan((a * Math.PI / 180) / 2).toFixed(4)}
+                        = <b>${d.toFixed(2)} m</b>${cd > 0 ? `
+
+illuminance = candela ÷ throw²      (the inverse square law)
+
+  ${cd.toLocaleString()} ÷ ${t}²          = <b>${Math.round(lux).toLocaleString()} lux</b>  (${(lux * 0.09290304).toFixed(0)} footcandles)` : ''}</pre>`
+      + `<p class="note"><b>Double the throw and you quarter the light.</b> That is the inverse
+      square law, and it is why a back light on a deep stage needs far more than the front light
+      does. Note also that beam angle and field angle are different numbers: beam is where the
+      intensity has fallen to half, field is where it has fallen to a tenth, so the field is always
+      the wider figure and the one that decides whether two pools touch. Arithmetic from
+      <a href="https://showstack-inky.vercel.app/tools/">showstack</a>.</p>`;
+  };
+  root.addEventListener('input', run);
+  run();
+};
+
+// Current from load: single phase I = W / (V × pf), three phase adds √3.
+TOOLS.power = (root) => {
+  root.append(h(`<p class="tool-sub">What that rig actually draws, and whether it fits the socket
+    you were offered.</p>`));
+  root.append(h(`<div class="fields">
+    ${field('Total load', inp('pw-w', '3600', 'type="number" min="0"'))}
+    ${field('Supply voltage', sel('pw-v', [[230, '230 V (HK, TW, EU, UK)'], [120, '120 V (US)'], [110, '110 V'], [208, '208 V (US three phase)'], [400, '400 V (three phase)']], 230))}
+    ${field('Phase', sel('pw-p', [[1, 'Single phase'], [3, 'Three phase']], 1))}
+    ${field('Power factor', inp('pw-f', '1', 'type="number" min="0.1" max="1" step="0.05"'))}
+  </div>`));
+  const out = h('<div></div>');
+  root.append(out);
+
+  const run = () => {
+    const w = Math.max(0, num($('#pw-w').value, 0));
+    const v = num($('#pw-v').value, 230);
+    const ph = num($('#pw-p').value, 1);
+    const pf = Math.max(0.1, Math.min(1, num($('#pw-f').value, 1)));
+    const amps = ph === 3 ? w / (Math.sqrt(3) * v * pf) : w / (v * pf);
+    const common = [10, 13, 16, 32, 63, 125];
+    const fits = common.find((c) => amps <= c * 0.8);
+    out.innerHTML = readout(
+      `${amps.toFixed(2)} A`,
+      `${w.toLocaleString()} W at ${v} V, ${ph === 3 ? 'three phase' : 'single phase'}${pf < 1 ? `, power factor ${pf}` : ''}.`
+    ) + `<pre class="working">${ph === 3
+      ? `amps = watts ÷ (√3 × volts × power factor)
+
+  ${w.toLocaleString()} ÷ (1.732 × ${v} × ${pf})  = <b>${amps.toFixed(2)} A per phase</b>`
+      : `amps = watts ÷ (volts × power factor)
+
+  ${w.toLocaleString()} ÷ (${v} × ${pf})       = <b>${amps.toFixed(2)} A</b>`}</pre>`
+      + `<p class="note"><b>Design to 80 percent of the breaker</b>, not to 100. ${fits
+        ? `This load sits inside a <b>${fits} A</b> supply on that basis.`
+        : 'This load is past 125 A at 80 percent, so it is a distro conversation rather than a socket one.'}
+      A breaker that trips at 95 percent on a warm afternoon has not failed, it has done its job,
+      and it has done it during the show. Arithmetic from
+      <a href="https://showstack-inky.vercel.app/tools/">showstack</a>.</p>`;
+  };
+  root.addEventListener('input', run);
+  run();
+};
+
 // --- Mount ------------------------------------------------------------------
 
 for (const node of document.querySelectorAll('[data-tool]')) {

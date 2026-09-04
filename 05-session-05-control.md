@@ -481,6 +481,49 @@ computer and dies when that computer sleeps. And a control change carries **7 bi
 driven by MIDI has 128 steps, which is the resolution argument from the lighting block arriving in
 a different department.
 
+### Tracking: telling the rig where somebody is
+
+A control message usually says *do this*. A tracking message says *this is where the thing is now*,
+sixty times a second, and lets every department decide what to do about it.
+
+That difference matters more than it sounds. A follow spot operator is a person making an artistic
+decision continuously. A tracking system replaces the *knowing where* and leaves the deciding to
+each department: the light follows, the reverb follows, the projection maps onto a moving surface,
+the camera stays framed. One position stream, several answers.
+
+**PosiStageNet (PSN)** is the open one, and the one to learn first.
+
+| | |
+|---|---|
+| What it carries | live 3D position, orientation, speed and acceleration of tracked objects |
+| Transport | multicast UDP, port **56565**, group `236.10.10.10` |
+| Rate | 60 Hz by default, up to 250 Hz |
+| Openness | open and published, developed by VYV with MA Lighting, from 2013 |
+| Two packet types | `PSN_INFO` carries the tracker **names**, slowly. `PSN_DATA` carries the **positions**, fast. |
+
+That last row is the practical one. A receiver that reads only `PSN_DATA` gets a stream of numbers
+with no idea which tracker they belong to, so "the console sees positions but cannot tell which
+performer is which" is an INFO problem, not a DATA problem.
+
+**RTTrPM** is BlackTrax's format, also published. It carries the same ideas plus individual point
+positions and zone information. Its famous trap is byte order: the header carries both a big endian
+and a little endian signature, so a parser that does not check which one it got decodes every
+position as noise.
+
+**FreeD** is the camera one, from Vinten, carrying pan, tilt, roll, zoom and focus on UDP port 6000.
+It is what a camera tells a render engine so that virtual scenery moves correctly behind a real
+presenter.
+
+**What a year one student should take away.** Tracking is the Four Flows argument again: this is
+**media rate traffic wearing control clothing**. Sixty updates a second per tracked object, times
+the number of objects, is real bandwidth with a hard deadline, and it degrades the way media
+degrades rather than the way cue triggers degrade. A dropped GO is a cue that did not happen. A
+dropped position is a light that lags behind a performer, which the audience reads as the light
+being wrong rather than the network being busy.
+
+*Ports, packet structures and the full gotcha list are in*
+*[showstack](https://showstack-inky.vercel.app/), which is where these numbers came from.*
+
 ### PJLink, and controlling a projector
 
 Projectors are the department that everyone forgets is on the network until somebody has to turn

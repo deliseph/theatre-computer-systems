@@ -1,7 +1,7 @@
 # Glossary 詞彙表
 ## Computer Systems & Networking for Theatre and Entertainment Arts
 
-Roughly 335 terms, grouped by domain. Bring it to every session. Add to it.
+Roughly 340 terms, grouped by domain. Bring it to every session. Add to it.
 
 **On the Chinese:** 繁中 terms follow Taiwan convention, with common Hong Kong variants noted
 where they differ meaningfully. Where a term also appears in
@@ -287,6 +287,10 @@ headset.
 
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
+| PosiStageNet (PSN) | PosiStageNet | Open multicast protocol streaming 3D position of tracked objects, UDP 56565. PSN_INFO names the trackers, PSN_DATA carries the positions. |
+| RTTrPM | RTTrPM | BlackTrax's tracking format. Its header carries both byte orders, and a parser that ignores that decodes every position as noise. |
+| FreeD | FreeD | Camera tracking data: pan, tilt, roll, zoom, focus, on UDP 6000. What a camera tells a render engine. |
+| Tracking data | 追蹤資料 | Media rate traffic wearing control clothing. A dropped position is a light lagging a performer, not a cue that failed. |
 | PJLink | PJLink | A manufacturer independent projector control standard over TCP 4352. Power, input, mute, status. Housekeeping, not creative control. |
 | Program change | 音色切換訊息 | The MIDI message most desks and processors expect for recalling a scene or snapshot. |
 | Control change | 控制器變化訊息 | A MIDI parameter message, 7 bit, so 128 steps. Coarse for a fade. |
