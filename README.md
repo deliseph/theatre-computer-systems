@@ -49,7 +49,7 @@ guide is the lecturer's own working document. Both live in a private pack.
 - **A preparation path.** Every class states what you must already be able to do and where to get
   it, three concrete tasks, and what to bring. A five question readiness check tests the
   prerequisite rather than the content, and names the exact thing to go and fix.
-- **59 interactive explainers**, placed inline where each idea is taught. Every one shows a real
+- **60 interactive explainers**, placed inline where each idea is taught. Every one shows a real
   mechanism with the numbers used in the prose, and the controls exist to break it: starve the
   clock with a file copy, drag a subnet boundary through 32 bits, contain a broadcast inside a
   VLAN, watch IGMP memberships time out hours after everything looked fine.
@@ -60,7 +60,7 @@ guide is the lecturer's own working document. Both live in a private pack.
   planned duration from the block plan.
 - **Practice**: an endless subnetting trainer, a fault diagnosis simulator scored on the order you
   investigate in, the Four Flows sort, and flashcards generated from the reference tables.
-- **A bilingual glossary**, 338 terms, English and 繁體中文, following [showstack](https://showstack-inky.vercel.app/) where the two overlap.
+- **A bilingual glossary**, 344 terms, English and 繁體中文, following [showstack](https://showstack-inky.vercel.app/) where the two overlap.
 
 ---
 
@@ -72,7 +72,7 @@ guide is the lecturer's own working document. Both live in a private pack.
 | `01`, `03` to `06` | The five taught classes |
 | `02-session-02-production-visit.md` | The venue visit, with observation sheet |
 | `study-guide.md` | Student facing, per class, with self tests |
-| `glossary.md` | 338 terms, EN and 繁中 |
+| `glossary.md` | 344 terms, EN and 繁中 |
 | `field-commands.md` | The field card: commands, and setting an address on four platforms |
 | `lineage.md` | How we got here: why each technology exists and what it charged for it |
 | `numbers-to-know.md` | The reference card |

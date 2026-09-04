@@ -717,3 +717,113 @@ register('video-ip-lineage', (host) => lineage(host, {
     },
   ],
 }));
+
+// ============================================================================
+// 8. The speed limit, which is the one thing no technology gets around
+// ============================================================================
+
+const MEDIA = {
+  copper: { label: 'Copper', v: 0.66, note: 'twisted pair or coax, roughly two thirds of light in vacuum' },
+  fibre: { label: 'Standard fibre', v: 0.68, note: 'glass core, refractive index about 1.47' },
+  hollow: { label: 'Hollow core fibre', v: 0.997, note: 'light travels in air down the middle. Real, deployed, expensive.' },
+  radio: { label: 'Radio or free space', v: 1.0, note: 'the actual speed of light. Nothing beats this.' },
+};
+
+const MARKS = [
+  [0.04, 'one frame at 25 fps', 'red'],
+  [0.01, 'in-ear monitoring starts to feel late', 'amber'],
+  [0.002, 'a large venue, end to end', 'green'],
+];
+
+register('speed-limit', (host) => {
+  const st = { km: 1, med: 'fibre', proc: 8 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'The floor under every latency budget',
+    sub: 'Distance divided by the speed of light in whatever you are sending it down. No protocol, codec or future technology moves this number.',
+    note: '&nbsp;',
+  });
+
+  let cv, pend = false;
+  const fit = (want) => {
+    if (!cv || pend || Math.abs(cv.h - want) < 3) return;
+    pend = true;
+    requestAnimationFrame(() => { pend = false; cv.setHeight(Math.round(want)); });
+  };
+  cv = canvas(stage, {
+    height: 300,
+    animated: false,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(560, w - 24), ox = (w - W) / 2;
+      const c = 299792.458;                          // km per second, in vacuum
+      const v = c * MEDIA[st.med].v;
+      const oneWay = (st.km / v) * 1000;             // ms
+      const round = oneWay * 2;
+      const total = round + st.proc;
+
+      // Every medium, so the comparison is visible rather than asserted.
+      let y = 30;
+      label(g, `${st.km >= 1 ? st.km.toLocaleString('en-US') : st.km} km, one way`, ox, 14,
+        { color: p.ink, size: 12, weight: 650, ...mono });
+      const maxMs = (st.km / (c * 0.66)) * 1000;
+      for (const [k, m] of Object.entries(MEDIA)) {
+        const ms = (st.km / (c * m.v)) * 1000;
+        const on = k === st.med;
+        const bw = W - 210;
+        label(g, m.label, ox, y + 7, { color: on ? p.ink : p.muted, size: 11.5, weight: on ? 700 : 500 });
+        box(g, ox + 132, y, bw, 15, { fill: alpha(p.line, 0.3), stroke: 'transparent', r: 3 });
+        box(g, ox + 132, y, Math.max(2, bw * (ms / (maxMs || 1))), 15,
+          { fill: alpha(on ? p.amber : p.muted, on ? 0.7 : 0.3), stroke: on ? p.amber : 'transparent', r: 3, lw: 1 });
+        label(g, `${ms < 1 ? ms.toFixed(3) : ms.toFixed(2)} ms`, ox + 140 + bw, y + 7,
+          { color: on ? p.ink2 : p.muted, size: 11, ...mono });
+        y += 24;
+      }
+      label(g, MEDIA[st.med].note, ox, y + 6, { color: p.muted, size: 11 });
+
+      // The budget: propagation there and back, plus everything else. The
+      // thresholds are stacked above it, because three of them at one height
+      // just overprint each other.
+      const by = y + 66;
+      const scale = (W - 60) / Math.max(0.06, total);
+      label(g, 'a round trip, plus the boxes at each end', ox, by - 10, { color: p.ink2, size: 11.5, weight: 600 });
+      box(g, ox, by, Math.max(2, round * scale), 22, { fill: alpha(p.amber, 0.55), stroke: p.amber, r: 4, lw: 1 });
+      box(g, ox + Math.max(2, round * scale), by, Math.max(2, st.proc * scale), 22,
+        { fill: alpha(p.cyan, 0.4), stroke: p.cyan, r: 4, lw: 1 });
+      label(g, `${total.toFixed(1)} ms`, ox + W - 46, by + 11, { color: p.ink, size: 13, weight: 700, ...mono });
+      label(g, `${round.toFixed(2)} ms of physics`, ox + 4, by + 34, { color: p.amber, size: 11, ...mono });
+      label(g, `${st.proc} ms of equipment`, ox + 4, by + 52, { color: p.cyan, size: 11, ...mono });
+
+      // The thresholds that decide whether it matters.
+      MARKS.forEach(([sec, lbl, col], i) => {
+        const ms = sec * 1000;
+        if (ms > total * 1.6) return;
+        const x = ox + Math.min(W - 8, ms * scale);
+        const ly = by - 52 + i * 14;
+        line(g, x, ly - 3, x, by + 28, { color: alpha(p[col], 0.85), lw: 1.3, dash: [4, 3] });
+        const flip = x > ox + W - 190;
+        label(g, lbl, flip ? x - 5 : x + 5, ly, { color: p[col], size: 9.5, align: flip ? 'right' : 'left' });
+      });
+      fit(by + 66);
+    },
+  });
+
+  const upd = () => {
+    cv.once();
+    const c = 299792.458;
+    const oneWay = (st.km / (c * MEDIA[st.med].v)) * 1000;
+    const round = oneWay * 2;
+    if (st.km <= 5) setMicro();
+    else if (round + st.proc > 40) setNote(`<b>${(round + st.proc).toFixed(0)} ms round trip.</b> Past one frame at 25 fps, and ${round.toFixed(0)} ms of that is the distance itself. No codec, protocol or purchase reduces it: the only levers are a shorter path, a faster medium, or not needing the round trip. This is why remote production is designed around <b>not asking a question and waiting for the answer</b>.`);
+    else setNote(`<b>${round.toFixed(2)} ms of propagation, ${st.proc} ms of equipment.</b> At this distance the boxes still dominate, so the useful work is in the buffers and the processing. Notice where that stops being true: past roughly ${Math.round((10 - st.proc) * (c * MEDIA[st.med].v) / 2000)} km the physics is the larger number and no amount of tuning helps.`);
+    function setMicro() {
+      setNote(`<b>${round.toFixed(3)} ms.</b> Inside a building, propagation is nothing: light crosses a large venue in about two microseconds. Everything you measure in a venue is <b>equipment</b>, which is good news, because equipment is a choice. The physics only starts to matter when the path leaves the building.`);
+    }
+  };
+
+  controls.append(
+    slider('Distance', { min: 0, max: 4.3, step: 0.05, value: 0, fmt: (v) => { const km = Math.round(10 ** v * 10) / 10; return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toLocaleString('en-US')} km`; }, on: (v) => { st.km = Math.round(10 ** v * 10) / 10; upd(); } }).node,
+    choice('Medium', Object.entries(MEDIA).map(([k, m]) => [k, m.label]), { value: 'fibre', on: (v) => { st.med = v; upd(); } }).node,
+    slider('Equipment at both ends', { min: 0, max: 60, step: 1, value: 8, fmt: (v) => `${v} ms`, on: (v) => { st.proc = v; upd(); } }).node
+  );
+  upd();
+});

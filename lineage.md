@@ -241,15 +241,78 @@ lot of time, and it is not deterministic.** A show wants deterministic. So the s
 today is in preparation and in things that degrade gracefully, and not yet in the signal path where
 a wrong guess is a visible failure in front of an audience.
 
-### Not here yet, and be careful who is selling it
+### Quantum teleportation, and what it actually does
 
-Quantum computing is real research and it is not a faster computer. It is a different machine that
-is dramatically better at a small number of specific problems, and no better at anything you do.
-The related idea, quantum key distribution, is about **detecting whether somebody has listened to a
-link**, not about sending data faster.
+This one is worth doing properly, because the popular version of it is wrong in a specific way you
+can check, and because "we will teleport the signal" is a sentence somebody will say to you.
 
-Nothing about it moves a video frame across a venue more quickly, and nothing in this module gets
-easier because of it. Treat a claim otherwise as marketing.
+**Quantum teleportation is real.** It has been demonstrated in laboratories since 1997, over
+1,400 km between a ground station and a satellite, and in 2024 over a fibre that was carrying
+ordinary internet traffic at the same time. None of that is marketing. What it does is transfer the
+**quantum state** of one particle onto another particle somewhere else, and the original state is
+destroyed in the process, because quantum states cannot be copied.
+
+Now the part that gets left out.
+
+The protocol needs two things: a pair of **entangled** particles shared in advance, and a
+**classical message** of two ordinary bits, sent from the sending end to the receiving end,
+describing the result of a measurement. Without those two bits the receiver holds a particle in a
+state indistinguishable from noise. It cannot do anything with it, and it cannot tell that anything
+has happened.
+
+> **Those two bits travel down an ordinary channel, at the speed of light or slower.** So
+> teleportation cannot deliver anything before light could have delivered it. Not "not yet". Not
+> "until the engineering improves". The classical channel is part of the protocol, and it is the
+> bottleneck by construction.
+
+**So what is it for?** Networking quantum computers to each other, and extending
+**quantum key distribution** over long distances through repeaters. QKD is also real, and what it
+offers is **detecting whether somebody has listened to a link**, not sending data faster. Both are
+serious research with serious money behind them. Neither one moves a video frame across a venue any
+sooner, and neither is on a timescale that changes how you specify a show.
+
+**The test to apply.** If somebody tells you a new technology will beat the latency of light over
+the same path, they are either describing a shorter path, a faster medium, or nothing.
+
+### The floor nobody moves
+
+Which brings us to the number that actually governs long distance transmission, and always will.
+
+<!--anim:speed-limit-->
+
+Light in a glass fibre travels at about **two thirds** of its vacuum speed, which works out at
+roughly **5 microseconds per kilometre**, or 5 ms per thousand kilometres, each way.
+
+| Path | One way, in standard fibre |
+|------|---------------------------|
+| Across a large venue | about 0.002 ms. Nothing. |
+| Across a city, 30 km | 0.15 ms |
+| Hong Kong to Taipei, about 800 km | 4 ms |
+| Hong Kong to London, about 9,600 km | 48 ms, so 96 ms there and back |
+
+Read the last row against the lip sync threshold. **A round trip to London is more than two frames
+of video before any equipment is switched on.** That is why remote production is designed around
+not asking a question and waiting for the answer, and why a remote director's talkback feels
+different from a local one no matter what is spent on it.
+
+### What will genuinely change transmission in your working life
+
+Four things, all unglamorous, all already shipping:
+
+- **Hollow core fibre.** Light travels down air in the middle of the fibre rather than through
+  glass, at about 99.7 percent of vacuum speed instead of 68. That is roughly **a third less
+  latency on the same route**, and it is deployed today on financial trading links because a third
+  of 48 ms is worth real money. It is the only item on this list that touches the physics.
+- **Deterministic networking.** TSN, the IEEE family that grew out of AVB, brings reserved
+  bandwidth and guaranteed delivery windows to ordinary Ethernet. This is the AVB argument from
+  Block 1 winning the general case at last, and it matters far more to a show than any exotic
+  physics.
+- **Better compression, not less of it.** JPEG XS at a few lines of latency, AV1, and encoders that
+  use machine learning to decide where the bits go. All of this buys distance and cost, and pays
+  for it in the same currency as always.
+- **More lanes.** 400 and 800 gigabit Ethernet, and private 5G with network slicing for wireless
+  links that need a guarantee. More bandwidth is not more speed, and confusing the two is the most
+  common mistake in this whole area: **a wider road does not shorten the journey.**
 
 > The test to apply to any new technology in this industry is the same one as everywhere else in
 > this module: **what problem did it solve, and what did it charge you for solving it?** If a

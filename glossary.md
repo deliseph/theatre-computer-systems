@@ -1,7 +1,7 @@
 # Glossary 詞彙表
 ## Computer Systems & Networking for Theatre and Entertainment Arts
 
-Roughly 340 terms, grouped by domain. Bring it to every session. Add to it.
+Roughly 346 terms, grouped by domain. Bring it to every session. Add to it.
 
 **On the Chinese:** 繁中 terms follow Taiwan convention, with common Hong Kong variants noted
 where they differ meaningfully. Where a term also appears in
@@ -141,6 +141,12 @@ headset.
 | Seek time | 尋道時間 | How long a spinning disk takes to move its head and wait for the platter. Zero on flash, and the whole argument. |
 | NVMe | NVMe | A storage protocol designed for flash rather than inherited from disks. The interface stopped being the bottleneck. |
 | 3D NAND | 3D 快閃記憶體 | Flash density from stacking cells upward rather than shrinking them sideways. |
+| Quantum teleportation | 量子隱形傳態 | Real, and it transfers a quantum state, not data faster than light: the protocol needs two ordinary bits sent down a classical channel, so light is still the floor. |
+| Entanglement | 量子糾纏 | The shared resource teleportation consumes. Distributing it over distance is what quantum repeaters are for. |
+| QKD | 量子金鑰分發 | Quantum key distribution. It detects whether a link has been listened to. It does not make anything faster. |
+| Hollow core fibre | 空芯光纖 | Light travelling down air inside the fibre at 99.7 per cent of vacuum speed instead of 68. About a third less latency on the same route. |
+| TSN | 時效性網路 | Time-Sensitive Networking. Reserved bandwidth and guaranteed delivery windows on ordinary Ethernet. The AVB argument winning the general case. |
+| Propagation delay | 傳播延遲 | Distance divided by the speed of light in the medium. About 5 microseconds per kilometre in glass fibre, and nothing changes it but a shorter path or a faster medium. |
 | NPU | 神經處理單元 | Hardware for machine learning arithmetic. Already useful for upscale, denoise and keying. Not deterministic, so not yet in the signal path. |
 | Canvas | 畫布 | The total pixel area a media server is producing across all outputs. |
 

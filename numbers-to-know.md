@@ -51,6 +51,9 @@ video  =  width × height × frame rate × bits per pixel
 | The lossy steps in a codec | **chroma subsampling** and **quantisation**. Quantisation is the quality slider. |
 | What sets bitrate | how **predictable** the picture is, not the resolution alone |
 
+| Light in glass fibre | about **5 µs per km**, so 5 ms per 1,000 km, each way |
+| Sound in air | about **3 ms per metre** |
+
 **Bits to bytes:** divide by 8. A 2.5 Gbit/s video stream is about 312 MB/s of storage throughput.
 Getting this the wrong way round is the most common mistake in the exam.
 
