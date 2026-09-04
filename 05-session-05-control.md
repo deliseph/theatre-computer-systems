@@ -370,6 +370,9 @@ reappear in act three.
 
 ### Getting DMX onto the network
 
+*The generation by generation version of what follows, with what each step gave up, is on*
+*[How we got here](/lineage).*
+
 DMX ran out of room. A modern rig needs dozens or hundreds of universes, and cannot have dozens
 of separate cable runs from the control position. So we put universes inside network packets.
 
@@ -666,6 +669,22 @@ Do not give these until the chain runs. Then walk round and do one to each team.
 ---
 
 ## Sources and further study
+
+### The index this module checks itself against
+
+**[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
+technology. Protocols with their ports and multicast ranges, standards with their designations,
+hardware and software with what each one actually speaks, and bilingual EN / 繁中 vocabulary, with
+a citation on every fact and a free JSON API.
+
+Three ways to use it in this module:
+
+- **Check a number before you repeat it.** Every port and date in these notes was verified against
+  it.
+- **The interop checker**: pick two products, get the protocols they share and in which direction.
+  That is the question this whole module is teaching you to ask.
+- **The field tools**, 62 of them, for the calculations this module does not examine but the job
+  needs: DIP switch addressing, bridle angle, voltage drop, noise dose, RF intermod, beam angle.
 
 The two documents below are the actual standards behind almost everything in this class, they are
 free, and most working technicians have never opened either. Read the first ten pages of each.

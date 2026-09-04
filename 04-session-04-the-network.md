@@ -810,6 +810,29 @@ need it.
 - Not acceptable: anything that must happen. No show critical control, no media, no clock.
 - If you must, use a dedicated access point on a dedicated channel, and keep the wired path primary.
 
+**The two things called 5G, which are not related at all.** This confusion is deliberate on
+somebody's part and it costs real time in venues, so name it early.
+
+| | **5 GHz Wi-Fi** | **5G mobile** |
+|---|-----------------|---------------|
+| What it is | a **radio band** that Wi-Fi uses | a **generation** of mobile phone network |
+| Who runs it | you, on your own access point | a network operator, on licensed spectrum |
+| The 5 means | five gigahertz, a frequency | the fifth generation, after 4G |
+| Range | shorter than 2.4 GHz, and it hates walls | kilometres, from a mast |
+| On a show | a dedicated AP for a focus tablet | a backup internet link, or nothing |
+
+A phone showing "5G" in the corner is on a mobile network. A phone connected to `VENUE-WIFI-5G` is
+on a Wi-Fi network using the 5 GHz band. **Neither one tells you anything about the other**, and a
+device that "has 5G" may have either.
+
+Two practical consequences. Wi-Fi's 5 GHz band is the one to use on a show, because it has far more
+non-overlapping channels than 2.4 GHz and the audience's phones and every wireless microphone
+remote are crowded into 2.4. And 6 GHz, sold as **Wi-Fi 6E** and **Wi-Fi 7**, is better again for
+exactly the same reason: it is emptier, for now.
+
+> The general rule holds regardless of the band. **Wi-Fi is a shared medium with no delivery
+> guarantee.** A better band buys you a less crowded room, not a promise.
+
 ---
 
 ## Block E: Lab, build it, subnet it, break it, fix it
@@ -891,6 +914,22 @@ Small moment, long memory. The protocol stops being an acronym and becomes visib
 ---
 
 ## Sources and further study
+
+### The index this module checks itself against
+
+**[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
+technology. Protocols with their ports and multicast ranges, standards with their designations,
+hardware and software with what each one actually speaks, and bilingual EN / 繁中 vocabulary, with
+a citation on every fact and a free JSON API.
+
+Three ways to use it in this module:
+
+- **Check a number before you repeat it.** Every port and date in these notes was verified against
+  it.
+- **The interop checker**: pick two products, get the protocols they share and in which direction.
+  That is the question this whole module is teaching you to ask.
+- **The field tools**, 62 of them, for the calculations this module does not examine but the job
+  needs: DIP switch addressing, bridle angle, voltage drop, noise dose, RF intermod, beam angle.
 
 This class covers the three things that need genuine repetition, so this list is longer than the
 others. Work through it in order.

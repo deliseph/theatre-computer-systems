@@ -98,7 +98,13 @@ configuration risk.**
 - **MADI**, 64 channels down one coaxial or optical cable. Point to point, no addressing, no
   network. Still widely used precisely because there is nothing to configure.
 
-Name them so students recognise the connectors, then move on.
+- **CobraNet** and **EtherSound**, the first audio over Ethernet systems, from the late 1990s.
+  Layer 2 only, fixed latency, dedicated network. You will still meet CobraNet in installations.
+- **Ravenna**, the open standards route, close to a default in broadcast. Dante discovers; Ravenna
+  is configured.
+
+Name them so students recognise the connectors, then move on. The full story, and what each
+generation charged for what it solved, is on [How we got here](/lineage).
 
 ### Dante
 
@@ -250,6 +256,15 @@ correct in general. Both are correct for particular jobs.
 Practical guidance to give them plainly: NDI is enormously useful and is used constantly in the
 industry, and it is not automatically the right choice for a show critical main screen feed
 unless the network was designed for it. Know which of those two situations you are in.
+
+**Two more sit between those columns**, and they matter enough to name. **ST 2022-6** wraps the
+whole SDI stream in packets, changing the transport and nothing else, which made it easy to adopt
+and left everything braided together. **JPEG XS**, standardised into ST 2110 as **2110-22**,
+compresses within a few lines rather than a whole frame, so it costs a fraction of a frame of
+latency instead of a whole one. That is the option for a live path that cannot afford NDI's frame
+and cannot afford 2110's bandwidth.
+
+*Side by side, with the latency and bandwidth of each, on [How we got here](/lineage).*
 
 ### Inside ST 2110, and the one idea worth stealing from it
 
@@ -683,6 +698,22 @@ place to learn it.
 ---
 
 ## Sources and further study
+
+### The index this module checks itself against
+
+**[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
+technology. Protocols with their ports and multicast ranges, standards with their designations,
+hardware and software with what each one actually speaks, and bilingual EN / 繁中 vocabulary, with
+a citation on every fact and a free JSON API.
+
+Three ways to use it in this module:
+
+- **Check a number before you repeat it.** Every port and date in these notes was verified against
+  it.
+- **The interop checker**: pick two products, get the protocols they share and in which direction.
+  That is the question this whole module is teaching you to ask.
+- **The field tools**, 62 of them, for the calculations this module does not examine but the job
+  needs: DIP switch addressing, bridle angle, voltage drop, noise dose, RF intermod, beam angle.
 
 ### The one worth doing properly
 

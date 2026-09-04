@@ -12,6 +12,7 @@ import './anim-file.js';
 import './anim-colour.js';
 import './anim-light.js';
 import './anim-systems.js';
+import './anim-lineage.js';
 
 mountAll();
 mountVideos();

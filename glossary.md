@@ -1,10 +1,14 @@
 # Glossary 詞彙表
 ## Computer Systems & Networking for Theatre and Entertainment Arts
 
-Roughly 312 terms, grouped by domain. Bring it to every session. Add to it.
+Roughly 335 terms, grouped by domain. Bring it to every session. Add to it.
 
 **On the Chinese:** 繁中 terms follow Taiwan convention, with common Hong Kong variants noted
-where they differ meaningfully. Learn the **English** term as the operational one, because every
+where they differ meaningfully. Where a term also appears in
+[showstack](https://showstack-inky.vercel.app/), the open index of live entertainment technology,
+this glossary follows showstack's wording, because that entry carries a source and this one does
+not. showstack covers the craft vocabulary this module does not: rigging, power, scenic, access,
+and the false friends that cause real confusion on headset. Learn the **English** term as the operational one, because every
 menu, every error message, every piece of paperwork and every conversation on an international
 crew is in English. The Chinese is there to build the concept. The English is what you say on
 headset.
@@ -122,6 +126,22 @@ headset.
 | NVENC / NVDEC | 硬體編解碼 | Dedicated encode and decode hardware on the GPU. A codec it does not support falls back to the CPU and the layer count collapses. |
 | Mosaic / Eyefinity | 多輸出合併 | Combining several physical outputs into one desktop. NVIDIA's is professional cards only; AMD's works on consumer cards. |
 | Head count | 輸出數量 | How many displays one card can drive. Usually four on NVIDIA, up to six on AMD. A hard physical limit, not a setting. |
+| AES3 / AES/EBU | AES3 數位音訊介面 | Two channels of digital audio on one balanced pair, self clocking. Point to point, not a network. |
+| MADI (AES10) | MADI | 64 channels on one coax or fibre, in a fixed order. No addressing, nothing to configure, which is why it survives. |
+| CobraNet | CobraNet | The first widely used audio over Ethernet. Layer 2 only, fixed latency, dedicated network. Largely superseded. |
+| AVB / Milan | AVB／Milan | Audio networking where the switches reserve bandwidth in advance. The strongest guarantee, and every switch must support it. |
+| Ravenna | Ravenna | Audio over IP built on published standards. Broadcast's answer to the same question Dante answers. |
+| AES67 | AES67 | Not a product: the rules that let Dante, Ravenna, Q-LAN and Livewire exchange audio. ST 2110-30 is AES67. |
+| ST 2022-6 | ST 2022-6 | The whole SDI stream wrapped in IP packets. Easy to adopt, and it inherits SDI's braiding. |
+| JPEG XS | JPEG XS | Visually lossless compression with sub frame latency, a few lines rather than a frame. |
+| TMDS | TMDS | The signalling DVI and HDMI use up to HDMI 2.0. HDMI 2.1 replaced it with FRL. |
+| MST | 多串流傳輸 | DisplayPort carrying several independent displays down one cable. Why one port can drive a wall. |
+| DSC | 顯示串流壓縮 | Display Stream Compression. Visually lossless, and it changes which formats a cable can carry. |
+| Skew | 時間偏差 | Bits on parallel lines arriving at slightly different times. Fixed by the cable, and why serial won. |
+| Seek time | 尋道時間 | How long a spinning disk takes to move its head and wait for the platter. Zero on flash, and the whole argument. |
+| NVMe | NVMe | A storage protocol designed for flash rather than inherited from disks. The interface stopped being the bottleneck. |
+| 3D NAND | 3D 快閃記憶體 | Flash density from stacking cells upward rather than shrinking them sideways. |
+| NPU | 神經處理單元 | Hardware for machine learning arithmetic. Already useful for upscale, denoise and keying. Not deterministic, so not yet in the signal path. |
 | Canvas | 畫布 | The total pixel area a media server is producing across all outputs. |
 
 ---
@@ -130,6 +150,9 @@ headset.
 
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
+| 5 GHz Wi-Fi | 5 GHz 無線網路 | A radio band Wi-Fi uses. Nothing to do with 5G mobile, which is a generation of phone network. |
+| 5G mobile | 第五代行動網路 | The fifth generation of mobile network, run by an operator on licensed spectrum. Not a Wi-Fi band. |
+| Wi-Fi 6E / Wi-Fi 7 | Wi-Fi 6E／7 | Wi-Fi using the 6 GHz band. Better because it is emptier, not because the medium changed. |
 | Private address range | 私有位址範圍 | `10.x`, `172.16` to `172.31`, `192.168.x`. Not routed on the internet. Every show network lives in one. |
 | Public address | 公有位址 | Unique on the internet, issued by a provider. A show device never needs one. |
 | NAT | 網路位址轉換 | A router swapping private addresses for its one public address and back. Why inbound connections do not just work. |
@@ -230,11 +253,11 @@ headset.
 | DMX512 | DMX512 | The lighting control standard since 1986. 250 kbit/s, 512 slots, still the last hop to almost every fixture. |
 | DMX512-A | DMX512-A | The current revision, published by ESTA as E1.11. |
 | RS-485 | RS-485 | The balanced electrical standard DMX runs on. Why it survives long runs in a noisy building. |
-| Universe | 宇宙（DMX 線路） | 512 channels of DMX data. A quantity of data, **not** a cable. |
+| Universe | 一條 DMX 線路（universe） | 512 channels of DMX data. A quantity of data, **not** a cable. |
 | Channel | 通道 | One controllable parameter. One byte, 0 to 255. |
 | Slot | 資料槽 | One of the 512 positions in a DMX frame. Often used interchangeably with channel. |
 | Address | 位址 | Where a fixture starts listening in the universe. |
-| Patch | 迴路對應 | The mapping between control numbers and physical fixtures. |
+| Patch | 配接 | The mapping between control numbers and physical fixtures. |
 | Break | 中斷訊號 | The signal marking the start of a DMX frame. |
 | Termination | 終端電阻 | A 120 ohm resistor on the last device in a DMX line. Missing it causes reflections and intermittent flicker. |
 | Splitter | 分配器 | Takes one DMX line and starts several fresh segments. Necessary past 32 devices. |
@@ -254,7 +277,7 @@ headset.
 | 16 bit dimming | 十六位元調光 | Coarse plus fine byte, 65,536 steps. Smooth fades. Costs a second channel. |
 | Dimmer | 調光器 | The device controlling the power to a conventional lamp. |
 | Fixture | 燈具 | Any lighting unit. |
-| Moving head | 電腦燈／搖頭燈 | A motorised fixture. A computer with a lamp in it, typically 20 to 40 channels. |
+| Moving head | 搖頭燈（港：電腦燈） | A motorised fixture. A computer with a lamp in it, typically 20 to 40 channels. |
 | Console | 控台 | The lighting or audio control surface. Increasingly a control surface for a computer elsewhere. |
 | Visualiser | 燈光模擬軟體 | Software that renders the rig, so programming can happen without the rig. |
 
@@ -280,7 +303,7 @@ headset.
 | MTC | MIDI 時間碼 | Timecode carried over MIDI. |
 | LTC | 線性時間碼 | Timecode as an audio signal. You can hear it. It travels down any audio path, which is exactly why it is used. |
 | Timecode | 時間碼 | `hours:minutes:seconds:frames`. The shared clock a large show is built on. |
-| Drop frame | 丟幀 | A counting correction for the 29.97 fps rate. A 1953 colour television compromise that still bites people. |
+| Drop frame | 丟幀時碼 | A counting correction for the 29.97 fps rate. A 1953 colour television compromise that still bites people. |
 | Frame | 影格／幀 | One picture, and the smallest unit of timecode. |
 | RS-232 | RS-232 | Short run serial control. Projectors, screens, machine control. Direct, deterministic and dumb. |
 | RS-422 | RS-422 | Balanced serial. Goes further than RS-232. |
@@ -328,12 +351,12 @@ headset.
 | DisplayPort | DisplayPort | Computer video output standard. Common on media server graphics cards. |
 | EDID | EDID | The conversation where a display tells a source what it can accept. When it fails, the source guesses, and it guesses wrong. |
 | HDCP | HDCP | Copy protection in HDMI. Produces a black screen with no useful error. If the screen is black and everything looks correct, suspect HDCP. |
-| Scaler | 縮放器 | Converts one resolution to another. |
+| Scaler | 影像縮放器 | Converts one resolution to another. |
 | Switcher | 切換台 | Selects and mixes between video sources. |
 | LED processor | LED 處理器 | Turns a video signal into the data an LED wall needs, and maps it to the physical panel layout. |
 | Media server | 媒體伺服器 | The computer playing back and processing video for a show. Openly a computer, unlike a lighting console. |
 | IMAG | 現場影像放大 | Image magnification. Live camera of the stage on screens, so the back row can see faces. |
-| Projection mapping | 投影對位 | Aligning projected images onto a non flat surface. |
+| Projection mapping | 光雕投影 | Aligning projected images onto a non flat surface. |
 
 ---
 

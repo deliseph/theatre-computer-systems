@@ -387,6 +387,22 @@ Brisk. Put the seven session table on screen. Cover:
 
 ## Sources and further study
 
+### The index this module checks itself against
+
+**[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
+technology. Protocols with their ports and multicast ranges, standards with their designations,
+hardware and software with what each one actually speaks, and bilingual EN / 繁中 vocabulary, with
+a citation on every fact and a free JSON API.
+
+Three ways to use it in this module:
+
+- **Check a number before you repeat it.** Every port and date in these notes was verified against
+  it.
+- **The interop checker**: pick two products, get the protocols they share and in which direction.
+  That is the question this whole module is teaching you to ask.
+- **The field tools**, 62 of them, for the calculations this module does not examine but the job
+  needs: DIP switch addressing, bridle angle, voltage drop, noise dose, RF intermod, beam angle.
+
 Everything here is free and checkable. Two habits worth starting now: read the actual standard
 rather than a summary of it, and read the manufacturer's own documentation rather than a forum post.
 

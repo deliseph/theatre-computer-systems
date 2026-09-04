@@ -176,6 +176,7 @@ const NAV_RESOURCES = [
   ['/glossary', 'Glossary', 'Bilingual term list'],
   ['/numbers', 'Numbers', 'The reference card'],
   ['/field', 'Field card', 'Commands and settings'],
+  ['/lineage', 'How we got here', 'Why each technology exists'],
 ];
 
 function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] }) {
@@ -275,6 +276,7 @@ const addSearch = (route, title, section, text) => {
 const studyMd = renumber(read('study-guide.md'));
 const numbersMd = renumber(read('numbers-to-know.md'));
 const fieldMd = renumber(read('field-commands.md'));
+const lineageMd = renumber(read('lineage.md'));
 const glossaryMd = read('glossary.md');
 
 const drillCards = [];
@@ -515,6 +517,23 @@ write('/field', shell({
 }));
 for (const b of fieldDoc.blocks) addSearch('/field', 'The field card', b.title, b.html);
 
+const lineageDoc = render(lineageMd.replace(/^#\s+[^\n]*\n/, ''));
+write('/lineage', shell({
+  title: 'How we got here',
+  desc: 'Why each of these technologies exists, and what it refuses to do.',
+  body: `<article class="doc"><header class="page-head">
+      <p class="eyebrow"><span class="pill">Reference</span></p>
+      <h1>How we got here</h1>
+      <p class="strap">Nothing here was designed. It accumulated, one problem at a time. Knowing why
+      something exists tells you what it refuses to do, and that knowledge outlives the product names.</p>
+      <div class="head-actions"><a class="btn" href="/class/2">Class 2</a>
+      <a class="btn" href="/class/4">Class 4</a><a class="btn" href="/class/5">Class 5</a></div>
+    </header>${lineageDoc.html}</article>`,
+  active: '/lineage',
+  scripts: ['/assets/anim.js'],
+}));
+for (const b of lineageDoc.blocks) addSearch('/lineage', 'How we got here', b.title, b.html);
+
 const glossDoc = render(glossaryMd.replace(/^#\s+[^\n]*\n/, '').replace(/^##\s+Computer Systems[^\n]*\n/m, ''));
 write('/glossary', shell({
   title: 'Glossary',
@@ -683,6 +702,9 @@ write('/', shell({
     thing to go and fix.</p></a>
     <a class="card" href="/foundations"><h3>Foundations</h3><p>Bits and bytes, powers of two, binary
     and hex. Forty minutes, done once, and the rest of the module stops fighting you.</p></a>
+    <a class="card" href="/lineage"><h3>How we got here</h3><p>Why each of these technologies
+      exists, and what it refuses to do. Audio to the network, DMX to sACN, VGA to DisplayPort,
+      parallel to serial, floppy disk to NVMe.</p></a>
     <a class="card" href="/tools"><h3>Fifteen calculators</h3><p>Subnet, VLAN plan, PoE budget,
     timecode, LED wall, delay time, data rate, latency budget, universes and more. Each shows its
     working.</p></a>
@@ -718,7 +740,7 @@ fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex
 fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
 fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify(STAMP, null, 2));
 
-const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field',
+const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field', '/lineage',
   ...CLASSES.map((c) => `/class/${c.n}`), ...CLASSES.map((c) => `/teach/${c.n}`)];
 
 console.log(`Built ${routes.length} routes`);

@@ -136,6 +136,9 @@ This is where the most useful teaching is, because it is where the numbers bite.
   system is also using the disk, and it is nothing at all to an NVMe drive. The specification
   writes itself once you do the arithmetic.
 
+*How storage got from a floppy disk to NVMe, and why a spinning disk collapses on scattered reads,*
+*is on [How we got here](/lineage).*
+
 ### GPU
 
 - Three separate jobs, and students conflate them: **render** (making pixels), **decode**
@@ -739,6 +742,22 @@ Marked against the four criteria rubric. Criterion 4, failure, is worth as much 
 ---
 
 ## Sources and further study
+
+### The index this module checks itself against
+
+**[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
+technology. Protocols with their ports and multicast ranges, standards with their designations,
+hardware and software with what each one actually speaks, and bilingual EN / 繁中 vocabulary, with
+a citation on every fact and a free JSON API.
+
+Three ways to use it in this module:
+
+- **Check a number before you repeat it.** Every port and date in these notes was verified against
+  it.
+- **The interop checker**: pick two products, get the protocols they share and in which direction.
+  That is the question this whole module is teaching you to ask.
+- **The field tools**, 62 of them, for the calculations this module does not examine but the job
+  needs: DIP switch addressing, bridle angle, voltage drop, noise dose, RF intermod, beam angle.
 
 - **[NDI documentation](https://docs.ndi.video/all)**, and specifically its
   [bandwidth white paper](https://docs.ndi.video/all/getting-started/white-paper/bandwidth).
