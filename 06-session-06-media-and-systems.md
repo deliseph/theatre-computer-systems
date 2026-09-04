@@ -50,8 +50,12 @@ By the end of this session a student can:
 2. Explain why clock is the foundation of all networked media, and what happens without it.
 3. Compare compressed and uncompressed video over IP and choose appropriately for a job.
 4. Trace a pixel pipeline from source to display and name what can go wrong at each stage.
-5. Perform a single point of failure audit on a system and propose redundancy.
-6. Produce the documentation set that makes a system operable by someone else.
+5. Describe how PTP measures offset, and name two things that break the assumption it rests on.
+6. Add up a latency budget across a chain and say which stages are worth spending on.
+7. Size a link for a given set of media flows, and explain why oversubscription is fatal for media.
+8. Perform a single point of failure audit on a system and propose redundancy.
+9. Write a commissioning procedure that tests the failure rather than the success.
+10. Produce the documentation set that makes a system operable by someone else.
 
 ---
 
@@ -153,6 +157,46 @@ follow different masters, drift apart, and you get clicks that appear to move ar
 Link straight back to session 4: the Four Flows table said clock is killed by "a second master".
 Here is what that actually sounds like.
 
+### PTP, the mechanism, and the switch that quietly ruins it
+
+Clock is the foundation of this whole block, so it is worth knowing how the agreement is actually
+reached rather than treating it as magic.
+
+**Four messages.** The grandmaster sends a `Sync` and notes the moment it left. The follower notes
+the moment it arrived. Then the follower sends a `Delay_Req` and notes when it left, and the
+grandmaster notes when it arrived and reports that back. Now both ends have four timestamps, and:
+
+```
+path delay  =  ((t2 − t1) + (t4 − t3)) ÷ 2
+offset      =  (t2 − t1) − path delay
+```
+
+<!--anim:ptp-sync-->
+
+Read the divide by two carefully, because everything that goes wrong is hiding in it. **PTP
+assumes the two directions take the same amount of time.** When that is true, the arithmetic is
+exact. When it is not, the follower lands exactly halfway between and reports itself as locked.
+
+Two things break the assumption:
+
+- **A switch that is not PTP aware.** It queues the timing messages behind whatever else it is
+  carrying, so the delay it adds is different each way and changes second to second. A PTP aware
+  switch either corrects the timestamp for the time the message spent inside it (**transparent
+  clock**) or terminates and regenerates the timing itself (**boundary clock**). This is why the
+  switch model matters on a Dante or AES67 system, and it is not a preference.
+- **An asymmetric path.** One direction takes an extra hop, or a different link speed. The offset
+  error is half the difference, permanently.
+
+**The failure mode is the point.** A clock problem does not usually look like a clock problem. It
+looks like audio that is fine for an hour and then starts clicking, or a stream that drifts out of
+sync overnight and is fine again after a restart. That is why the clock is the first thing to
+check when a system is intermittently wrong, and the last thing anyone actually checks.
+
+**The two roles to be able to name.** The **grandmaster** is elected, automatically, by the Best
+Master Clock algorithm comparing advertised quality. If nobody is configured to win, the election
+can be won by whatever cheap device happens to boot first, and it will be re-run whenever that
+device is unplugged. On a show, **you choose the grandmaster and you lock it.**
+
 ### AES67 and interoperability
 
 Honest, short, no marketing.
@@ -207,6 +251,84 @@ Practical guidance to give them plainly: NDI is enormously useful and is used co
 industry, and it is not automatically the right choice for a show critical main screen feed
 unless the network was designed for it. Know which of those two situations you are in.
 
+### Inside ST 2110, and the one idea worth stealing from it
+
+Even if you never touch a broadcast plant, ST 2110 contains one idea that changes how you think
+about a video signal.
+
+**It separates the essences.** An SDI cable carries video, audio and ancillary data braided into
+one stream, so everything travels together and everything is routed together. ST 2110 sends them
+as **separate multicast flows**: video on one, each audio group on another, ancillary data on a
+third. A monitor that only needs the picture subscribes to the picture. A device that only needs
+the timecode takes 40 kbit/s instead of 2.5 Gbit/s.
+
+The cost is that the parts can now arrive separately, which is why PTP is not optional here: the
+only thing holding the picture and the sound together is that both are timestamped against the
+same clock. **Take away the shared clock and you have not got a video system, you have got three
+unrelated streams.**
+
+| Part of the family | What it does |
+|--------------------|--------------|
+| ST 2110-20 | uncompressed video |
+| ST 2110-30 | uncompressed audio, which is AES67 |
+| ST 2110-40 | ancillary data, including timecode |
+| ST 2110-22 | compressed video, usually JPEG XS, for when 2.5 Gbit/s a stream is too much |
+| ST 2059 | the PTP profile that makes all of the above agree |
+
+**ST 2022-7, seamless protection.** Send the same stream twice, down two physically separate
+networks, and let the receiver rebuild from whichever packets arrive. Lose a switch and the
+picture does not flinch, because the other copy was already there. This is the one redundancy
+scheme in this module that survives a failure with **no visible glitch at all**, and the reason it
+can is that it never had to detect the failure or switch anything.
+
+That is worth carrying into every system you design, at any budget: **the fastest failover is the
+one that already happened.**
+
+### Visually lossless, and what that phrase is doing
+
+Between "uncompressed" and "H.264" sits a category the industry calls **visually lossless**, or
+mezzanine compression: JPEG XS, TICO, and the intra frame codecs from Class 2 wearing a different
+hat. Roughly 4:1 to 10:1, intra frame only, sub frame latency, and designed so that repeated
+encode and decode passes do not accumulate visible damage.
+
+It is not lossless. It is lossy compression tuned so that the loss lands below what the eye finds
+on normal picture content at normal viewing distance, which means it can still be provoked: fine
+coloured text, hard saturated edges, noise. The phrase is an engineering claim about typical
+material, not a guarantee, and knowing that is the difference between using it well and being
+surprised by it once.
+
+### The LED wall pipeline, end to end
+
+An LED wall is not a screen you plug into. It is a chain, and every link can be the one that is
+wrong.
+
+```
+content file  →  media server canvas  →  output  →  processor  →  receiving cards  →  panels
+```
+
+- **The canvas** is the total pixel area the server is producing. A 6 m by 3 m wall at 3.9 mm pitch
+  is about 1,536 by 768 pixels, which is not a standard raster, so somebody has to decide how a
+  1920 by 1080 file is placed on it. That decision is a creative one and it is usually made by
+  accident.
+- **The processor** takes a normal video output and maps rectangles of it onto panels. If the
+  mapping is wrong the wall shows the right picture in the wrong order, which looks like a fault
+  in the content and is not.
+- **Receiving cards** sit behind groups of panels. One dead card takes out its group, which is why
+  a wall fails in rectangles rather than in pixels.
+- **Scan rate and refresh rate are different numbers.** Refresh rate is how many times a second the
+  wall redraws, often 1,920 Hz or 3,840 Hz on a wall meant for camera. Scan rate is how the driver
+  multiplexes rows, and it is why a cheap wall photographs badly even at a high refresh number.
+
+**And this is where Class 4 comes back.** The panels dim by PWM, exactly like the fixtures, so the
+same shutter arithmetic applies: a camera whose exposure catches only a few refresh cycles records
+bands. Ask for the wall's refresh rate before the shoot, not after, and test with **the actual
+camera at the actual shutter**.
+
+**Low level grey scale** is the other thing that separates a good wall from a cheap one. Near
+black, a wall runs out of PWM steps in the same way an 8 bit dimmer runs out at the bottom of a
+fade, so dark content posterises into blocks. It is the identical failure as the fade to black in
+Class 4, one department along, and you now know both the cause and the word for it.
+
 ### The pixel pipeline
 
 Trace it on the board, left to right, and name the failure at every stage. This diagram is the
@@ -259,6 +381,95 @@ and PTP increasingly does both jobs. Draw that parallel explicitly, it consolida
 
 ---
 
+### The latency budget, added up honestly
+
+Every box in the chain costs time. None of them is unreasonable on its own, they all add, and the
+total is what the performer feels and what the audience sees against the picture.
+
+<!--anim:latency-budget-->
+
+The two numbers worth carrying in your head:
+
+| Threshold | What happens |
+|-----------|--------------|
+| about **10 ms** electrical | a performer on in-ear monitors starts to feel their own voice arriving late, and compensates by backing off the microphone |
+| about **40 ms** | lip sync becomes visible: the sound and the mouth have separated |
+
+Three things follow, and they are the whole of latency management.
+
+1. **The buffer is almost always the biggest single lever**, and plugins are the second. Both are
+   choices somebody made, usually while the room was empty and quiet.
+2. **Constant latency can be compensated. Variation cannot.** A system that always takes 12 ms is
+   better than one that averages 6 ms and occasionally spikes to 20. This is the jitter argument
+   from Class 1, arriving with numbers attached.
+3. **The audience is not comparing you to zero.** Sound has always taken about 3 ms per metre, so a
+   listener 20 m back has been hearing a 58 ms delay all their life without complaint. That is why
+   a delay tower works, and it is why the electrical budget matters more than the total.
+
+**Where video and audio disagree.** A video processor that takes two frames is spending 80 ms at
+25 fps, which is already past the lip sync threshold on its own. The fix is not to make the video
+faster, it is to **delay the audio to match**, deliberately, with a measured number rather than by
+ear. Measuring it is a commissioning task, and it belongs in the paperwork.
+
+### Designing the network the media has to cross
+
+Everything in Class 3 was about making a network work. This is about making one that can carry a
+show, which is a different question, and it comes down to three numbers you can work out on paper
+before anybody buys anything.
+
+**1. Add up what has to cross each link, at peak.** Not the average. The moment when every camera
+is live, every screen is fed and somebody is transferring content.
+
+```
+16 channels of Dante, 48 kHz 24 bit    16 × 1.152 Mbit/s   ≈    18 Mbit/s
+4 full NDI HD feeds                     4 × 140 Mbit/s     ≈   560 Mbit/s
+12 universes of sACN                   12 × 0.25 Mbit/s    ≈     3 Mbit/s
+1 uncompressed HD feed                                     ≈ 2,500 Mbit/s
+                                                             ------------
+                                                             ≈ 3,081 Mbit/s
+```
+
+**2. Compare it to the link, then halve your answer.** A 1 Gbit link does not carry 1 Gbit of show
+traffic. Design to about **60 to 70 percent** of a link's rated speed and you have room for
+bursts, for retransmission, for the thing nobody told you about, and for the file copy that will
+happen whatever the policy says. The example above needs 10 Gbit, and not marginally.
+
+**3. Look at the uplinks, not the ports.** A 48 port gigabit switch with two 10 Gbit uplinks can
+have 48 Gbit arriving and 20 Gbit leaving. That ratio is **oversubscription**, and it is fine for
+an office and fatal for media, because the traffic that gets dropped when an uplink saturates is
+whatever arrived at the wrong microsecond, which is exactly your clock and your audio.
+
+| Shape | What it gives you | What it costs |
+|-------|------------------|---------------|
+| One switch, everything on it | simplest thing that works, no uplink to oversubscribe | a single point of failure, and a hard limit on size |
+| Star: edge switches to one core | tidy cabling, familiar | the core is now the whole show; uplinks must be sized properly |
+| Two independent networks, primary and secondary | survives a switch, and is what Dante and ST 2022-7 expect | twice the hardware, twice the discipline, and it must be tested |
+
+**Multicast is the sharpest edge here.** A single uncompressed video flow arriving at a switch with
+no IGMP snooping is sent to every port, so a 2.5 Gbit/s stream lands on the 1 Gbit port that a
+lighting node is using and takes the lighting down. The failure appears in a department that has
+nothing to do with the change that caused it, which is why this is the fault that takes longest to
+find and why Class 3 spent so long on it.
+
+### What you leave behind
+
+The last thing a system does is get handed over, and this part is graded in the exam because it is
+the part that gets skipped.
+
+**A system nobody can operate without you is not finished.** Neither is one nobody can fix at
+19:45 when you are on a plane. The test is simple and unforgiving: could a competent person who
+has never seen this rig restore it from your paperwork?
+
+Three things make that true, and they take an afternoon:
+
+- **Labels that match the drawing.** Every one, both ends, in the same scheme the documentation
+  uses. A label that says something different from the paperwork is worse than no label.
+- **Addresses written down somewhere other than in the devices.** The IP schedule, the DMX patch,
+  the universe map, the PTP grandmaster. When a node is replaced at short notice, this is the
+  document that decides whether it takes four minutes or forty.
+- **A one page "if it breaks" sheet.** Not the manual. The three things that go wrong most often on
+  this specific rig, and what to do about each, in the order to try them.
+
 ## Block C: Designing for failure, and the paperwork
 
 ### The single point of failure audit
@@ -279,6 +490,9 @@ Sort every answer into three columns:
 Then apply the audit to something concrete, ideally the venue from session 2. Ten minutes with
 the class calling out components. It goes better than it sounds, because everyone has an opinion
 about what would be worst.
+
+<!--anim:spof-map-->
+
 
 ### Redundancy patterns
 
@@ -331,6 +545,44 @@ Non negotiables to give them as habits, not policies:
 - Change the default password on every managed switch and every node. Write it in the handover
   pack, not on a sticky note on the rack.
 - Know who has remote access and be able to revoke it.
+
+### Commissioning: proving it works before the client does
+
+A system that has never been tested under load has not been tested. Commissioning is the
+difference between "we built it" and "we know what it does", and it is a written procedure, not a
+feeling.
+
+**Test the failure, not the success.** Everybody tests that the show plays. Almost nobody tests
+what happens when the thing they installed for redundancy is actually needed, which is how a
+venue discovers that the backup switch was never patched, or that the secondary playback machine
+has last week's content on it. **A redundant path nobody has ever cut over to is a theory.**
+
+A minimum commissioning list for a small show system:
+
+| Test | How you know it passed |
+|------|------------------------|
+| Pull the primary network cable, mid playback | the show continues; write down how long the gap was |
+| Pull the primary power feed | the same, and note what needed a manual restart |
+| Run every output at full level for twenty minutes | nothing thermally throttles, nothing drifts |
+| Copy a large file across the show network during a cue | the cue is unaffected, which is the QoS and VLAN design being proved |
+| Measure end to end latency, audio and video | a number written on the paperwork, not an impression |
+| Restart every device in turn | it comes back on its own, with the right address, without a laptop |
+| Leave it running overnight, then look at it | clock still locked, no memory creep, no dropped nodes |
+
+**Write down what normal looks like.** Record the healthy state while it is healthy: switch port
+counts, PTP offset, the media server's frame rate, the temperature. During a show, "is this
+number bad" is unanswerable unless somebody wrote down what the number was on a good day.
+
+### Monitoring during the show
+
+Two rules, and neither is technical.
+
+**Watch the thing that fails slowly.** Sudden failures announce themselves. The ones that hurt are
+gradual: a clock drifting, a drive filling, a fan dying, an interface retrying. Put those on a
+screen that somebody actually looks at.
+
+**Alarms that nobody acts on are worse than no alarms**, because they train the room to ignore the
+screen. Fewer alerts, each with an owner and an action, beats a dashboard nobody reads.
 
 ### The documentation set
 

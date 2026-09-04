@@ -660,3 +660,114 @@ register('chroma', (host) => {
   }
   update();
 });
+
+// ============================================================================
+// Class 1 anchor: trace one signal, end to end, in your own department
+// ============================================================================
+
+const CHAINS = {
+  audio: {
+    label: 'A voice',
+    steps: [
+      ['Performer', 'air pressure, analogue', 'media'],
+      ['Microphone', 'a voltage that looks like the sound', 'media'],
+      ['Preamp and A to D', 'now it is numbers, 48,000 a second', 'media'],
+      ['Network, Dante', 'numbers in packets, sharing a cable', 'media'],
+      ['Console', 'arithmetic on the numbers, in a buffer', 'media'],
+      ['Network again', 'back out to the amplifier', 'media'],
+      ['D to A and amplifier', 'numbers become a voltage again', 'media'],
+      ['Loudspeaker', 'a voltage becomes air pressure', 'media'],
+      ['The seat, 20 m back', '58 ms of air nobody complains about', 'media'],
+    ],
+    clock: 'Word clock or PTP, holding every converter to the same instant',
+    control: 'The operator moving a fader, and the desk telling the amplifier about it',
+  },
+  light: {
+    label: 'A lighting cue',
+    steps: [
+      ['Operator presses GO', 'one event, once', 'control'],
+      ['Console', 'works out a level for every channel, 44 times a second', 'control'],
+      ['sACN over the network', 'a number per slot, repeated forever', 'control'],
+      ['Gateway or node', 'packets become DMX on a cable', 'control'],
+      ['Fixture', 'reads the slots at its address', 'control'],
+      ['Dimmer curve', 'the number becomes a target brightness', 'control'],
+      ['PWM driver', 'switching, thousands of times a second', 'control'],
+      ['LED', 'photons, at last', 'control'],
+      ['The stage', 'and only now is it a design decision', 'control'],
+    ],
+    clock: 'None required. This is why lighting survives a network that video cannot.',
+    control: 'The whole chain is control. That is what makes it state rather than events.',
+  },
+  video: {
+    label: 'A video cue',
+    steps: [
+      ['Content file', 'bytes on a disk, compressed', 'media'],
+      ['Media server, decode', 'bytes become a raster in memory', 'media'],
+      ['Composite and render', 'layers, effects, a canvas', 'media'],
+      ['Output, SDI or NDI', 'a stream with a deadline every 40 ms', 'media'],
+      ['Network or cable', 'sharing with everything else', 'media'],
+      ['Processor', 'maps the canvas onto panels', 'media'],
+      ['Receiving cards', 'each drives its group of panels', 'media'],
+      ['Panels, PWM', 'switching, like the fixtures', 'media'],
+      ['The wall', 'and the camera, which does not average', 'media'],
+    ],
+    clock: 'Genlock or PTP, so frames change at the same instant everywhere',
+    control: 'The cue that started it, and the timecode that may be driving it',
+  },
+};
+
+register('signal-chain', (host) => {
+  let key = 'audio', step = 0, acc = 0;
+  const { controls, stage, setNote } = figure(host, {
+    title: 'Trace one signal, all the way',
+    sub: 'Pick your department. Every arrow is a place it can go wrong, and every one of them is on the syllabus.',
+    note: '&nbsp;',
+  });
+
+  let cv;
+  cv = canvas(stage, {
+    height: 320,
+    animated: true,
+    controls,
+    draw(g, w, hgt, t, dt) {
+      const p = palette();
+      const c = CHAINS[key];
+      acc += dt;
+      if (acc > 1.5) { acc = 0; step = (step + 1) % c.steps.length; paint(); }
+
+      const W = Math.min(560, w - 24), ox = (w - W) / 2;
+      const n = c.steps.length;
+      const rowH = 26, oy = 24;
+
+      c.steps.forEach(([name, what, flow], i) => {
+        const y = oy + i * rowH;
+        const on = i === step, past = i < step;
+        const col = flow === 'control' ? p.amber : p.cyan;
+        if (i) line(g, ox + 12, y - rowH + 8, ox + 12, y - 6, { color: alpha(col, past || on ? 0.8 : 0.25), lw: 2 });
+        g.fillStyle = on ? col : alpha(col, past ? 0.6 : 0.2);
+        g.beginPath(); g.arc(ox + 12, y, on ? 6 : 4, 0, 7); g.fill();
+        label(g, name, ox + 30, y, { color: on ? p.ink : (past ? p.ink2 : p.muted), size: 12, weight: on ? 700 : 500 });
+        label(g, what, ox + 200, y, { color: on ? col : p.muted, size: 11 });
+      });
+
+      const fy = oy + n * rowH + 12;
+      line(g, ox, fy - 6, ox + W, fy - 6, { color: p.line, lw: 1 });
+      g.fillStyle = p.green; g.fillRect(ox, fy + 6, 10, 10);
+      label(g, `clock: ${c.clock}`, ox + 17, fy + 11, { color: p.muted, size: 11 });
+      g.fillStyle = p.amber; g.fillRect(ox, fy + 28, 10, 10);
+      label(g, `control: ${c.control}`, ox + 17, fy + 33, { color: p.muted, size: 11 });
+    },
+  });
+
+  function paint() {
+    const c = CHAINS[key];
+    const [name, what] = c.steps[step];
+    setNote(`<b>${name}.</b> ${what.charAt(0).toUpperCase() + what.slice(1)}. Ask the three questions here: <b>what is it</b> at this point, <b>where is it going</b> next, and <b>what is its deadline</b>? If you can answer those at every stage of your own chain, you can diagnose it, and that is the whole of this module.`);
+  }
+
+  controls.append(
+    choice('Department', Object.entries(CHAINS).map(([k, v]) => [k, v.label]), { value: 'audio', on: (v) => { key = v; step = 0; acc = 0; paint(); cv.once(); } }).node,
+    button('Next stage ›', () => { step = (step + 1) % CHAINS[key].steps.length; acc = 0; paint(); cv.once(); }).node
+  );
+  paint();
+});

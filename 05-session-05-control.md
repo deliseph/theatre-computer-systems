@@ -52,8 +52,15 @@ By the end of this session a student can:
 3. Explain the relationship between DMX, Art-Net and sACN, and choose between them.
 4. Calculate universe requirements for a pixel based lighting rig.
 5. Choose appropriately between OSC, MIDI, MSC, serial and contact closure for a given trigger.
-6. Explain what timecode is for and why a large show is built on it.
-7. Build, measure and document a working cross department trigger chain.
+6. Explain what timecode is for and why a large show is built on it, and describe how LTC survives
+   being recorded, played back at the wrong level and run backwards.
+7. Explain what a dimmer curve does, why square law is the usual default, and where 8 bit dimming
+   runs out.
+8. Explain how an LED dims, and predict when a camera will see banding.
+9. Read a fixture personality, calculate a patch, and identify an address overlap from its symptom.
+10. Choose between HTP and LTP for a given channel, and say what each one costs.
+11. Explain tracking against cue only, and predict where an edit will appear.
+12. Build, measure and document a working cross department trigger chain.
 
 ---
 
@@ -178,12 +185,188 @@ So a full DMX universe updates about **44 times per second, at best.** Consequen
   no faster gear.
 - Some devices transmit fewer slots to go faster. This is legal and it is a real technique.
 
+### Dimming: what a level actually does
+
+A DMX value is a request. Between the number and the photons sits a **curve**, and the curve
+decides how the fade feels. This matters because your eye is not linear: its response to light is
+roughly a cube root, so a lamp emitting half its light looks about three quarters as bright.
+
+Send that through a **linear** curve and the top half of the fader does almost nothing you can
+see, while everything happens in the bottom third. A slow fade to black sits still, then falls off
+a cliff. Send it through a **square law** curve, where output is the square of the fader, and the
+squaring almost exactly cancels the cube root in your eye. Fader position and apparent brightness
+now move together, which is why square law is the default on most consoles.
+
+<!--anim:dim-curve-->
+
+| Curve | What it does | When you want it |
+|-------|-------------|------------------|
+| Linear | output equals the level | measuring, calibrating, driving something that is not a lamp |
+| Square law | output is the level squared | almost always. Position matches perception. |
+| S curve | slow at both ends | when a fade should arrive and settle rather than land |
+| Tungsten emulation | adds thermal lag and a warm tail | matching LED to a tungsten rig, or faking the feel of one |
+
+**Then the resolution problem.** An 8 bit dimmer has 256 levels. At the top of a fade one step is
+a fraction of a percent and invisible. At the bottom, one step is a large share of what is left,
+and the square law makes it worse by squaring an already small number. So a fade that is smooth
+for four seconds comes apart in the last half second, **always in the same place**.
+
+<!--anim:dim-resolution-->
+
+16 bit dimming puts 256 intermediate levels between every one of those steps. That is the entire
+reason a fixture offers a fine channel, and the reason a designer asking for a five second fade to
+black on an 8 bit rig is going to be disappointed by something that is nobody's fault.
+
+### How an LED actually dims, and why the camera sees it
+
+**An LED does not dim.** A filament dims, because you can feed it less power and it glows less. An
+LED run at reduced current shifts colour, so instead it is switched fully on and fully off, very
+fast, and left on for a fraction of each cycle. That fraction is the level. This is **PWM**, pulse
+width modulation, and it is the same trick as everything else in this module: a smooth quantity
+turned into a rate.
+
+Your eye averages it and sees a steady dimmer level. A camera shutter does not average, it
+**samples**, and if the exposure is short enough to catch only a few PWM cycles, each frame lands
+on a different amount of on time. With a rolling shutter, where each row of the sensor starts a
+fraction later than the one above, every row catches a different slice, and you get **bands**.
+
+<!--anim:pwm-flicker-->
+
+Nothing is broken when this happens. The fixture is doing exactly what it was told. The fix is one
+of three things: raise the PWM frequency in the fixture menu, slow the shutter, or use a fixture
+whose PWM rate is high enough that any realistic shutter averages hundreds of cycles. That last one
+is what "flicker free" on a spec sheet means, and it is worth checking against **the actual camera
+at the actual shutter**, because it will look fine on the monitor in the room and show up on the
+broadcast feed.
+
+### A fixture personality, and the footprint
+
+A fixture reads the slot at its address and a run of slots after it. How many, and what each one
+means, is the **personality** or **mode**, and it is decided by the fixture, not by the desk.
+
+A modest moving head might use eight:
+
+| Offset | Channel | What one byte buys |
+|--------|---------|--------------------|
+| +0 | Pan coarse | 256 positions across 540 degrees |
+| +1 | Pan fine | 256 steps between each of those |
+| +2 | Tilt coarse | 256 positions across 270 degrees |
+| +3 | Tilt fine | the same again |
+| +4 | Dimmer | 0 to full |
+| +5 | Strobe | a byte carved into ranges: off, speed, random, pulse |
+| +6 | Colour | a wheel, also carved into ranges |
+| +7 | Gobo | the same |
+
+<!--anim:fixture-channels-->
+
+Two things follow, and both cause real faults.
+
+**16 bit position.** Coarse times 256 plus fine gives 65,536 positions instead of 256. One step of
+coarse on a long throw is a visible jump, so a slow pan on 8 bit stutters. Two slots buy movement
+that arrives smoothly, which is the same argument as 16 bit dimming, one department along.
+
+**Ranges inside a byte.** Strobe, colour and gobo pack a whole behaviour into one value using
+bands. The same DMX value means different things on two fixtures, so the manual's channel chart is
+not optional reading.
+
+### Patching arithmetic
+
+Patching is addition, and the mistake is always the same one.
+
+```
+next address  =  this address  +  this fixture's footprint
+```
+
+<!--anim:dmx-patch-->
+
+When two fixtures overlap, both read the same numbers and both obey them. The symptom is a light
+that half works: right colour, wrong movement, or a fixture that flickers whenever a completely
+different one moves. Nothing on the desk shows it, because as far as the desk is concerned the
+patch is fine.
+
+The version that catches people out is subtler. The footprint comes from the fixture's **mode**,
+so someone changing a mode in a fixture menu changes the footprint without touching the patch, and
+a rig that was clean this morning has overlaps this afternoon. **Leave gaps when you patch.** They
+cost nothing and they save an hour.
+
 ### RDM
 
 One paragraph. **Remote Device Management** adds a return path over the same cable, so a
 controller can discover fixtures, read and set their addresses, and read status like lamp hours
 and temperature. It is bidirectional DMX. It requires RDM capable splitters, which is why it
 often does not work in a venue that has RDM capable fixtures.
+
+### Effects, which are not programmed one cue at a time
+
+A rig that appears to be doing something complicated is usually doing something very simple to
+every fixture at a different moment. An effect engine holds three numbers:
+
+- a **shape**, a curve over one cycle: sine, ramp, step, triangle
+- a **rate**, how many cycles per second
+- a **spread**, how the offsets are distributed across the selected fixtures
+
+<!--anim:effect-engine-->
+
+Nothing moves. Twelve lamps fade at twelve different phases of the same curve, and your eye reads
+travel. **Spread is the control that matters artistically**, because it decides whether the rig
+reads as one gesture or as movement along a line, and the shape barely changes that.
+
+Two practical consequences. **An effect is state, not events**, so it keeps running when the
+network stops, which is the Class 1 point about state protocols arriving in a useful place. And an
+effect running on top of a cue is a second source claiming the same channels, so everything in the
+next section applies to it.
+
+### When two sources want the same channel
+
+A show network usually has more than one thing capable of writing to a universe: the main console,
+a backup, a media server doing pixel mapping, a house desk somebody forgot about. When two of them
+claim the same slot, something has to decide, and there are only two rules.
+
+<!--anim:htp-ltp-->
+
+**HTP, highest takes precedence.** The bigger number wins. Nobody can black out a channel somebody
+else is holding up, which is why this is the traditional rule for dimmers and why it is safe. The
+cost is that you cannot take a light *out* while another source is holding it, so a busking desk
+left at 30 percent puts a quiet floor under the whole show and every blackout has a glow in it.
+
+**LTP, latest takes precedence.** Whoever moved last owns it. This is necessary for anything that
+is not a quantity: the highest of red and blue is not a colour, and the highest of two pan
+positions is not a position. So moving lights are LTP and dimmers are usually HTP, often inside the
+same desk. The cost is that a stray source can steal a channel and nothing in the numbers tells you
+which one did it.
+
+**On a network this stops being theoretical.** Art-Net and sACN both allow several senders on one
+universe. sACN has a **priority** field, 0 to 200, so a backup console can sit on the same universe
+at lower priority and take over cleanly when the main one stops sending. Art-Net has no such field,
+which is why an Art-Net rig with two senders is decided by whichever packet arrived most recently,
+and why two people can each be certain the rig is theirs.
+
+### Cues, and the idea that confuses everybody once
+
+A **cue** is not a picture of the stage. It is a set of changes plus a set of times, and the times
+are the part people forget: a fade time, sometimes a separate one for up and down, a delay before
+it starts, and sometimes a follow that fires the next cue automatically.
+
+The confusing part is what a cue stores.
+
+<!--anim:cue-tracking-->
+
+**Tracking.** A cue only records the channels it changes. Anything it does not mention keeps doing
+whatever it was doing. Change a wash in cue 12 and the change runs forward through every later cue
+that never mentions that wash. This is the point rather than a fault: on a show with four hundred
+cues, you want to change the warm wash once.
+
+**Cue only.** Every cue stores a complete state, so an edit stays exactly where you put it.
+Predictable, and much more work.
+
+Almost every professional console is tracking, and almost every first year student is surprised
+once, in a technical rehearsal, when a note in cue 12 turns up in cue 40. Knowing the word
+**tracking** is what turns that from a mystery into a setting.
+
+**The related trap.** "Blocking" a cue means deliberately recording a hard value into every channel
+so that nothing tracks through it, usually to protect an act break. A show with blocks everywhere
+has thrown away the reason to use tracking, and a show with none can have a note from act one
+reappear in act three.
 
 ### Getting DMX onto the network
 
@@ -257,6 +440,20 @@ count, node port count and processing. Bandwidth is not the enemy here. Configur
   flexibility looks like a promise it does not keep.
 - It is event based. A lost OSC message is a cue that did not happen.
 
+**OSC in audio, specifically.** Most current digital mixing desks accept OSC, and this is how a
+sound department automates itself without a show control system: a playback machine sends
+`/ch/03/mix/on 1` before a cue and the channel is open before the actor speaks. Two patterns cover
+almost all of it:
+
+| Pattern | Example | Why |
+|---------|---------|-----|
+| A playback application drives the desk | QLab or Reaper sends OSC to the console at a cue | one operator, one GO, no missed unmute |
+| The desk drives something else | a scene recall sends OSC to a media server | the audio desk is already the thing being operated |
+
+**The thing to check before promising it:** whether the desk's OSC implementation is *receive
+only*, and whether it needs a specific port and a specific enable switch buried in a setup menu.
+Both are common, both are in the manual, and neither is discoverable by guessing.
+
 ### MIDI, and MSC
 
 - **MIDI** is from 1983, musical instrument origin, still everywhere. Notes, control changes,
@@ -266,6 +463,48 @@ count, node port count and processing. Bandwidth is not the enemy here. Configur
   STOP, RESUME, addressed to a device type and a cue number. Designed for exactly our industry.
   It is old, limited and still in use because it is dependable.
 - **MTC (MIDI Time Code)** carries timecode over MIDI. See below.
+
+**What you will actually do with MIDI.** Three jobs, and they cover nearly everything:
+
+| Job | Message | Note |
+|-----|---------|------|
+| Fire a cue in another department | a **note on**, one note per cue | crude, instant, universally supported |
+| Recall a scene or a snapshot | a **program change** | what most desks and processors expect |
+| Move a fader or a parameter live | a **control change**, value 0 to 127 | 7 bit, so 128 steps, which is coarse for a fade |
+
+Two practical points and then move on. MIDI over a **DIN cable** is a physical link between two
+boxes and has no addressing beyond its 16 channels; **MIDI over USB** is a connection to one
+computer and dies when that computer sleeps. And a control change carries **7 bits**, so a fade
+driven by MIDI has 128 steps, which is the resolution argument from the lighting block arriving in
+a different department.
+
+### PJLink, and controlling a projector
+
+Projectors are the department that everyone forgets is on the network until somebody has to turn
+forty of them off.
+
+**PJLink** is a manufacturer independent standard for basic projector control over IP, on **TCP
+port 4352**. It is deliberately small: power on and off, input select, mute, and a status query
+that reports lamp hours, errors and whether the thing is actually on.
+
+```
+%1POWR 1        turn on
+%1POWR 0        turn off
+%1INPT 31       select input
+%1POWR ?        are you on?
+```
+
+That is roughly the whole vocabulary, and that is the point. It is supported across brands, so one
+control system can look after a mixed rig, and it is the reason a venue can shut down its projectors
+from one button rather than forty remote controls.
+
+**What it does not do.** Anything creative. Lens control, geometry, blending and colour are all
+manufacturer specific, over the manufacturer's own protocol or a web interface. PJLink is
+housekeeping, and housekeeping is worth automating: **a projector that reports its own lamp hours
+and its own error state is a projector that tells you it is dying before the show does.**
+
+*Depth on any of these protocols belongs in the show networking and control elective. At year one
+the useful knowledge is which one to reach for, and what each one refuses to do.*
 
 ### Serial, RS-232 and RS-422
 

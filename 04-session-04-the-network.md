@@ -572,6 +572,42 @@ Any scheme works. Having one, writing it down, and labelling the devices to matc
 .200 up        temporary and test devices
 ```
 
+### Public and private addresses, and the other thing called "public network"
+
+Two different things share the word, and mixing them up wastes an evening.
+
+**Private address ranges.** Three blocks of the address space are reserved for private use. They
+are not routed on the internet, anybody can use them, and every show network you will ever build
+lives in one of them.
+
+| Range | Prefix | Where you meet it |
+|-------|--------|-------------------|
+| `10.0.0.0` to `10.255.255.255` | /8 | large rigs, and the traditional Art-Net alternative |
+| `172.16.0.0` to `172.31.255.255` | /12 | corporate networks, and rarely on a show |
+| `192.168.0.0` to `192.168.255.255` | /16 | small rigs, almost every venue, every home router |
+| `2.0.0.0` to `2.255.255.255` | /8 | not private. Art-Net's legacy default, and a real public range. |
+
+That last row is the one worth flagging. Art-Net historically used `2.x.x.x`, which is genuinely
+public address space belonging to somebody else. On an isolated show network it works and nobody
+notices. Plug that network into a venue's internet connection and traffic for real hosts vanishes
+into your rig. **Use `10.x.x.x` for new Art-Net work.**
+
+**A public address** is one that is unique on the internet, issued by a provider. A show device
+never needs one. If a device on your rig has a public address, someone has connected the show
+network to the building network, and that is a decision, not an accident.
+
+**NAT**, in one sentence: a router swaps private addresses for its one public address on the way
+out and swaps them back on the way in, which is why a whole venue shares one internet address.
+Year one needs to know the word and that it is why inbound connections do not just work.
+
+**And the other meaning.** Windows separately labels each network it joins **Public** or
+**Private**, and this has nothing to do with addresses: it is a firewall setting. On Public,
+Windows blocks most inbound traffic, so your machine can reach the console and the console cannot
+reach your machine. A network you have just plugged into is Public by default.
+
+> "It works one way" on a Windows machine is the network profile until proven otherwise. It is on
+> the [field card](/field), with the click path.
+
 ### Static, DHCP, and the address that means failure
 
 - **DHCP** hands out addresses automatically. The address can change.

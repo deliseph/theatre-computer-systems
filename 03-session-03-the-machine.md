@@ -66,7 +66,11 @@ By the end of this session a student can:
 8. Explain the luma and chroma weights, and why video compression is built on them.
 9. Describe the steps a lossy codec runs, name the two that lose information and the one that is
    the quality setting, and explain why confetti destroys a bitrate that a locked-off shot does not.
-10. Write a defensible specification for a show computer against a production brief.
+10. Explain additive mixing, state the difference between hitting a colour and rendering one, and
+    say what gamma, gamut and colour temperature each control.
+11. Explain why a fixture and a display store colour identically, and why two sources at the same
+    colour temperature can still fail to match.
+12. Write a defensible specification for a show computer against a production brief.
 
 ---
 
@@ -140,6 +144,37 @@ This is where the most useful teaching is, because it is where the numbers bite.
 - **On a show:** dropped frames, tearing, an output that will not come up at the right resolution.
 - Note that output count is a hard physical limit. A card with four outputs drives four displays,
   and no amount of software solves that. This is why media servers look the way they do.
+
+**The card you choose is a specification decision, not a preference.** Year one needs four facts.
+
+| | NVIDIA | AMD |
+|---|--------|-----|
+| Displays per card | typically **4** on GeForce and most professional cards | up to **6** on cards built for it, via Eyefinity |
+| Combining outputs into one desktop | Mosaic, on the professional cards only | Eyefinity, including on consumer cards |
+| Compute for plugins and effects | **CUDA**, plus OpenCL | OpenCL, ROCm and HIP. No CUDA. |
+| Hardware encode and decode | NVENC and NVDEC | VCN, through AMF |
+| Framelock and genlock across cards | an add-in sync card on the professional line | far less common |
+
+**1. Count the outputs first.** Four heads is the usual ceiling on one card, and six is the reason
+AMD still turns up on wall jobs. More outputs than that means more cards, or an output that feeds a
+processor which then fans out to panels, which is what most large walls actually do.
+
+**2. CUDA is the reason NVIDIA is the industry default**, not raw speed. A great deal of media
+server and post production code is written against CUDA, so on AMD it either falls back to a slower
+path or does not run. **Check what your software actually accelerates before buying the faster
+card**, because "faster" and "supported" are different questions.
+
+**3. Hardware decode is separate from render.** A card with a dedicated decoder plays many
+compressed layers without touching the shaders. It is also why a codec the decoder does not support
+falls back to the CPU and the layer count collapses. This is the Class 2 codec conversation arriving
+as a purchasing decision.
+
+**4. If frames must change at the same instant across several outputs, you need genlock**, and that
+means a sync card and the professional line. Without it, outputs tear against each other on a wall
+and nobody can work out why the seam moves.
+
+*The deeper version of this belongs in the show networking and control elective. At year one, the
+four facts above are what stops a bad specification.*
 
 ### I/O and the bus
 
@@ -247,6 +282,20 @@ The conceptual heart of the module. Everything is sampling and quantising, in ev
 
 <!--anim:sampling-->
 
+**Where the 6.02 dB comes from, and why it matters.** Rounding each measurement to the nearest
+available level leaves an error. That error is a signal in its own right, and it is audible: it is
+the noise floor. Each extra bit halves the size of the step and therefore buys about 6 dB more
+range, which is the whole of the arithmetic.
+
+The part worth understanding is the *character* of the error rather than its size. At low bit
+depths the error follows the shape of the signal, so it is not hiss, it is **distortion**
+correlated with the music, and your ear finds that immediately. Adding a small amount of noise
+before rounding, called **dither**, breaks the correlation: the error gets very slightly larger
+and sounds much better, because patterned distortion has become plain hiss. This is why a
+mastering engineer dithers on the way down to 16 bit instead of simply truncating.
+
+<!--anim:quantise-noise-->
+
 ### Video
 
 - **Raster.** Width times height in pixels.
@@ -297,8 +346,8 @@ that out loud is worth more than either explanation on its own.
   be stored at lower resolution. **This is the whole basis of chroma subsampling**, which comes
   next, and it is why 4:2:2 is a video term and not an audio one.
 - **Gamma** is the non-linear curve between the stored number and the light actually emitted. It
-  exists because our eyes are non-linear too. One sentence at year one. It is the reason two
-  systems can agree on the numbers and disagree about the picture.
+  exists because our eyes are non-linear too. It is the reason two systems can agree on the
+  numbers and disagree about the picture, and it gets its own section below.
 
 The arithmetic students should reach for automatically:
 
@@ -306,6 +355,93 @@ The arithmetic students should reach for automatically:
 one frame  =  width × height × channels × bit depth ÷ 8   bytes
 data rate  =  that × frame rate
 ```
+
+### Colour: what the three numbers actually mean
+
+This section belongs to all three specialisms at once. A pixel on an LED wall and a colour
+mixing fixture store colour the same way, and both are lying to you in the same useful manner.
+
+**Additive mixing.** Red plus green makes yellow. Nothing in the beam is yellow: two lights land
+in the same place and the eye reports one colour. That single fact is what makes a video wall and
+an LED fixture possible, and it is why lighting and video colour are the same subject.
+
+<!--anim:additive-mixing-->
+
+Three bytes, one colour. On a screen those bytes are a pixel. On a rig they are three DMX slots.
+The arithmetic does not change when the job title does.
+
+#### The number is a target, not a description
+
+Here is where it stops being tidy. Two fixtures can hit the same colour target and light the same
+costume differently, because **hitting a colour and rendering a colour are different problems.**
+
+Your eye has three cone types, so any colour you can see can be matched by some mixture of three
+primaries. That is why three emitters are enough to fool you. But an *object* does not have three
+cone types: it reflects whatever wavelengths it happens to reflect. Point a three spike RGB source
+at a red costume that only reflects between 610 and 660 nm, and if the red emitter peaks at 632 nm
+with nothing either side, there is very little there to reflect. The costume goes dull, the skin
+goes waxy, and the meter still says you are on target.
+
+<!--anim:spectral-render-->
+
+That is what a **CRI** or **TM-30** number on a spec sheet is trying to describe, and it is what
+the extra emitters in a seven colour fixture are buying. It is also the honest answer to "why does
+this cost four times as much".
+
+#### Gamma, properly
+
+Your eye's response to light is roughly a cube root: doubling the photons does not double the
+sensation. So if you spend your code values evenly across *light*, you waste most of them at the
+bright end, where the eye cannot tell two neighbours apart, and starve the dark end, where it can.
+
+**Gamma encoding spends the codes where the perception is.** Store the roughly cube rooted value,
+and 8 bits is enough for a picture that looks smooth. Store light linearly in 8 bits and the
+shadows band.
+
+<!--anim:gamma-curve-->
+
+Two consequences you will meet within a year:
+
+- A file, a camera and a screen must agree on the curve. When they do not, the picture comes out
+  washed out or with crushed blacks, and nothing is broken. **A gamma mismatch is a paperwork
+  failure, not an equipment failure.**
+- The same reasoning is why lighting consoles have dimmer curves. Same eye, same maths, different
+  department. That comes back in Class 4.
+
+#### Gamut: the triangle inside the horseshoe
+
+Every colour a human can see fits inside one horseshoe shaped region. Every colour a given display
+can make fits inside the **triangle** formed by its three primaries. Those are not the same shape,
+and the triangle is much smaller than people expect.
+
+| Gamut | Where you meet it |
+|-------|------------------|
+| Rec.709 / sRGB | ordinary HD video, most computer content, most projectors |
+| DCI-P3 | cinema, better LED walls, recent phones and displays |
+| Rec.2020 | the UHD container standard. No display fills it. |
+
+<!--anim:colour-gamut-->
+
+When a colour sits outside the triangle, something has to give, and the choice is a look: clip it
+to the edge of the triangle and it goes flat, or squeeze the whole picture inwards and every other
+colour shifts with it. Somebody should be making that choice deliberately. This is also the honest
+reason a lighting designer's deep congo blue never photographs: the camera is not failing, it is
+telling you what fits.
+
+#### Colour temperature, and the axis nobody prints on the fixture
+
+Kelvin says where a white sits along one curve, the **Planckian locus**, running from warm
+tungsten through daylight to cold blue. It does not say how far *off* that curve you are sitting.
+
+That second axis is green against magenta, sometimes labelled Duv, sometimes just a plus green
+control. **Two fixtures can agree on 5,600 K and still not match**, because one of them is sitting
+green of the curve. Correcting it with the Kelvin control makes it worse. It needs the green
+control, or a minus green gel.
+
+<!--anim:colour-temperature-->
+
+> White is not a colour. It is an agreement, and a white balance is where the agreement is set.
+
 
 ### The formats you will actually meet, by domain
 

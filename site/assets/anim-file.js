@@ -924,3 +924,102 @@ register('ltc-encode', (host) => {
   );
   upd();
 });
+
+// ============================================================================
+// 8. Quantisation noise: what bit depth is actually buying
+// ============================================================================
+
+register('quantise-noise', (host) => {
+  const st = { bits: 4, dither: false, gain: 1 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'Where the noise floor comes from',
+    sub: 'The staircase is what gets stored. The gap between the staircase and the wave is the error, and that error is a sound.',
+    note: '&nbsp;',
+  });
+
+  // A deterministic pseudo random source, so the picture is stable frame to
+  // frame and the dither is visible as a property rather than as flicker.
+  const rnd = (i) => { const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return (x - Math.floor(x)) - 0.5; };
+  const wave = (u) => 0.8 * Math.sin(u * Math.PI * 2 * 1.5) + 0.14 * Math.sin(u * Math.PI * 2 * 6.5);
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 300,
+    animated: false,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(560, w - 24), ox = (w - W) / 2;
+      const N = 150;
+      const levels = 2 ** st.bits;
+      const step = 2 / (levels - 1);
+
+      const H = 118, oy = 20, mid = oy + H / 2;
+      line(g, ox, mid, ox + W, mid, { color: alpha(p.line, 0.8), lw: 1 });
+
+      // Every available level, drawn, because the whole point is that there
+      // are only this many places a sample is allowed to land.
+      if (levels <= 64) {
+        for (let k = 0; k < levels; k++) {
+          const v = -1 + k * step;
+          line(g, ox, mid - (v * H) / 2, ox + W, mid - (v * H) / 2, { color: alpha(p.line, 0.5), lw: 0.6 });
+        }
+      }
+
+      g.beginPath();
+      for (let i = 0; i <= W; i++) g.lineTo(ox + i, mid - (wave(i / W) * H) / 2);
+      g.strokeStyle = alpha(p.cyan, 0.75); g.lineWidth = 1.6; g.stroke();
+
+      const errs = [];
+      g.beginPath();
+      for (let i = 0; i < N; i++) {
+        const u = i / N;
+        const v = wave(u);
+        const d = st.dither ? rnd(i) * step : 0;
+        const q = clamp(Math.round((v + d + 1) / step) * step - 1, -1, 1);
+        errs.push(q - v);
+        const x0 = ox + u * W, x1 = ox + ((i + 1) / N) * W, y = mid - (q * H) / 2;
+        if (!i) g.moveTo(x0, y); else g.lineTo(x0, y);
+        g.lineTo(x1, y);
+      }
+      g.strokeStyle = p.amber; g.lineWidth = 1.6; g.stroke();
+
+      // The error, on its own, amplified so it can be seen.
+      const ey = oy + H + 54, eh = 56;
+      box(g, ox, ey - eh / 2, W, eh, { fill: alpha(p.raised, 0.5), stroke: p.line, r: 4, lw: 1 });
+      line(g, ox, ey, ox + W, ey, { color: alpha(p.line, 0.8), lw: 1 });
+      g.beginPath();
+      errs.forEach((e, i) => {
+        const x = ox + (i / N) * W;
+        const y = ey - clamp((e / step) * 2, -1, 1) * (eh / 2 - 3);
+        if (!i) g.moveTo(x, y); else g.lineTo(x, y);
+      });
+      g.strokeStyle = p.red; g.lineWidth = 1.4; g.stroke();
+      label(g, 'the error, on its own. This is the noise floor, and you can hear it.',
+        ox, ey - eh / 2 - 10, { color: p.red, size: 11.5, weight: 600 });
+
+      // The numbers.
+      const rms = Math.sqrt(errs.reduce((a, e) => a + e * e, 0) / errs.length);
+      const snr = 20 * Math.log10(1 / (rms || 1e-9));
+      let y = ey + eh / 2 + 26;
+      const row = (a, b, c) => { label(g, a, ox, y, { color: p.muted, size: 11, ...mono });
+        label(g, b, ox + 210, y, { color: c, size: 12.5, weight: 650, ...mono }); y += 22; };
+      row('levels available', `${levels.toLocaleString('en-US')}  (${st.bits} bit)`, p.ink2);
+      row('theoretical dynamic range', `${(st.bits * 6.02).toFixed(1)} dB   (6.02 dB per bit)`, p.cyan);
+      row('measured here', `${snr.toFixed(1)} dB below full scale`, p.amber);
+      fit(y + 12);
+    },
+  });
+
+  const upd = () => {
+    if (st.bits <= 4) setNote(`<b>${2 ** st.bits} levels for the whole waveform.</b> Look at the error trace: it follows the shape of the signal, so it is not hiss, it is <b>distortion</b>. That is the ugly kind of error, because it is correlated with the music and your ear finds it immediately.`);
+    else if (st.dither) setNote('<b>Dither on.</b> A tiny amount of noise added <i>before</i> rounding breaks the correlation between the error and the signal. The measured error is very slightly larger, and it sounds much better, because it has turned patterned distortion into plain hiss. This is why a mastering engineer dithers on the way down to 16 bit rather than just truncating.');
+    else setNote(`At ${st.bits} bit the error is small and mostly uncorrelated, so it behaves like hiss sitting about ${(st.bits * 6.02).toFixed(0)} dB below full scale. That figure is where <b>6.02 dB per bit</b> comes from: each extra bit halves the step and buys another 6 dB of range. 24 bit is not for hearing 144 dB, it is headroom so that a quiet take recorded conservatively still has room above the floor.`);
+  };
+
+  controls.append(
+    slider('Bit depth', { min: 2, max: 10, step: 1, value: 4, fmt: (v) => `${v} bit`, on: (v) => { st.bits = v; upd(); } }).node,
+    toggle('Dither before rounding', { on: (v) => { st.dither = v; upd(); } }).node
+  );
+  upd();
+});

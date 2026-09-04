@@ -119,7 +119,26 @@ export function figure(host, { title, sub, note }) {
   const noteEl = note ? h(`<p class="anim-note">${note}</p>`) : null;
   if (noteEl) fig.append(noteEl);
   host.append(fig);
-  return { fig, controls, stage, setNote: (t) => { if (noteEl) noteEl.innerHTML = t; } };
+
+  // A still figure has no animation loop to pick up a state change, so any
+  // control that moves must trigger a repaint. Doing it here means every
+  // figure gets it, rather than each one remembering to ask.
+  let queued = false;
+  const repaint = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      for (const c of fig.querySelectorAll('canvas.anim-canvas')) {
+        if (c.__anim && !c.__anim.running) c.__anim.once();
+      }
+    });
+  };
+  controls.addEventListener('input', repaint);
+  controls.addEventListener('change', repaint);
+  controls.addEventListener('click', repaint);
+
+  return { fig, controls, stage, repaint, setNote: (t) => { if (noteEl) noteEl.innerHTML = t; } };
 }
 
 /**
@@ -157,6 +176,7 @@ export function canvas(stage, { height = 260, draw, animated = true, controls })
     get w() { return w; },
     get h() { return hgt; },
     get t() { return t; },
+    get running() { return running; },
     start() { if (running) return; running = true; t0 = 0; raf = requestAnimationFrame(frame); },
     stop() { running = false; cancelAnimationFrame(raf); },
     once() { g.clearRect(0, 0, w, hgt); draw(g, w, hgt, t, 0); },
@@ -188,6 +208,7 @@ export function canvas(stage, { height = 260, draw, animated = true, controls })
     controls.append(b.node);
   }
   api.once();
+  cv.__anim = api;          // so figure() can repaint a still canvas on input
   return api;
 }
 

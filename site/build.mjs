@@ -175,6 +175,7 @@ const NAV_RESOURCES = [
   ['/practice', 'Practice', 'Drills, sorting, fault diagnosis'],
   ['/glossary', 'Glossary', 'Bilingual term list'],
   ['/numbers', 'Numbers', 'The reference card'],
+  ['/field', 'Field card', 'Commands and settings'],
 ];
 
 function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] }) {
@@ -273,6 +274,7 @@ const addSearch = (route, title, section, text) => {
 
 const studyMd = renumber(read('study-guide.md'));
 const numbersMd = renumber(read('numbers-to-know.md'));
+const fieldMd = renumber(read('field-commands.md'));
 const glossaryMd = read('glossary.md');
 
 const drillCards = [];
@@ -497,6 +499,22 @@ write('/numbers', shell({
 }));
 for (const b of numbersDoc.blocks) addSearch('/numbers', 'Numbers to know', b.title, b.html);
 
+const fieldDoc = render(fieldMd.replace(/^#\s+[^\n]*\n/, ''));
+write('/field', shell({
+  title: 'The field card',
+  desc: 'Commands and settings, for when somebody is waiting.',
+  body: `<article class="doc"><header class="page-head">
+      <p class="eyebrow"><span class="pill">Reference</span><span class="pill pill-q">Examinable</span></p>
+      <h1>The field card</h1>
+      <p class="strap">The commands you type and the settings you change while standing in a venue.
+      Learn the first six by heart. Look the rest up.</p>
+      <div class="head-actions"><button class="btn btn-primary" onclick="window.print()">Print this card</button>
+      <a class="btn" href="/class/3">Where this is taught</a></div>
+    </header>${fieldDoc.html}</article>`,
+  active: '/field',
+}));
+for (const b of fieldDoc.blocks) addSearch('/field', 'The field card', b.title, b.html);
+
 const glossDoc = render(glossaryMd.replace(/^#\s+[^\n]*\n/, '').replace(/^##\s+Computer Systems[^\n]*\n/m, ''));
 write('/glossary', shell({
   title: 'Glossary',
@@ -700,7 +718,7 @@ fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex
 fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
 fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify(STAMP, null, 2));
 
-const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers',
+const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field',
   ...CLASSES.map((c) => `/class/${c.n}`), ...CLASSES.map((c) => `/teach/${c.n}`)];
 
 console.log(`Built ${routes.length} routes`);

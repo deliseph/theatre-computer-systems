@@ -293,7 +293,16 @@ register('vlan-switch', (host) => {
             : `Broadcast from port ${state.from + 1} on VLAN ${ports[state.from]} reached ${got} other port${got === 1 ? '' : 's'}. Every other port never saw it.`,
           w / 2, 218, { color: p.ink2, size: 12, align: 'center' });
       } else {
-        label(g, 'Click a port to reassign it to the selected VLAN, then press Send.',
+        // Show which VLAN a click will paint. Without this the chooser looks
+      // like a control that does nothing until you also click a port.
+      {
+        const bv = VLANS.find((v) => v.id === state.paint) || VLANS[0];
+        const bc = p[bv.c] || p.amber;
+        const bx = ox + 4, by = 74;
+        g.fillStyle = bc; g.fillRect(bx, by - 6, 11, 11);
+        label(g, `assigning: VLAN ${bv.id} ${bv.name}`, bx + 17, by, { color: p.ink2, size: 10.5, weight: 600 });
+      }
+      label(g, 'Click a port to reassign it to the selected VLAN, then press Send.',
           w / 2, 218, { color: p.muted, size: 12, align: 'center' });
       }
       label(g, `Trunk to the next switch: ${state.trunk ? 'tagged 10, 20, 30' : 'none'}`,

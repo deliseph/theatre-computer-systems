@@ -43,7 +43,10 @@ By the end of this session a student can:
 2. Sort any piece of show traffic into one of the Four Flows and say what would break it.
 3. Explain the difference between latency and jitter, using a physical example.
 4. Estimate whether a given signal will fit down a given wire, to an order of magnitude.
-5. Say what they will be assessed on and what to bring to the production visit.
+5. Trace one signal in their own specialism end to end, naming what it is, where it goes and what
+   its deadline is at every stage.
+6. State the six working habits of productive diagnosis and explain why each one exists.
+7. Say what they will be assessed on and what to bring to the production visit.
 
 ---
 
@@ -277,6 +280,70 @@ because thunder always follows lightning. Sound arriving *before* picture is unn
 catch it three times faster. This is a good example of a technical spec derived from perception.
 
 ---
+
+## Block 4b: Trace one signal, all the way
+
+This is the exercise the rest of the module refers back to, and it is worth doing properly rather
+than describing.
+
+**The three questions.** At any point in any chain, in any department, there are only three
+questions worth asking, and you will still be asking them in twenty years:
+
+1. **What is it here?** Air pressure, a voltage, a number in memory, a packet on a wire, a photon.
+2. **Where is it going next?** Which box, over what, sharing with what else.
+3. **What is its deadline?** Now, this frame, this millisecond, or whenever.
+
+Answer those at every stage of a chain and you can diagnose it. Fail to answer them and you are
+guessing, and guessing on a show is expensive.
+
+<!--anim:signal-chain-->
+
+### The exercise, in pairs, on paper
+
+Take the chain from **your own** specialism. Draw it as boxes and arrows, left to right, from the
+human at one end to the human at the other. For every arrow, write:
+
+- what the signal *is* at that point
+- which of the Four Flows it belongs to
+- what happens if that arrow is cut
+
+Fifteen minutes, then swap with a pair from a different department and find one thing in their
+chain that they have not accounted for. You will find one. Everybody does, and it is almost always
+the clock, because clock is the flow with no obvious cable.
+
+**What the exercise is really teaching.** Nobody can hold a whole show system in their head. What
+you can hold is a method for walking one, and the method is the three questions. That is why this
+appears in Class 1 rather than at the end.
+
+## Block 4c: How to be wrong productively
+
+Everything after this class is diagnosis, so the working method is worth stating on day one. These
+are not study tips. They are how the job is done, and a first year who works this way is more
+useful in a technical rehearsal than a third year who does not.
+
+**Evidence beats intuition, every time.** "It should work" has never fixed anything. Look at the
+link light, read the address, check the number. Your intuition is a way of choosing what to look
+at, not a substitute for looking.
+
+**Change one thing.** Change two and you have learned nothing, whichever way it goes. This is
+slower for the first ten minutes and much faster for the next hour.
+
+**Write down what you changed.** A show has fifty people touching it. Half of all "mystery faults"
+are somebody else's undocumented fix from yesterday, and the other half are your own.
+
+**Halve the problem.** Do not walk a chain end to end. Test in the middle: is it working here? Now
+you have eliminated half the system with one measurement. Six of those and you are inside any rig
+in the world.
+
+**Know what normal looks like.** Record the healthy state while it is healthy. "Is 12 percent bad?"
+is unanswerable unless somebody wrote down what it was on a good day.
+
+**Say what you actually know.** On headset, "the node has no link light" is useful and "the network
+is broken" is not, because the second one is a conclusion and it might be wrong. Report the
+observation, then your best guess, and mark which is which.
+
+> These six lines are examined. They are also the shortest description of the difference between
+> somebody who is trusted with a rig and somebody who is not.
 
 ## Block 5: Course map and expectations
 

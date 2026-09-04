@@ -1,7 +1,7 @@
 # Glossary 詞彙表
 ## Computer Systems & Networking for Theatre and Entertainment Arts
 
-Roughly 260 terms, grouped by domain. Bring it to every session. Add to it.
+Roughly 312 terms, grouped by domain. Bring it to every session. Add to it.
 
 **On the Chinese:** 繁中 terms follow Taiwan convention, with common Hong Kong variants noted
 where they differ meaningfully. Learn the **English** term as the operational one, because every
@@ -108,6 +108,20 @@ headset.
 | GOP | 影像群組 | Group of pictures. The repeating I, P, B pattern. A long GOP is small and slow to seek in. |
 | CBR / VBR | 固定／變動位元率 | Constant bitrate spends the same data every second. Variable bitrate spends it where the picture is hard. VBR looks better; CBR is predictable on a fixed link. |
 | Bitrate | 位元率 | Data per second of video. It does not depend on resolution alone: confetti at 1080p can cost more than a locked-off shot at 4K. |
+| Additive mixing | 加色混合 | Adding light of different colours. Red plus green is yellow, and nothing in the beam is yellow: the mixing happens in your eye. |
+| Gamma | 伽瑪 | The non-linear curve between a stored number and the light emitted. It spends the code values where your eye is sensitive, which is why 8 bit is enough. |
+| Gamut | 色域 | The set of colours a device can actually reproduce: the triangle formed by its three primaries. Much smaller than what you can see. |
+| Rec.709 / DCI-P3 / Rec.2020 | 色域標準 | Three gamut standards, small to large. HD video, cinema and better walls, and the UHD container that no display fills. |
+| Out of gamut | 超出色域 | A colour the source recorded and the display cannot make. Something has to give, and which way it gives is a look. |
+| Chromaticity diagram | 色度圖 | The horseshoe. Every visible colour inside it, every display a triangle within it. |
+| Colour temperature | 色溫 | Where a white sits along the Planckian locus, in kelvin. It says nothing about how far off that curve you are. |
+| Duv / green-magenta | 綠洋紅偏差 | The second axis of white. Two fixtures can share a colour temperature and still not match, and the Kelvin control will not fix it. |
+| CRI / TM-30 | 演色性指數 | How faithfully a source renders the colour of the objects it lights. A separate question from hitting a colour target. |
+| Spectral power distribution | 光譜功率分布 | What is actually in the beam, wavelength by wavelength. Three narrow spikes and a continuous spectrum can look the same and render differently. |
+| CUDA | CUDA | NVIDIA's compute platform. The reason NVIDIA is the industry default: a lot of media software is written against it and has no AMD equivalent. |
+| NVENC / NVDEC | 硬體編解碼 | Dedicated encode and decode hardware on the GPU. A codec it does not support falls back to the CPU and the layer count collapses. |
+| Mosaic / Eyefinity | 多輸出合併 | Combining several physical outputs into one desktop. NVIDIA's is professional cards only; AMD's works on consumer cards. |
+| Head count | 輸出數量 | How many displays one card can drive. Usually four on NVIDIA, up to six on AMD. A hard physical limit, not a setting. |
 | Canvas | 畫布 | The total pixel area a media server is producing across all outputs. |
 
 ---
@@ -116,6 +130,16 @@ headset.
 
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
+| Private address range | 私有位址範圍 | `10.x`, `172.16` to `172.31`, `192.168.x`. Not routed on the internet. Every show network lives in one. |
+| Public address | 公有位址 | Unique on the internet, issued by a provider. A show device never needs one. |
+| NAT | 網路位址轉換 | A router swapping private addresses for its one public address and back. Why inbound connections do not just work. |
+| APIPA / 169.254.x.x | 自動私有位址 | The address a machine gives itself when DHCP got silence. No server, no link, or the wrong VLAN. |
+| Network profile (Windows) | 網路類型 | Windows labelling a network Public or Private. A firewall setting, nothing to do with addresses, and the usual cause of "it works one way". |
+| ipconfig / ifconfig | 位址查詢指令 | The first thing you run. Read the address, the mask, the gateway and the MAC, in that order. |
+| ping | 連通測試 | Asks "are you there" at layer 3. Proves reachability, never correctness. |
+| tracert / traceroute | 路徑追蹤 | Every router between you and the target. On a show network the answer should be one hop. |
+| arp -a | ARP 表查詢 | IP to MAC, locally. The fastest way to find a duplicate IP. |
+| netstat | 連線狀態查詢 | What is listening and what is connected. Finds two applications fighting over one port. |
 | Network | 網路（港：網絡） | Devices sharing a communication medium. The show backbone. |
 | Packet | 封包 | The **layer 3** unit, carrying IP addresses. Survives unchanged across every hop of a journey. |
 | Protocol | 通訊協定 | The agreed rules for a conversation. sACN, Dante, NDI and OSC are all protocols. |
@@ -188,6 +212,21 @@ headset.
 
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
+| Dimmer curve | 調光曲線 | The shape between the DMX value and the light. Square law makes fader position match apparent brightness; linear does not. |
+| Square law | 平方律 | Output is the level squared. It cancels the cube root in your eye's response, which is why it is the usual default. |
+| 16 bit / fine channel | 十六位元細調通道 | A coarse byte plus a fine byte, 65,536 steps. What stops a slow fade or a slow pan from stepping. |
+| PWM | 脈寬調變 | How an LED dims: switched fully on and off, fast, on for part of each cycle. Your eye averages it; a camera shutter samples it. |
+| Flicker free | 無頻閃 | A PWM rate high enough that any realistic camera shutter averages hundreds of cycles. Test it with the actual camera. |
+| Personality / mode | 通道模式 | How many slots a fixture uses and what each one means. Decided by the fixture, not by the desk, and it changes the footprint. |
+| Footprint | 佔用通道數 | How many consecutive slots a fixture occupies. Next address equals this address plus this footprint. |
+| HTP | 最高優先 | Highest takes precedence. The larger value wins. Safe for dimmers, and it means you cannot take a channel out. |
+| LTP | 最後優先 | Latest takes precedence. Necessary for anything that is not a quantity: the highest of two colours is not a colour. |
+| Priority (sACN) | 優先權 | A field, 0 to 200, letting a backup sender sit on the same universe and take over cleanly. Art-Net has no equivalent. |
+| Tracking | 追蹤式記錄 | A cue records only what it changes, so an edit runs forward into later cues that never mention that channel. |
+| Cue only | 單一場記錄 | Every cue stores a complete state. Predictable, and much more work. |
+| Block cue | 阻斷場 | A cue with hard values everywhere, so nothing tracks through it. Useful at an act break, damaging everywhere else. |
+| Effect engine | 效果引擎 | A shape, a rate and a spread. Nothing moves: fixtures fade at different phases of one curve and your eye reads travel. |
+| Spread / offset | 展開／相位偏移 | How the offsets are distributed across the selected fixtures. The control that decides whether an effect reads as one gesture or as travel. |
 | DMX512 | DMX512 | The lighting control standard since 1986. 250 kbit/s, 512 slots, still the last hop to almost every fixture. |
 | DMX512-A | DMX512-A | The current revision, published by ESTA as E1.11. |
 | RS-485 | RS-485 | The balanced electrical standard DMX runs on. Why it survives long runs in a noisy building. |
@@ -225,6 +264,9 @@ headset.
 
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
+| PJLink | PJLink | A manufacturer independent projector control standard over TCP 4352. Power, input, mute, status. Housekeeping, not creative control. |
+| Program change | 音色切換訊息 | The MIDI message most desks and processors expect for recalling a scene or snapshot. |
+| Control change | 控制器變化訊息 | A MIDI parameter message, 7 bit, so 128 steps. Coarse for a fade. |
 | Show control | 演出控制 | Making departments act together from one trigger or one clock. |
 | State based | 狀態式 | The message says what the value **is**, and repeats constantly. A lost packet costs nothing. DMX, sACN. |
 | Event based | 事件式 | The message says what should **happen**, once. A lost packet costs you the cue. OSC, MIDI, GO. |
@@ -299,6 +341,16 @@ headset.
 
 | English | 繁中 | What it is, and why it matters |
 |---------|------|-------------------------------|
+| Grandmaster | 主時鐘 | The clock everything else follows. Elected automatically unless you choose it, and on a show you choose it. |
+| Boundary clock | 邊界時鐘 | A switch that terminates and regenerates PTP rather than passing it through. What makes timing survive a network. |
+| Transparent clock | 透明時鐘 | A switch that corrects each timing message for the time it spent inside. The other way to keep PTP honest. |
+| Path asymmetry | 路徑不對稱 | The two directions taking different times. PTP averages them, so the follower is wrong by half the difference and reports itself locked. |
+| Latency budget | 延遲預算 | The total of every stage in the chain. About 10 ms is where a performer on in-ears feels it, about 40 ms is where lip sync shows. |
+| Oversubscription | 超額訂閱 | More traffic able to arrive at a switch than can leave it. Fine for an office, fatal for media. |
+| ST 2022-7 | 無縫保護 | Send the same stream down two networks and rebuild from whichever packets arrive. The fastest failover is the one that already happened. |
+| Essence separation | 訊號分離 | ST 2110 sending video, audio and data as separate flows. Only the shared clock holds them together. |
+| Visually lossless | 視覺無損 | Lossy compression tuned so the loss lands below what the eye finds on normal content. A claim about typical material, not a guarantee. |
+| Commissioning | 系統驗收 | Proving the system works, in writing, before the client finds out. Test the failure, not the success. |
 | Single point of failure | 單點故障 | One thing that, if it fails, stops the show. Find them all, then decide about each. |
 | Failure mode | 故障模式 | The specific way something breaks, and what the audience then experiences. |
 | Failover | 故障切換 | Automatic changeover to a backup path. Only real if the backup is already running. |

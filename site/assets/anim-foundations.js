@@ -79,7 +79,7 @@ register('binary-counter', (host) => {
     note: '&nbsp;',
   });
 
-  let bits = [1, 1, 0, 0, 0, 0, 0, 0];
+  let bits = [1, 0, 1, 1, 0, 1, 0, 0];   // 180, deliberately not a legal mask octet
   const wrap = el('div', 'bitbox');
   const out = el('div');
   stage.append(wrap, out);

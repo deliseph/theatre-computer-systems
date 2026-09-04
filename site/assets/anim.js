@@ -9,6 +9,9 @@ import './anim-control.js';
 import './anim-media.js';
 import './anim-foundations.js';
 import './anim-file.js';
+import './anim-colour.js';
+import './anim-light.js';
+import './anim-systems.js';
 
 mountAll();
 mountVideos();
