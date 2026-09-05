@@ -75,7 +75,10 @@ export function grade(card, right, now = Date.now()) {
   const id = cardId(card);
   const prev = st[id] || { box: 0, seen: 0 };
   const box = right ? Math.min(INTERVALS.length - 1, prev.box + 1) : 0;
-  st[id] = { box, due: now + INTERVALS[box] * DAY, seen: (prev.seen || 0) + 1, last: now };
+  // miss is a running count of how often this card has been missed. It is what
+  // separates a card that needs another look from a card that was never taught.
+  st[id] = { box, due: now + INTERVALS[box] * DAY, seen: (prev.seen || 0) + 1, last: now,
+    miss: (prev.miss || 0) + (right ? 0 : 1) };
   write(st);
   return st[id];
 }

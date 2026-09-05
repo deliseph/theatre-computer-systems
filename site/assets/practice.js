@@ -352,6 +352,7 @@ async function mountDrill(root, classNum) {
   let deck = [], i = 0, shown = false, sessionRight = 0, sessionWrong = 0, finished = false;
   const missed = new Map();   // cardId -> misses in THIS sitting, never stored
   let tipOff = false;         // the student said "no, that is it"
+  let pointerFor = null;      // the card whose second miss earned a pointer
   const stat = getStat('drill');
 
   const pool = () => drillCards.filter((c) => filter === 'all' || c.tag === filter);
@@ -364,7 +365,7 @@ async function mountDrill(root, classNum) {
     if (mode === 'all') deck = shuffle(p);
     else if (mode === 'new') deck = shuffle(due(p).fresh).slice(0, 8);
     else deck = due(p).ready.slice(0, 20);
-    i = 0; shown = false; finished = false; sessionRight = 0; sessionWrong = 0;
+    i = 0; shown = false; pointerFor = null; finished = false; sessionRight = 0; sessionWrong = 0;
     missed.clear(); tipOff = false;
   };
 
@@ -444,12 +445,18 @@ async function mountDrill(root, classNum) {
         <div class="flash-tag">${card.tag}</div>
         <div class="flash-q">${card.q}</div>
         ${shown ? `<div class="flash-a">${card.a}</div>
-          <div class="chip-row" style="justify-content:center">
+          ${pointerFor ? `<div class="rv-where">
+            <span class="rv-where-s">This one has not landed yet. It is taught here:</span>
+            <a class="rv-where-l" href="${card.src.to}">${card.src.label} →</a></div>
+            <div class="chip-row" style="justify-content:center">
+              <button class="chip on" id="dr-next">Next card →</button></div>`
+          : `<div class="chip-row" style="justify-content:center">
             <button class="chip" data-g="miss">✗ Missed it</button>
-            <button class="chip on" data-g="got">✓ Got it</button></div>`
+            <button class="chip on" data-g="got">✓ Got it</button></div>`}`
         : `<div class="chip-row" style="justify-content:center;margin-top:18px">
             <button class="chip on" id="dr-show">Reveal the answer</button></div>`}
       </div>`;
+    if (pointerFor) $('#dr-next', box)?.focus({ preventScroll: true });
   };
 
   box.addEventListener('click', (e) => {
@@ -459,17 +466,25 @@ async function mountDrill(root, classNum) {
     if (m) { mode = m.dataset.m; build(); return paint(); }
     if (e.target.closest('[data-tip]')) { tipOff = true; return paint(); }
     if (e.target.closest('#dr-show')) { shown = true; return paint(); }
+    if (e.target.closest('#dr-next')) {
+      pointerFor = null; i++; shown = false;
+      if (i >= deck.length) finished = true;
+      return paint();
+    }
     const g = e.target.closest('[data-g]');
     if (g) {
       const right = g.dataset.g === 'got';
       right ? (stat.right++, sessionRight++) : (stat.wrong++, sessionWrong++);
       setStat('drill', stat);
-      gradeCard(deck[i], right);
+      const st = gradeCard(deck[i], right);
       if (!right) { const id = cardId(deck[i]); missed.set(id, (missed.get(id) || 0) + 1); }
       // A card you just missed is seen again before you leave, at the back of
       // the queue. Retrieval works when the second attempt is not immediate.
       if (!right && deck.length > 1) deck.push(deck[i]);
-      i++; shown = false;
+      // A second miss is not a card that needs repeating faster. It is a card
+      // that was never taught, or was taught and not followed, so say where.
+      if (!right && st.miss >= 2 && deck[i].src) { pointerFor = deck[i]; return paint(); }
+      i++; shown = false; pointerFor = null;
       if (i >= deck.length) finished = true;
       return paint();
     }
@@ -571,7 +586,7 @@ async function mountReady(root, classNum) {
         <div class="q-meta">${right} of ${items.length}</div>
         <p class="q-prompt">${ready ? 'You are ready for this class.' : 'Two things to do first.'}</p>
         ${gaps.length
-          ? `<p>Before you come in, fix these:</p><ul>${gaps.map((g) => `<li>${g}</li>`).join('')}</ul>`
+          ? `<p>Before you come in, fix these:</p><ul>${gaps.map((g) => `<li>${g.fix}${g.src ? ` <a class="rv-where-l" href="${g.src.to}">${g.src.label} →</a>` : ''}</li>`).join('')}</ul>`
           : '<p>Nothing outstanding. Bring the reference card and come in.</p>'}
         <div class="chip-row" style="margin:12px 0 0"><button class="chip on" id="rd-again">Try again</button></div>
       </div>`;
@@ -594,7 +609,7 @@ async function mountReady(root, classNum) {
     if (!btn) return;
     const q = items[i];
     const ok = +btn.dataset.n === q.c;
-    if (ok) right++; else gaps.push(q.fix);
+    if (ok) right++; else gaps.push(q);
 
     const card = $('.q-card', box);
     card.querySelectorAll('.opt').forEach((b) => {
@@ -603,7 +618,7 @@ async function mountReady(root, classNum) {
       else if (b === btn) b.classList.add('wrong');
     });
     card.append(h(`<div class="q-answer">
-      <p><b style="color:var(--${ok ? 'green' : 'red'})">${ok ? '✓ Yes' : '✗ Not quite'}</b>${ok ? '' : ` — ${q.fix}`}</p>
+      <p><b style="color:var(--${ok ? 'green' : 'red'})">${ok ? '✓ Yes' : '✗ Not quite'}</b>${ok ? '' : ` — ${q.fix}`}${!ok && q.src ? ` <a class="rv-where-l" href="${q.src.to}">${q.src.label} →</a>` : ''}</p>
       <div class="chip-row" style="margin:10px 0 0"><button class="chip on" id="rd-next">Next →</button></div></div>`));
     $('#rd-next', box).onclick = () => { i++; paint(); };
     $('#rd-next', box).focus({ preventScroll: true });

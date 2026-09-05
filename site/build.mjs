@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { render, esc, slugify } from './lib/markdown.mjs';
-import { flowCards, flowMeta, faultScenarios, selfTest, readiness } from './data/interactive.mjs';
+import { flowCards, flowMeta, faultScenarios, selfTest, readiness, taughtAt } from './data/interactive.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // Content lives one directory up in the repo (single source of truth). A
@@ -122,7 +122,10 @@ function twoColumnCards(md, tag) {
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
       .replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>');
-    cards.push({ q: md2html(cells[0]), a: md2html(cells[1]), tag });
+    // The key the taughtAt map is authored against: the tag plus the raw
+    // question text, with markdown punctuation stripped.
+    const key = `${tag}::${cells[0].replace(/[`*]/g, '').trim()}`;
+    cards.push({ q: md2html(cells[0]), a: md2html(cells[1]), tag, key });
   }
   return cards;
 }
@@ -265,10 +268,15 @@ ${scripts.map((s) => `<script src="${s}?v=${STAMP.commit}" type="module"></scrip
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 
+// Every page is kept so the cross-reference pass at the end can check that a
+// link a card promises actually lands somewhere.
+const PAGES = new Map();
+
 const write = (route, html) => {
   const dir = route === '/' ? OUT : path.join(OUT, route.replace(/^\//, ''));
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'index.html'), html);
+  PAGES.set(route, html);
 };
 
 const searchIndex = [];
@@ -628,7 +636,7 @@ write('/tools', shell({
   active: '/tools',
   scripts: ['/assets/tools.js'],
 }));
-for (const [id, title] of Object.entries(TOOL_TITLES)) addSearch(`/tools#${id}`, 'Tools', title, `${title} calculator with working shown`);
+for (const [id, title] of Object.entries(TOOL_TITLES)) addSearch(`/tools#tool-${id}`, 'Tools', title, `${title} calculator with working shown`);
 
 write('/practice', shell({
   title: 'Practice',
@@ -665,7 +673,7 @@ write('/foundations', shell({
       who has not met it spends Class 3 fighting the arithmetic instead of learning the network.</p>
       <div class="head-actions">
         <a class="btn btn-primary" href="/practice#drill">Drill the numbers</a>
-        <a class="btn" href="/tools#binhex">Open the binary tool</a>
+        <a class="btn" href="/tools#tool-binhex">Open the binary tool</a>
       </div>
     </header>${foundDoc.html}</article>`,
   active: '/foundations',
@@ -794,6 +802,92 @@ write('/', shell({
   scripts: ['/assets/practice.js'],
 }));
 
+// --- Where this is taught ---------------------------------------------------
+//
+// A card the student has now missed twice is not a card they need to see
+// again sooner. It is a card they were never taught, or were taught and did
+// not follow. So each drill card can carry the place the fact is taught, and
+// the build refuses to ship a link that does not land: every route, every id
+// and every figure name is checked here against the pages just generated.
+
+const LINKABLE = ['/class/1', '/class/2', '/class/3', '/class/4', '/class/5', '/foundations', '/lineage', '/numbers'];
+const PAGE_NAME = {
+  '/foundations': 'Foundations',
+  '/lineage': 'How we got here',
+  '/numbers': 'Numbers to know',
+  ...Object.fromEntries(CLASSES.map((c) => [`/class/${c.n}`, `Class ${c.n}`])),
+};
+
+// mountAll() removes a host whose figure was never registered, so a link to one
+// would land on nothing. Read the register calls rather than trusting the name.
+const REGISTERED = new Set();
+for (const f of fs.readdirSync(path.join(HERE, 'assets')).filter((n) => /^anim-.*\.js$/.test(n))) {
+  const src = fs.readFileSync(path.join(HERE, 'assets', f), 'utf8');
+  for (const m of src.matchAll(/register\('([a-z0-9-]+)'/g)) REGISTERED.add(m[1]);
+}
+
+const HEADINGS = new Map();
+for (const route of LINKABLE) {
+  const html = PAGES.get(route);
+  if (!html) throw new Error(`taught-at: no page built for ${route}`);
+  const list = [];
+  for (const m of html.matchAll(/<h([234]) id="([^"]+)"[^>]*>([\s\S]*?)<a class="anchor"/g)) {
+    list.push({
+      index: m.index,
+      id: m[2],
+      text: m[3].replace(/<span class="ext-badge">[\s\S]*?<\/span>/g, '')
+        .replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(),
+    });
+  }
+  HEADINGS.set(route, list);
+  // A repeated id would make the anchor ambiguous. /prepare is deliberately not
+  // linkable: it reprints each class's prep headings and repeats ids by design.
+  const ids = (html.match(/ id="[^"]+"/g) || []);
+  const seen = new Set();
+  for (const raw of ids) {
+    if (seen.has(raw)) throw new Error(`taught-at: ${route} repeats${raw}`);
+    seen.add(raw);
+  }
+}
+
+function resolve(route, id) {
+  if (!LINKABLE.includes(route)) throw new Error(`taught-at: ${route} is not linkable (id ${id})`);
+  const html = PAGES.get(route);
+  const at = html.indexOf(`id="${id}"`);
+  if (at < 0) throw new Error(`taught-at: ${route} has no id "${id}"`);
+  if (id.startsWith('fig-') && !REGISTERED.has(id.slice(4))) {
+    throw new Error(`taught-at: ${route}#${id} names a figure that is never registered`);
+  }
+  const list = HEADINGS.get(route);
+  const own = list.find((h) => h.id === id);
+  let label = own ? own.text : '';
+  if (!own) {
+    let best = null;
+    for (const h of list) { if (h.index < at) best = h; else break; }
+    if (!best) throw new Error(`taught-at: ${route}#${id} sits above every heading`);
+    label = best.text;
+  }
+  if (label.length > 58) label = `${label.slice(0, label.lastIndexOf(' ', 58)).trim()}…`;
+  return { to: `${route}#${id}`, label: `${PAGE_NAME[route]} · ${label}` };
+}
+
+let taughtHit = 0;
+const staleKeys = new Set(Object.keys(taughtAt));
+for (const c of drillCards) {
+  const t = taughtAt[c.key];
+  if (t) { c.src = resolve(t.route, t.id); taughtHit++; staleKeys.delete(c.key); }
+  delete c.key;
+}
+if (staleKeys.size) {
+  console.error(`! taught-at keys match no card: ${[...staleKeys].join(' | ')}`);
+  process.exitCode = 1;
+}
+for (const n of Object.keys(readiness)) {
+  for (const q of readiness[n]) {
+    if (q.to) { q.src = resolve(q.to.route, q.to.id); delete q.to; }
+  }
+}
+
 // --- Data and assets --------------------------------------------------------
 
 fs.mkdirSync(path.join(OUT, 'assets'), { recursive: true });
@@ -815,6 +909,7 @@ const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossa
 console.log(`Built ${routes.length} routes`);
 console.log(`  search entries : ${searchIndex.length}`);
 console.log(`  drill cards    : ${drillCards.length}`);
+console.log(`  taught-at      : ${taughtHit} of ${drillCards.length} drill cards`);
 console.log(`  glossary cards : ${glossCards.length}`);
 console.log(`  flow cards     : ${flowCards.length}`);
 console.log(`  fault cases    : ${faultScenarios.length}`);

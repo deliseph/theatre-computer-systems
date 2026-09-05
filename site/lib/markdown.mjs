@@ -136,7 +136,10 @@ export function render(md) {
     const anim = /^<!--\s*anim:([a-z0-9-]+)\s*-->$/.exec(line.trim());
     if (anim) {
       para();
-      out.push(`<div class="anim" data-anim="${anim[1]}"></div>`);
+      // The id is what makes a figure linkable from anywhere else on the site.
+      // figure() clears the host's innerHTML but never its attributes, so it
+      // survives mounting.
+      out.push(`<div class="anim" data-anim="${anim[1]}" id="fig-${anim[1]}"></div>`);
       i++;
       continue;
     }

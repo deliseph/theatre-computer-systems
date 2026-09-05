@@ -1082,6 +1082,9 @@ for (const node of document.querySelectorAll('[data-tool]')) {
   const fn = TOOLS[node.dataset.tool];
   if (!fn) continue;
   const head = node.querySelector('.tool-h');
-  if (head && !head.id) head.id = node.dataset.tool;
+  // Prefixed, because a tool sits on a class page next to the prose and a bare
+  // id collides with a heading slug: /class/2 had two "storage" and /class/4
+  // two "timecode", which made those anchors ambiguous.
+  if (head && !head.id) head.id = `tool-${node.dataset.tool}`;
   fn(node);
 }

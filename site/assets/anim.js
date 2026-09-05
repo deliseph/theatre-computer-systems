@@ -18,3 +18,11 @@ import './anim-sync.js';
 
 mountAll();
 mountVideos();
+
+// A link straight to a figure lands before the canvas has any height, so the
+// reader ends up a screen above the thing they asked for. app.js has already
+// opened the panel it lives in; this only corrects for the height it gains.
+if (location.hash.startsWith('#fig-')) {
+  const t = document.getElementById(location.hash.slice(1));
+  if (t) requestAnimationFrame(() => t.scrollIntoView({ block: 'center' }));
+}

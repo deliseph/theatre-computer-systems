@@ -963,6 +963,16 @@ body.teach-mode.answers-shown .anim-note.is-held .anim-note-key { display: none;
 .rv-done p { margin: 0 0 8px; color: var(--ink-2); }
 .rv-next { color: var(--muted) !important; font-size: 14px; }
 
+/* Where a fact is taught. A pointer, not a penalty: it appears on a second
+   miss, it is one link, and it never blocks the next card. */
+.rv-where { margin: 4px 0 14px; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; text-align: center; }
+.rv-where-s { font: 400 13px/1.5 var(--sans); color: var(--muted); }
+.rv-where-l { font: 500 14px/1.45 var(--sans); color: var(--amber); text-decoration: none;
+  border-bottom: 1px solid transparent; max-width: 34ch; }
+.rv-where-l:hover { border-bottom-color: var(--amber); }
+.q-answer .rv-where-l { display: inline; }
+
 /* The home strip: what to do next, not a score. */
 .next-up {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
