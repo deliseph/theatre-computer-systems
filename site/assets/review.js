@@ -47,13 +47,23 @@ export function due(cards, now = Date.now()) {
   return { fresh, ready: ready.map((r) => r.c) };
 }
 
-/** How many cards are waiting, split into new and returning. */
+/**
+ * How many cards are waiting, and what state the rest are in. A card you got
+ * right once is not "still landing"; only a card you missed the last time you
+ * saw it is.
+ */
 export function counts(cards, now = Date.now()) {
   const { fresh, ready } = due(cards, now);
   const st = read();
-  const learning = cards.filter((c) => { const s = st[cardId(c)]; return s && s.box <= 1; }).length;
-  const known = cards.filter((c) => { const s = st[cardId(c)]; return s && s.box >= 4; }).length;
-  return { fresh: fresh.length, ready: ready.length, learning, known, total: cards.length };
+  let landing = 0, started = 0, known = 0;
+  for (const c of cards) {
+    const s = st[cardId(c)];
+    if (!s) continue;              // never seen: counted in fresh
+    if (s.box === 0) landing++;    // missed the last time it was seen
+    else if (s.box >= 4) known++;  // the 21 and 60 day intervals
+    else started++;                // boxes 1 to 3
+  }
+  return { fresh: fresh.length, ready: ready.length, landing, started, known, total: cards.length };
 }
 
 /**

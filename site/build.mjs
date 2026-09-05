@@ -638,9 +638,10 @@ write('/practice', shell({
       particular needs twenty minutes a night for a week, not three hours the day before.</p>
       <p class="note"><b>The cards come back on their own.</b> A card you get right returns in a
       few days, then a week, then three. A card you miss comes back tomorrow, and again before you
-      leave. So a sitting is short and it <b>ends</b>: when nothing is due, the page says so and
-      you stop. Miss a week and nothing is lost or broken, there are simply more cards waiting.
-      None of it leaves your browser.</p>
+      leave. So a sitting is short and it <b>ends</b>: the due count goes to zero and the page says
+      so. New cards are never pushed at you, you start eight when you want them. Miss a week and
+      nothing is lost or broken, there are simply more cards waiting. None of it leaves your
+      browser.</p>
     </header>
     <div class="practice" data-practice="subnetdrill" data-class="3"><h3 class="tool-h" id="subnetdrill">Subnetting trainer</h3></div>
     <div class="practice" data-practice="faults" data-class="3"><h3 class="tool-h" id="faults">Fault diagnosis simulator</h3></div>

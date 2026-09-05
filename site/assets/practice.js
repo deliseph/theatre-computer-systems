@@ -5,7 +5,7 @@
 // anywhere, which is the point: a drill you are being marked on is a test, and
 // people stop taking risks on tests.
 
-import { due, counts, grade as gradeCard, nextDue, describeWhen } from './review.js';
+import { due, counts, grade as gradeCard, nextDue, describeWhen, cardId } from './review.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
@@ -19,14 +19,12 @@ const loadData = async () => (DATA ||= await (await fetch('/assets/data.json')).
 // --- Stat store -------------------------------------------------------------
 
 const statKey = (k) => `tcs-stat-${k}`;
-const getStat = (k) => { try { return JSON.parse(localStorage.getItem(statKey(k))) || { right: 0, wrong: 0, best: 0 }; } catch { return { right: 0, wrong: 0, best: 0 }; } };
+const getStat = (k) => { try { return JSON.parse(localStorage.getItem(statKey(k))) || { right: 0, wrong: 0 }; } catch { return { right: 0, wrong: 0 }; } };
 const setStat = (k, v) => { try { localStorage.setItem(statKey(k), JSON.stringify(v)); } catch { /* ignore */ } };
 
-const scorebar = (right, wrong, a, b, labels = ['streak', 'best']) => `<div class="scorebar">
+const scorebar = (right, wrong, extra = '') => `<div class="scorebar">
   <span class="score good">✓ ${right}</span>
-  <span class="score bad">✗ ${wrong}</span>
-  <span class="score">${labels[0]} ${a}</span>
-  <span class="score">${labels[1]} ${b}</span></div>`;
+  <span class="score bad">✗ ${wrong}</span>${extra}</div>`;
 
 // ============================================================================
 // IPv4 helpers, duplicated deliberately so practice works without tools.js
@@ -139,7 +137,7 @@ function mountSubnetTrainer(root) {
 
   const next = () => {
     q = makeSubnetQuestion();
-    box.innerHTML = scorebar(stat.right, stat.wrong, streak, stat.best) + `
+    box.innerHTML = scorebar(stat.right, stat.wrong, `<span class="score">in a row ${streak}</span>`) + `
       <div class="q-card">
         <div class="q-meta">${q.tag}</div>
         <p class="q-prompt">${q.prompt}</p>
@@ -158,7 +156,7 @@ function mountSubnetTrainer(root) {
   const grade = (value, gaveUp) => {
     const right = !gaveUp && q.check(value);
     if (gaveUp) { stat.wrong++; streak = 0; }
-    else if (right) { stat.right++; streak++; stat.best = Math.max(stat.best, streak); }
+    else if (right) { stat.right++; streak++; }
     else { stat.wrong++; streak = 0; }
     setStat('subnet', stat);
 
@@ -352,57 +350,96 @@ async function mountDrill(root, classNum) {
   // 'due' is the sitting that ends. 'all' is the deck, for the night before.
   let mode = 'due';
   let deck = [], i = 0, shown = false, sessionRight = 0, sessionWrong = 0, finished = false;
+  const missed = new Map();   // cardId -> misses in THIS sitting, never stored
+  let tipOff = false;         // the student said "no, that is it"
   const stat = getStat('drill');
 
   const pool = () => drillCards.filter((c) => filter === 'all' || c.tag === filter);
 
+  // 'due' is the sitting that ends, and it holds nothing but cards that have
+  // come back. New cards are their own mode so that taking on new material is a
+  // decision, not a debt that grows while you sleep.
   const build = () => {
     const p = pool();
-    if (mode === 'all') {
-      deck = shuffle(p);
-    } else {
-      // Cards that have come back first, then a few new ones, so a sitting is
-      // mostly revision with a little new ground. Capped, because a sitting
-      // that never ends is a cage.
-      const { fresh, ready } = due(p);
-      deck = [...ready.slice(0, 20), ...shuffle(fresh).slice(0, 8)];
-    }
+    if (mode === 'all') deck = shuffle(p);
+    else if (mode === 'new') deck = shuffle(due(p).fresh).slice(0, 8);
+    else deck = due(p).ready.slice(0, 20);
     i = 0; shown = false; finished = false; sessionRight = 0; sessionWrong = 0;
+    missed.clear(); tipOff = false;
   };
 
   const header = () => {
     const c = counts(pool());
+    const newN = Math.min(c.fresh, 8);
     return `<div class="chip-row">
         <button class="chip${filter === 'all' ? ' on' : ''}" data-t="all">All ${drillCards.length}</button>
         ${tags.map((t) => `<button class="chip${filter === t ? ' on' : ''}" data-t="${t}">${t}</button>`).join('')}
       </div>
       <div class="chip-row rv-modes">
         <button class="chip${mode === 'due' ? ' on' : ''}" data-m="due">Due now
-          ${c.ready + Math.min(c.fresh, 8) > 0 ? `<b class="rv-n">${c.ready + Math.min(c.fresh, 8)}</b>` : ''}</button>
+          ${c.ready > 0 ? `<b class="rv-n">${c.ready}</b>` : ''}</button>
+        ${newN > 0 ? `<button class="chip${mode === 'new' ? ' on' : ''}" data-m="new">Start ${newN} new</button>` : ''}
         <button class="chip${mode === 'all' ? ' on' : ''}" data-m="all">Whole deck</button>
-        <span class="rv-state">${c.known} known · ${c.learning} still landing · ${c.total - c.known - c.learning - c.fresh + c.fresh} in the deck</span>
+        <span class="rv-state">${c.known} settled · ${c.landing} to come back to · ${c.fresh} of ${c.total} not started</span>
       </div>`;
+  };
+
+  // Card fronts are build-time HTML, so a raw fragment inside a sentence reads
+  // badly and can run long.
+  const plain = (html) => {
+    const d = document.createElement('div'); d.innerHTML = html;
+    const t = d.textContent.trim();
+    return t.length > 60 ? `${t.slice(0, 59)}…` : t;
+  };
+
+  // At most one suggestion, and it is always refusable. The guards on the
+  // second branch are the anti-treadmill rules: it never follows a sitting of
+  // new cards, never appears while cards are still due, and never appears
+  // after a long sitting.
+  const suggestion = (c) => {
+    const twice = [...missed.entries()].find(([, n]) => n >= 2);
+    if (twice) {
+      const card = deck.find((d) => cardId(d) === twice[0]) || pool().find((d) => cardId(d) === twice[0]);
+      if (card) {
+        const n = /Class (\d)/.exec(card.tag || '')?.[1];
+        const href = n ? `/class/${n}/#tab=numbers` : '/numbers';
+        const what = n ? `The Class ${n} numbers card has it in full.` : 'The numbers card has it in full.';
+        const link = n ? `Open the Class ${n} numbers card` : 'Open the numbers card';
+        return `<div class="rv-tip"><p>Two misses tonight on “${plain(card.q)}”. ${what}</p>
+          <div class="chip-row"><a class="chip on" href="${href}">${link}</a>
+          <button class="chip" data-tip="no">No, that is it</button></div></div>`;
+      }
+    }
+    if (mode === 'due' && c.ready === 0 && c.fresh > 0 && sessionRight + sessionWrong < 12) {
+      return `<div class="rv-tip"><p>There are ${c.fresh} cards you have not started. Eight of them takes about four minutes.</p>
+        <div class="chip-row"><button class="chip on" data-m="new">Start 8 new</button>
+        <button class="chip" data-tip="no">No, that is it</button></div></div>`;
+    }
+    return '';
   };
 
   const paint = () => {
     const card = deck[i];
     if (finished || !card) {
       const c = counts(pool());
+      const graded = sessionRight + sessionWrong;
       const when = describeWhen(nextDue(pool()));
+      const touched = c.known + c.landing + c.started;
+      const title = graded ? 'Done for tonight.' : touched ? 'Nothing is due.' : 'Nothing has come back yet.';
+      const tail = [];
+      if (c.ready > 0) tail.push(`There are ${c.ready} more due. They keep until tomorrow if you would rather stop.`);
+      else if (when) tail.push(`The next cards come back <b>${when}</b>.`);
+      else if (!touched) tail.push(`You have not started any of these cards. There are ${c.fresh} waiting whenever you want them.`);
+      if (c.known) tail.push(`You have ${c.known} of ${c.total} settled.`);
       box.innerHTML = header() + `<div class="q-card rv-done">
-        <h3>${sessionRight + sessionWrong > 0 ? 'Done for now.' : 'Nothing is due.'}</h3>
-        ${sessionRight + sessionWrong > 0
-          ? `<p>${sessionRight} right, ${sessionWrong} to come back to, out of ${sessionRight + sessionWrong}.</p>`
-          : ''}
-        <p class="rv-next">${when ? `Next cards come back <b>${when}</b>.` : 'Every card in this set is new. Start whenever you like.'}
-          ${c.known ? ` You have ${c.known} of ${c.total} settled.` : ''}</p>
-        <div class="chip-row" style="justify-content:center">
-          <button class="chip" data-m="all">Keep going through the whole deck</button>
-        </div></div>`;
+        <h3>${title}</h3>
+        ${graded ? `<p>${sessionRight} right, ${sessionWrong} to come back to, out of ${graded}.</p>` : ''}
+        <p class="rv-next">${tail.join(' ')}</p>
+        ${tipOff ? '<p class="rv-stop">That is it for tonight.</p>' : suggestion(c)}</div>`;
       return;
     }
     box.innerHTML = header() + `
-      ${scorebar(stat.right, stat.wrong, i + 1, deck.length, ['card', 'of'])}
+      ${scorebar(stat.right, stat.wrong, `<span class="score">card ${i + 1} of ${deck.length}</span>`)}
       <div class="q-card flash">
         <div class="flash-tag">${card.tag}</div>
         <div class="flash-q">${card.q}</div>
@@ -420,6 +457,7 @@ async function mountDrill(root, classNum) {
     if (t) { filter = t.dataset.t; build(); return paint(); }
     const m = e.target.closest('[data-m]');
     if (m) { mode = m.dataset.m; build(); return paint(); }
+    if (e.target.closest('[data-tip]')) { tipOff = true; return paint(); }
     if (e.target.closest('#dr-show')) { shown = true; return paint(); }
     const g = e.target.closest('[data-g]');
     if (g) {
@@ -427,6 +465,7 @@ async function mountDrill(root, classNum) {
       right ? (stat.right++, sessionRight++) : (stat.wrong++, sessionWrong++);
       setStat('drill', stat);
       gradeCard(deck[i], right);
+      if (!right) { const id = cardId(deck[i]); missed.set(id, (missed.get(id) || 0) + 1); }
       // A card you just missed is seen again before you leave, at the back of
       // the queue. Retrieval works when the second attempt is not immediate.
       if (!right && deck.length > 1) deck.push(deck[i]);

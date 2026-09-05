@@ -945,3 +945,9 @@ body.teach-mode main { padding: 0; }
   .prep-head { flex-wrap: wrap; }
   .prep-toggle { margin-left: 0; }
 }
+
+a.chip { text-decoration: none; display: inline-block; }
+.rv-tip { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.rv-tip p { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
+.rv-tip .chip-row { margin: 0; justify-content: center; }
+.rv-stop { margin-top: 16px !important; font-size: 14px; color: var(--muted) !important; }
