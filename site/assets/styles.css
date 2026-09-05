@@ -642,6 +642,29 @@ body.teach-mode main { padding: 0; }
 }
 .anim-note b { color: var(--ink); }
 
+/* Hold the note. On a projector the figure's conclusion waits for the room to
+   commit; a class page never hides anything. Teach mode only, no animation on
+   reveal: the answer is either up or it is not. */
+.anim-note-key {
+  display: none; margin: 0; padding: 3px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px dashed var(--line); background: transparent; color: var(--muted);
+  font: 500 13px/1.6 var(--sans); text-align: left;
+}
+.anim-note-key kbd {
+  display: inline-block; padding: 0 5px; border-radius: 4px;
+  border: 1px solid var(--line); font: 600 11px/1.5 var(--mono); color: var(--ink-2);
+}
+.anim-note-key:hover { border-style: solid; border-color: var(--cyan); color: var(--ink-2); }
+.anim-note.has-lead .anim-note-key { margin-left: 7px; }
+body.teach-mode .anim-note.is-held .anim-note-held { display: none; }
+body.teach-mode .anim-note.is-held .anim-note-key { display: inline-block; }
+body.teach-mode.answers-shown .anim-note.is-held .anim-note-held { display: inline; }
+body.teach-mode.answers-shown .anim-note.is-held .anim-note-key { display: none; }
+@media print {
+  .anim-note-key { display: none !important; }
+  .anim-note-held { display: inline !important; }
+}
+
 .anim-controls { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin-bottom: 14px; }
 .ac { font: 500 12.5px/1 var(--sans); color: var(--ink-2); }
 .ac-l { display: flex; align-items: baseline; gap: 6px; font: 600 10.5px/1 var(--sans);

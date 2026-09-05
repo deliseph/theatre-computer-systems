@@ -15,6 +15,10 @@
 const REG = new Map();
 export const register = (id, fn) => REG.set(id, fn);
 
+// One source of truth for 'we are on a projector'. The class is on <body>
+// before any module evaluates, so this is safe to read at module scope.
+export const TEACH = document.body.classList.contains('teach-mode');
+
 // --- Small DOM helpers ------------------------------------------------------
 
 export const h = (html) => {
@@ -108,6 +112,52 @@ export function choice(label, opts, { value, on }) {
 
 // --- Figure shell -----------------------------------------------------------
 
+/**
+ * Where a note stops being setup and starts being the answer.
+ *
+ * Notes are not pure punchlines: many open with an observation ('Both are
+ * running. Notice the difference in traffic') and land the claim at the end.
+ * Every note that has a claim marks it with <b>, so the split is the sentence
+ * boundary before the first bold, never mid-clause. A note with no bold folds
+ * whole: hiding too much is recoverable in one keypress, leaking the answer is
+ * not.
+ */
+export function splitNote(html) {
+  const s = String(html);
+  const cuts = [];
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '<') {
+      const close = s.indexOf('>', i);
+      if (close < 0) break;
+      const tag = s.slice(i + 1, close);
+      if (/^\//.test(tag)) depth = Math.max(0, depth - 1);
+      else if (!/\/$/.test(tag) && !/^(br|img|hr)\b/i.test(tag)) depth++;
+      i = close;
+      continue;
+    }
+    if (depth > 0) continue;              // never cut inside <b> or <i>
+    if (c !== '.' && c !== '?' && c !== '!') continue;
+    let j = i + 1;
+    while (j < s.length && /\s/.test(s[j])) j++;
+    if (j === i + 1 || j >= s.length) continue;   // 2.00 Mbit/s is not a sentence end
+    if (!/[A-Z0-9<“"(]/.test(s[j])) continue;
+    cuts.push(j);
+  }
+  const parts = [];
+  let prev = 0;
+  for (const c of cuts) { parts.push(s.slice(prev, c)); prev = c; }
+  parts.push(s.slice(prev));
+  let k = parts.findIndex((p) => p.includes('<b>'));
+  if (k < 0) k = 0;
+  const text = (x) => x.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const lead = parts.slice(0, k).join('').trim();
+  const held = parts.slice(k).join('').trim();
+  if (text(lead).length < 25) return { lead: '', held: s.trim(), foldable: text(s).length >= 12 };
+  return { lead, held, foldable: text(held).length >= 12 };
+}
+
 export function figure(host, { title, sub, note }) {
   host.innerHTML = '';
   const fig = el('figure', 'anim-fig');
@@ -116,7 +166,25 @@ export function figure(host, { title, sub, note }) {
   const controls = el('div', 'anim-controls');
   const stage = el('div', 'anim-stage');
   fig.append(controls, stage);
+  // The note is the figure's conclusion. On a projector it is legible from the
+  // back of the room before the lecturer has finished the setup, so the room
+  // reads the answer to a question nobody has asked it. In teach mode the note
+  // holds: the setup sentences stay up, the sentence that lands the point waits
+  // for the lecturer's n. Class pages are untouched, so a student alone on a
+  // phone never has anything withheld.
   const noteEl = note ? h(`<p class="anim-note">${note}</p>`) : null;
+  let leadEl = null, heldEl = null;
+  if (noteEl && TEACH) {
+    noteEl.innerHTML = '';
+    leadEl = el('span', 'anim-note-lead');
+    heldEl = el('span', 'anim-note-held');
+    const key = h(`<button type="button" class="anim-note-key" aria-expanded="false" title="The figure&#39;s conclusion, held until the room has guessed. Press n, or click, to show it.">Say what you expect. Press <kbd>n</kbd> for the answer.</button>`);
+    key.addEventListener('click', () => {
+      noteEl.classList.remove('is-held');
+      key.setAttribute('aria-expanded', 'true');
+    });
+    noteEl.append(leadEl, key, heldEl);
+  }
   if (noteEl) fig.append(noteEl);
   host.append(fig);
 
@@ -173,7 +241,25 @@ export function figure(host, { title, sub, note }) {
     return { check };
   }
 
-  return { fig, controls, stage, repaint, challenge, setNote: (t) => { if (noteEl) noteEl.innerHTML = t; } };
+  const setNote = (t) => {
+    if (!noteEl) return;
+    if (!TEACH) { noteEl.innerHTML = t; return; }
+    let s;
+    try { s = splitNote(t); } catch { s = { lead: '', held: String(t), foldable: true }; }
+    leadEl.innerHTML = s.lead;
+    heldEl.innerHTML = s.held;
+    noteEl.classList.toggle('has-lead', !!s.lead);
+    if (!s.foldable) { noteEl.removeAttribute('data-fold'); noteEl.classList.remove('is-held'); return; }
+    // First real text is what arms the fold. A note that is already showing
+    // stays showing while a slider moves it; re-holding is the deck's job, on
+    // the next slide.
+    if (!noteEl.hasAttribute('data-fold')) {
+      noteEl.setAttribute('data-fold', '1');
+      noteEl.classList.add('is-held');
+    }
+  };
+
+  return { fig, controls, stage, repaint, challenge, setNote };
 }
 
 /**
@@ -272,7 +358,7 @@ export function box(g, x, y, w, h, { fill, stroke, r = 8, lw = 1.5 }) {
  * is scaled up, with a floor, so the smallest annotations survive a projector.
  * Set once: the class is on <body> before any figure mounts.
  */
-export const TEXT_SCALE = document.body.classList.contains('teach-mode') ? 1.34 : 1;
+export const TEXT_SCALE = TEACH ? 1.34 : 1;
 const MIN_PROJECTED = 13;
 
 export function label(g, text, x, y, { color, size = 12, weight = 500, align = 'left', baseline = 'middle', mono = false }) {

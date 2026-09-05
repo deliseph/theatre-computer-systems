@@ -19,6 +19,10 @@ if (track) {
   const prevBtn = $('#tprev');
   const nextBtn = $('#tnext');
   const startBtn = $('#tstart');
+  const answersBtn = $('#tanswers');
+  const ANSWERS_KEY = 'tcs-teach-answers';
+  let answersShown = false;
+  try { answersShown = localStorage.getItem(ANSWERS_KEY) === 'shown'; } catch { /* private window */ }
 
   let i = 0;
   let started = null;       // epoch ms when the current block's stopwatch began
@@ -61,6 +65,36 @@ if (track) {
 
 
 
+  // Hold the note. A figure that prints its own conclusion turns a prediction
+  // into a reading exercise, so on the projector the conclusion waits for the
+  // room. Nothing is scored, counted or stored per note: it is one class on one
+  // paragraph, reset by turning the page.
+  const foldable = (root) => [...root.querySelectorAll('.anim-note[data-fold]')];
+
+  function holdAll() {
+    for (const n of foldable(track)) {
+      n.classList.add('is-held');
+      n.querySelector('.anim-note-key')?.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function toggleNote() {
+    const list = foldable(slides[i]);
+    if (!list.length) return;             // no figure here: the key is quiet
+    const anyHeld = list.some((n) => n.classList.contains('is-held'));
+    for (const n of list) {
+      n.classList.toggle('is-held', !anyHeld);
+      n.querySelector('.anim-note-key')?.setAttribute('aria-expanded', String(anyHeld));
+    }
+  }
+
+  function paintAnswers() {
+    document.body.classList.toggle('answers-shown', answersShown);
+    const t = answersBtn?.querySelector('span');
+    if (t) t.textContent = answersShown ? 'Answers: shown' : 'Answers: held';
+    answersBtn?.setAttribute('aria-pressed', String(!answersShown));
+  }
+
   function show(n) {
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach((s, k) => s.classList.toggle('on', k === i));
@@ -87,6 +121,7 @@ if (track) {
     // A new block restarts the block clock. Moving between the screens inside
     // one block must not, or the timer is useless for the thing it measures.
     if (started && block !== timedBlock) { started = Date.now(); timedBlock = block; }
+    holdAll();
     track.scrollTop = 0;
     paintClock();
   }
@@ -112,6 +147,13 @@ if (track) {
   });
 
   $('#tgrid')?.addEventListener('click', toggleGrid);
+
+  answersBtn?.addEventListener('click', () => {
+    answersShown = !answersShown;
+    try { localStorage.setItem(ANSWERS_KEY, answersShown ? 'shown' : 'held'); } catch { /* private window */ }
+    paintAnswers();
+  });
+  paintAnswers();
 
   $('#tfull').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -150,6 +192,8 @@ if (track) {
       case 'f': $('#tfull').click(); break;
       case 'o': case 'g': e.preventDefault(); toggleGrid(); break;
       case 't': startBtn.click(); break;
+      case 'n': e.preventDefault(); toggleNote(); break;
+      case 'a': e.preventDefault(); answersBtn?.click(); break;
       case 'Escape':
         if (!grid.hidden) { grid.hidden = true; break; }
         if (!document.fullscreenElement) location.href = $('.teach-exit').getAttribute('href');
