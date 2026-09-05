@@ -266,7 +266,17 @@ export function box(g, x, y, w, h, { fill, stroke, r = 8, lw = 1.5 }) {
   if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); }
 }
 
+/**
+ * Text inside a figure is drawn at 9.5 to 14px, which is right on a laptop and
+ * unreadable from the back of a lecture hall. In teach mode every drawn label
+ * is scaled up, with a floor, so the smallest annotations survive a projector.
+ * Set once: the class is on <body> before any figure mounts.
+ */
+export const TEXT_SCALE = document.body.classList.contains('teach-mode') ? 1.34 : 1;
+const MIN_PROJECTED = 13;
+
 export function label(g, text, x, y, { color, size = 12, weight = 500, align = 'left', baseline = 'middle', mono = false }) {
+  if (TEXT_SCALE !== 1) size = Math.max(MIN_PROJECTED, size * TEXT_SCALE);
   g.fillStyle = color;
   g.font = `${weight} ${size}px ${mono
     ? 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'

@@ -936,3 +936,12 @@ body.teach-mode main { padding: 0; }
 .teach .slide[data-fig] .anim-goal { margin: 0 0 8px; padding: 5px 10px; gap: 7px; }
 .teach .slide[data-fig] .anim-goal-t { font-size: 12.5px; }
 .teach .slide[data-fig] .anim-goal-tag { font-size: 9px; padding: 0 6px; }
+
+/* Prepare: five classes of preparation at once is four fifths noise. */
+.prep-toggle { margin-left: 8px; }
+.prep-block { transition: border-color .15s; }
+.prep-block.open > .prep-head { border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 4px; }
+@media (max-width: 620px) {
+  .prep-head { flex-wrap: wrap; }
+  .prep-toggle { margin-left: 0; }
+}

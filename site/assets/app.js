@@ -282,3 +282,53 @@ const tableRO = new ResizeObserver((entries) => { for (const e of entries) mark(
 document.querySelectorAll('.table-wrap').forEach((w) => tableRO.observe(w));
 addEventListener('load', markScrollables);
 markScrollables();
+
+// --- Prepare page: one block open at a time ---------------------------------
+// All five rendered at once was over ten thousand pixels on a phone, most of it
+// for a class weeks away. Open the one the reader needs, let them open others.
+const prepBlocks = [...document.querySelectorAll('.prep-block')];
+if (prepBlocks.length) {
+  const setOpen = (n, open) => {
+    const block = prepBlocks.find((b) => b.dataset.prep === String(n));
+    if (!block) return;
+    const btn = block.querySelector('[data-prep-toggle]');
+    const body = block.querySelector('.prep-body');
+    body.hidden = !open;
+    block.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? 'Hide' : 'Show';
+  };
+
+  // The class they are heading for: the first one not marked as studied, or
+  // the one they were last reading if that is still unfinished.
+  const done = getProgress();
+  let want = [1, 2, 3, 4, 5].find((n) => !done[`class-${n}`]) || 1;
+  try {
+    const last = Number(localStorage.getItem('tcs-last-class')) || 0;
+    if (last && !done[`class-${last}`]) want = last;
+  } catch { /* private window */ }
+
+  const fromHash = /^#prepare-class-(\d)/.exec(location.hash);
+  setOpen(fromHash ? Number(fromHash[1]) : want, true);
+
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-prep-toggle]');
+    if (t) {
+      const block = t.closest('.prep-block');
+      setOpen(block.dataset.prep, block.querySelector('.prep-body').hidden);
+      return;
+    }
+    const open = e.target.closest('[data-prep-open]');
+    if (open) {
+      e.preventDefault();
+      setOpen(want, true);
+      document.querySelector(`.prep-block[data-prep="${want}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  // A link straight to a class's preparation must open it.
+  addEventListener('hashchange', () => {
+    const m = /^#prepare-class-(\d)/.exec(location.hash);
+    if (m) setOpen(Number(m[1]), true);
+  });
+}

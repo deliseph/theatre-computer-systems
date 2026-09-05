@@ -672,7 +672,10 @@ for (const b of foundDoc.blocks) addSearch('/foundations', 'Foundations', b.titl
 
 // The prepare page collects every pre-class block in one place, so a student can
 // see the whole run-up rather than discovering each one the night before.
-const prepCards = classData.map((c) => `<section class="prep-block">
+// Five classes of preparation, every readiness check rendered, came to well
+// over ten thousand pixels on a phone, four fifths of it for a class weeks
+// away. Each block collapses; app.js opens the one the reader actually needs.
+const prepCards = classData.map((c) => `<section class="prep-block" data-prep="${c.n}">
     <header class="prep-head">
       <span class="prep-n">${c.n}</span>
       <div>
@@ -680,8 +683,9 @@ const prepCards = classData.map((c) => `<section class="prep-block">
         <p class="prep-meta">Class ${c.n}</p>
       </div>
       <a class="btn" href="/class/${c.n}#tab=prepare">Open Class ${c.n} →</a>
+      <button class="btn prep-toggle" aria-expanded="false" data-prep-toggle="${c.n}">Show</button>
     </header>
-    ${c.prep.html}
+    <div class="prep-body" hidden>${c.prep.html}</div>
   </section>`).join('');
 
 write('/prepare', shell({
@@ -695,7 +699,8 @@ write('/prepare', shell({
       things to actually go and do, and what to bring. The readiness check is five questions that
       point at the specific thing to fix.</p>
       <div class="head-actions">
-        <a class="btn btn-primary" href="/foundations">Start with Foundations</a>
+        <a class="btn btn-primary" href="#" data-prep-open="next">Open the one I need</a>
+        <a class="btn" href="/foundations">Foundations, if the arithmetic is new</a>
       </div>
     </header>
     <div class="note" style="margin-bottom:28px"><b>The one that matters.</b> Class 3 needs its
