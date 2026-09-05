@@ -21,7 +21,8 @@ if (track) {
   const startBtn = $('#tstart');
 
   let i = 0;
-  let started = null;   // epoch ms when the current block's stopwatch began
+  let started = null;       // epoch ms when the current block's stopwatch began
+  let timedBlock = null;    // which block that stopwatch is timing
 
   // Thirty seven identical dots are not navigation. Group them by block, so
   // the row reads as the shape of the class rather than as a progress bar.
@@ -83,8 +84,9 @@ if (track) {
     const same = slides.filter((s) => (s.dataset.block || s.dataset.title) === block);
     subLbl.textContent = same.length > 1 ? `${same.indexOf(slides[i]) + 1}/${same.length} in block` : '';
 
-    // A new block restarts the block clock, which is what a lecturer expects.
-    if (started) started = Date.now();
+    // A new block restarts the block clock. Moving between the screens inside
+    // one block must not, or the timer is useless for the thing it measures.
+    if (started && block !== timedBlock) { started = Date.now(); timedBlock = block; }
     track.scrollTop = 0;
     paintClock();
   }
@@ -104,8 +106,8 @@ if (track) {
   setInterval(paintClock, 1000);
 
   startBtn.addEventListener('click', () => {
-    if (started) { started = null; startBtn.textContent = '▶ Start stopwatch'; }
-    else { started = Date.now(); startBtn.textContent = '■ Stop'; }
+    if (started) { started = null; timedBlock = null; startBtn.textContent = '▶ Start stopwatch'; }
+    else { started = Date.now(); timedBlock = slides[i].dataset.block || slides[i].dataset.title; startBtn.textContent = '■ Stop'; }
     paintClock();
   });
 
@@ -132,6 +134,9 @@ if (track) {
     // other key still drives the deck.
     const textEntry = tag === 'TEXTAREA' || tag === 'SELECT' ||
       (tag === 'INPUT' && !/^(range|checkbox|radio|button)$/.test(type));
+    // Escape always gets you out of a text field, so a figure with an input
+    // box cannot swallow the whole deck.
+    if (textEntry && e.key === 'Escape') { e.target.blur(); e.preventDefault(); return; }
     if (textEntry) return;
     const onSlider = tag === 'INPUT' && type === 'range';
     if (onSlider && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) return;

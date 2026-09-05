@@ -66,32 +66,35 @@ By the end of this session a student can:
 
 ## Block 1: Cold open
 
-Say nothing about the syllabus. Do not introduce yourself yet. Start with the rig running.
+This class opens with a rig already running, before anyone has said a word about a syllabus.
 
-**Setup, prepared in advance:** one laptop, one switch, three destinations.
+**What is set up:** one laptop, one switch, three destinations.
 - Laptop sends sACN or Art-Net to a node, which drives a moving light. The light is moving.
 - Laptop sends audio via Dante Virtual Soundcard (or an analogue send if Dante is not available)
   to a speaker. Music is playing.
 - Laptop sends NDI to a second machine driving the projector. Video is on screen.
 
-Let it run for thirty seconds. Then ask: **"How many cables are carrying the show right now?"**
+It runs for thirty seconds. Then the question: **how many cables are carrying the show right
+now?**
 
-Count them. There are three or more: one Cat lead from the laptop to the
-switch. Light, sound and picture, all on one wire.
+Most people count three or more. It is one: a single Cat lead from the laptop to the switch.
+Light, sound and picture, all on one wire.
 
-Then **pull the Cat lead.** Everything stops at once. Light freezes or goes to last look, audio
-drops, video freezes.
+Then the lead comes out. Everything stops at once: the light freezes or goes to its last look, the
+audio drops, the video freezes on a frame.
 
-Plug it back in. Watch it recover. The sentence that follows is the spine of the whole module:
+It goes back in, and the show recovers. The sentence that follows is the spine of the whole
+module:
 
 > Every signal in a modern show is, at some point, a number in a computer's memory, travelling
 > over a shared network, with a deadline.
 
-That is the module. Now introduce yourself.
+That is the module.
 
-**Facilitation note:** the freeze behaviour when you pull the lead is itself a lesson. The light
-holds its last value (DMX is state based, and the node keeps outputting), the audio stops dead,
-the video freezes on a frame. Point it out now without explaining it. Promise it for Class 4.
+**Watch how the three departments failed differently**, because it is the first real thing this
+class teaches. The light held its last value, the audio stopped dead, the video froze on a frame.
+Three identical cable pulls, three different failures. Why that happens is Class 4, and it is
+worth carrying the question until then.
 
 ---
 
@@ -165,7 +168,7 @@ The model is worth having in your head before the examples, because you will use
 
 ### Card sort exercise (15 minutes)
 
-Prepare a deck of about 24 cards, one item per card. Groups of three. They sort into the four
+A deck of about 24 cards, one item per card, sorted in threes into the four
 columns and then defend two of their choices.
 
 Suggested cards, with the intended answer and the teaching point:
@@ -347,7 +350,7 @@ observation, then your best guess, and mark which is which.
 
 ## Block 5: Course map and expectations
 
-Brisk. Put the seven session table on screen. Cover:
+The shape of the module, quickly:
 
 - The shape: 2 intro, 2 visit, 16 content, 4 practical exam.
 - The assessment map and the four criteria rubric. Spend the most time on criterion 3,
@@ -367,7 +370,7 @@ Brisk. Put the seven session table on screen. Cover:
   not stand in a doorway, keep off headset channels, and if someone says move, move first and
   ask after.
 - Teams of three, allocated now, not on the day.
-- Hand out the observation sheet from `02-session-02-production-visit.md` and walk through it
+- The observation sheet for the visit is in `02-session-02-production-visit.md`, and it is worth reading through
   for two minutes so they know what they are hunting for.
 
 ---

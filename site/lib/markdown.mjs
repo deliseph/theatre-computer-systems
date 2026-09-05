@@ -297,7 +297,81 @@ function splitBlocks(html) {
     const title = m[3].replace(/<span class="ext-badge">.*?<\/span>/g, '')
       .replace(/<[^>]+>/g, '').trim();
     if (level === 2) parent = title;
-    blocks.push({ id: m[2], title, level, parent, html: part });
+    for (const page of paginate(part, m[0])) {
+      blocks.push({ id: m[2], title, level, parent, ...page });
+    }
   }
   return blocks;
+}
+
+/**
+ * A section is the right teaching unit and the wrong display unit: measured on
+ * a 1280x720 projector, half of all screens overflowed, the worst at nearly
+ * five screens of scrolling. So a section is paged for projection at the
+ * boundaries that carry meaning, a figure and a table, and then on a word
+ * budget through long prose. Each figure takes the paragraph above it along as
+ * its introduction, because a figure with no lead-in teaches nothing.
+ *
+ * Returns [{html, page, pages}] — one entry per projected screen.
+ */
+const WORD_BUDGET = 185;
+
+/**
+ * Words alone under-measure a screen: a code block of eight lines is a dozen
+ * words and a third of a projector. This weights each element by roughly the
+ * height it renders at, in word-equivalents, which is what the budget is
+ * really counting.
+ */
+function visualWeight(html) {
+  const words = (html.replace(/<[^>]+>/g, ' ').match(/\S+/g) || []).length;
+  const preLines = (html.match(/<pre[\s\S]*?<\/pre>/g) || [])
+    .reduce((a, b) => a + b.split('\n').length, 0);
+  const listItems = (html.match(/<li[\s>]/g) || []).length;
+  const rows = (html.match(/<tr[\s>]/g) || []).length;
+  const heads = (html.match(/<h4[\s>]/g) || []).length;
+  return words + preLines * 10 + listItems * 7 + rows * 12 + heads * 10;
+}
+
+function paginate(part, headingHtml) {
+  const body = part.slice(headingHtml.length ? part.indexOf('>', part.indexOf('</h')) + 1 : 0);
+  // Split off the heading (everything up to and including the closing h2/h3).
+  const hEnd = part.search(/<\/h[23]>/);
+  const head = hEnd === -1 ? '' : part.slice(0, hEnd + 5);
+  const rest = hEnd === -1 ? part : part.slice(hEnd + 5);
+  if (!head) return [{ html: part, page: 1, pages: 1 }];
+
+  // Top-level nodes of the section, in order.
+  const nodes = rest.match(/<(?:div|p|ul|ol|pre|blockquote|table|h4|figure)[\s\S]*?<\/(?:div|p|ul|ol|pre|blockquote|table|h4|figure)>|<hr\s*\/?>/g) || [];
+  if (!nodes.length) return [{ html: part, page: 1, pages: 1 }];
+
+  const isFigure = (n) => /^<div class="anim"/.test(n) || /^<div class="vid"/.test(n) || /^<div class="practice"/.test(n);
+  const isTable = (n) => /^<div class="table-wrap"/.test(n);
+
+  const chunks = [];
+  let cur = [];
+  for (const n of nodes) {
+    if ((isFigure(n) || isTable(n)) && cur.length) {
+      // A figure keeps the paragraph above it as its lead-in.
+      const lead = isFigure(n) && /^<p/.test(cur[cur.length - 1]) ? cur.pop() : null;
+      if (cur.length) chunks.push(cur);
+      cur = lead ? [lead, n] : [n];
+      continue;
+    }
+    // A code block or an h4 starting a new idea is a fair place to turn the
+    // page when the screen already holds its share.
+    if ((/^<pre/.test(n) || /^<h4/.test(n)) && cur.length && visualWeight(cur.join('')) > WORD_BUDGET * 0.55) {
+      chunks.push(cur); cur = [];
+    }
+    cur.push(n);
+    if (isFigure(n) || isTable(n)) { chunks.push(cur); cur = []; continue; }
+    if (visualWeight(cur.join('')) > WORD_BUDGET) { chunks.push(cur); cur = []; }
+  }
+  if (cur.length) chunks.push(cur);
+  if (chunks.length <= 1) return [{ html: part, page: 1, pages: 1 }];
+
+  return chunks.map((c, k) => ({
+    html: head + c.join(''),
+    page: k + 1,
+    pages: chunks.length,
+  }));
 }

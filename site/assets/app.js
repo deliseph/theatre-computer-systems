@@ -58,8 +58,20 @@ const remember = (id) => { try { localStorage.setItem(TABKEY, id); } catch { /* 
 const recall = () => { try { return localStorage.getItem(TABKEY); } catch { return null; } };
 
 tabs.forEach((t) => t.addEventListener('click', () => { showTab(t.dataset.tab, true); remember(t.dataset.tab); }));
-if (location.hash.startsWith('#tab=')) showTab(location.hash.slice(5), false);
-else {
+
+// An in-page link to #tab=... must switch the tab. Without this the header's
+// "Start learning" button changed the URL and left the reader on Prepare.
+function tabFromHash(push) {
+  if (!location.hash.startsWith('#tab=')) return false;
+  const id = location.hash.slice(5);
+  if (!tabs.some((t) => t.dataset.tab === id)) return false;
+  showTab(id, false);
+  if (push) remember(id);
+  document.querySelector('.tabs')?.scrollIntoView({ block: 'nearest' });
+  return true;
+}
+addEventListener('hashchange', () => { tabFromHash(true); });
+if (!tabFromHash(false)) {
   const last = recall();
   if (last && tabs.some((t) => t.dataset.tab === last)) showTab(last, false);
 }
@@ -218,3 +230,17 @@ addEventListener('keydown', (e) => {
     location.href = items[sel].getAttribute('href');
   }
 });
+
+// --- Scrollable table hint ---------------------------------------------------
+// A table wider than its column scrolls, and on a phone nothing said so. Mark
+// the ones that actually overflow, and unmark them when they stop.
+function mark(w) { w.classList.toggle('can-scroll', w.scrollWidth > w.clientWidth + 2); }
+function markScrollables() { document.querySelectorAll('.table-wrap').forEach(mark); }
+
+// A table inside a hidden panel measures zero, so it cannot be assessed until
+// the panel is shown. A ResizeObserver catches that moment, and window resizes
+// and font loads, without anything having to remember to call it.
+const tableRO = new ResizeObserver((entries) => { for (const e of entries) mark(e.target); });
+document.querySelectorAll('.table-wrap').forEach((w) => tableRO.observe(w));
+addEventListener('load', markScrollables);
+markScrollables();

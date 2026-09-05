@@ -147,7 +147,9 @@ function mountSubnetTrainer(root) {
              <div class="chip-row" style="margin:12px 0 0"><button class="chip on" id="sq-go">Check</button>
              <button class="chip" id="sq-skip">Show me</button></div>`}
       </div>`;
-    $('#sq-in', box)?.focus();
+    // preventScroll: focusing on mount otherwise yanks the page down to the
+    // answer box, hiding the class title on arrival.
+    $('#sq-in', box)?.focus({ preventScroll: true });
   };
 
   const grade = (value, gaveUp) => {
@@ -165,7 +167,7 @@ function mountSubnetTrainer(root) {
       <pre class="working">${q.working}</pre>
       <div class="chip-row" style="margin:12px 0 0"><button class="chip on" id="sq-next">Next question →</button></div>
     </div>`));
-    $('#sq-next', box).focus();
+    $('#sq-next', box).focus({ preventScroll: true });
   };
 
   box.addEventListener('click', (e) => {
@@ -325,7 +327,7 @@ async function mountFlows(root) {
       <p><b style="color:var(--${ok ? 'green' : 'red'})">${ok ? '✓' : '✗'} ${flowMeta[c.f].label}.</b> ${c.why}</p>
       <div class="chip-row" style="margin:10px 0 0"><button class="chip on" id="fl-next">Next →</button></div></div>`));
     $('#fl-next', box).onclick = () => { i++; paint(); };
-    $('#fl-next', box).focus();
+    $('#fl-next', box).focus({ preventScroll: true });
   });
 
   start();
@@ -516,7 +518,7 @@ async function mountReady(root, classNum) {
       <p><b style="color:var(--${ok ? 'green' : 'red'})">${ok ? '✓ Yes' : '✗ Not quite'}</b>${ok ? '' : ` — ${q.fix}`}</p>
       <div class="chip-row" style="margin:10px 0 0"><button class="chip on" id="rd-next">Next →</button></div></div>`));
     $('#rd-next', box).onclick = () => { i++; paint(); };
-    $('#rd-next', box).focus();
+    $('#rd-next', box).focus({ preventScroll: true });
   });
 
   paint();

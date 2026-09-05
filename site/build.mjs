@@ -435,9 +435,17 @@ for (const c of classData) {
         /(<h2 [^>]*>)([\s\S]*?)\s*\(\d+\s*min\)(<a class="anchor")/i,
         '$1$2$3'
       );
-      return `<section class="slide" data-i="${i}" data-title="${esc(b.title)}"
-        data-block="${esc(b.parent)}" data-level="${b.level}">
-        <div class="slide-inner">${html}</div></section>`;
+      const cont = b.pages > 1 && b.page > 1;
+      const label = b.pages > 1 ? `${b.title} (${b.page}/${b.pages})` : b.title;
+      // On a continuation screen the heading is repeated small, so the room
+      // still knows which section it is in without spending a title line.
+      const inner = cont
+        ? html.replace(/<h([23]) ([^>]*)>/, '<h$1 $2 data-cont="1">')
+        : html;
+      const hasFig = /<div class="(anim|practice)"/.test(html);
+      return `<section class="slide" data-i="${i}" data-title="${esc(label)}"
+        data-block="${esc(b.parent)}" data-level="${b.level}"${cont ? ' data-cont="1"' : ''}${hasFig ? ' data-fig="1"' : ''}>
+        <div class="slide-inner">${inner}</div></section>`;
     })
     .join('');
 

@@ -508,7 +508,11 @@ td code { white-space: nowrap; }
 #gloss-filter { flex: 1; min-width: 220px; padding: 10px 14px; border-radius: 9px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); font: 400 15px/1.3 var(--sans); }
 #gloss-filter:focus { outline: 2px solid var(--amber); outline-offset: -1px; }
 .gloss-count { font: 500 12.5px/1 var(--mono); color: var(--muted); }
-tr[hidden] { display: none; }
+/* The user-agent [hidden] rule loses to any author rule that sets display, so
+   a component styled `display: grid` stays on screen while claiming to be
+   hidden. This was already patched by hand for table rows once and then bit
+   the teach-mode overview. One reset, for everything. */
+[hidden] { display: none !important; }
 
 /* --- Search modal -------------------------------------------------------- */
 
@@ -844,3 +848,44 @@ body.teach-mode main { padding: 0; }
 /* Key hints on teach-mode buttons. */
 .teach-btn kbd { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px;
   border: 1px solid var(--line); font: 600 10px/16px var(--mono); color: var(--muted); }
+
+/* A continuation screen keeps its heading for orientation, at a size that
+   does not spend a whole projected line on repeating itself. */
+.teach .slide[data-cont] .hd { font-size: .58em; opacity: .62; margin-bottom: .6em; }
+.teach .slide[data-cont] .hd .anchor { display: none; }
+
+/* On a screen whose point is the figure, the figure is the star: the prose
+   around it steps back so the whole thing fits a 720p projector without
+   scrolling. Measured, not guessed: figure screens were the single largest
+   cause of overflow. */
+.teach .slide[data-fig] .slide-inner { font-size: clamp(15px, 1.15vw, 18px); }
+.teach .slide[data-fig] .slide-inner .hd-3 { font-size: clamp(18px, 1.6vw, 23px); margin: 0 0 10px; }
+.teach .slide[data-fig] .slide-inner .hd-2 { font-size: clamp(22px, 2.4vw, 32px); margin: 0 0 12px; }
+.teach .slide[data-fig] .slide-inner > p { margin: 0 0 12px; }
+.teach .slide[data-fig] .anim-fig { padding: 12px 14px; }
+.teach .slide[data-fig] .anim-cap { font-size: 15px; margin-bottom: 4px; }
+.teach .slide[data-fig] .anim-sub { font-size: 13px; margin: 0 0 8px; }
+.teach .slide[data-fig] .anim-note { font-size: 14px; padding: 10px 12px; margin-top: 10px; }
+.teach .slide[data-fig] .anim-controls { gap: 7px; margin-bottom: 8px; }
+
+/* Phone: the tab strip and wide tables both scroll sideways, and neither said
+   so. A student on a phone was reading "Test yourself" cut mid-word and losing
+   the right-hand column of every table without knowing it was there. */
+.tabs {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent);
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.table-wrap { position: relative; }
+.table-wrap::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 26px;
+  pointer-events: none; opacity: 0; transition: opacity .15s;
+  background: linear-gradient(to right, transparent, var(--ground));
+}
+.table-wrap.can-scroll::after { opacity: 1; }
+.table-wrap.can-scroll { scroll-snap-type: x proximity; }
+@media (max-width: 760px) {
+  .table-wrap.can-scroll { box-shadow: inset -14px 0 12px -14px rgba(0, 0, 0, .28); }
+}
