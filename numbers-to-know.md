@@ -53,6 +53,10 @@ video  =  width × height × frame rate × bits per pixel
 
 | Light in glass fibre | about **5 µs per km**, so 5 ms per 1,000 km, each way |
 | Sound in air | about **3 ms per metre** |
+| A frame at 25 fps | **40 ms** |
+| Camera to LED wall, typical | 3 to 7 frames, so **120 to 280 ms** |
+| Precedence window | **5 to 35 ms**: two arrivals fuse and localise to the first |
+| Delay tower setting | the distance from the PA, in ms, **plus 10 to 15** |
 
 **Bits to bytes:** divide by 8. A 2.5 Gbit/s video stream is about 312 MB/s of storage throughput.
 Getting this the wrong way round is the most common mistake in the exam.

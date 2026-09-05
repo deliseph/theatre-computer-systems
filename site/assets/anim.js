@@ -14,6 +14,7 @@ import './anim-light.js';
 import './anim-systems.js';
 import './anim-lineage.js';
 import './anim-extra.js';
+import './anim-sync.js';
 
 mountAll();
 mountVideos();

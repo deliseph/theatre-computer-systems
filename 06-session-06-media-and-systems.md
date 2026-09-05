@@ -266,6 +266,95 @@ and cannot afford 2110's bandwidth.
 
 *Side by side, with the latency and bandwidth of each, on [How we got here](/lineage).*
 
+### Getting the picture and the sound to arrive together
+
+At a concert the screen is early and the sound is late, and both of those are
+true at the same time for different people in the same room. This is the
+question the latency budget was building towards.
+
+**Two clocks are running against each other.** Light crosses a room in
+microseconds, so the wall shows you a thing the instant the video chain has
+finished with it. Sound takes about **3 ms per metre**, so it is always
+arriving late, and later the further back you stand.
+
+<!--anim:av-align-->
+
+Now the part that surprises people, and it is worth sitting with:
+
+> **A video processing delay behaves exactly like an acoustic delay.** So there
+> is a distance at which the two coincide on their own, with nothing set and
+> nobody trying.
+
+An 80 ms video chain matches the air at about 27 m. Nearer than that, the
+screen is late, because close to the stage the air costs almost nothing and the
+processing is the only delay in the picture. Further back, the sound is late,
+which is the normal condition at the back of any large room and the reason
+nobody complains: it is exactly what happens with no screen at all, and every
+audience has heard it their whole life.
+
+**Which means you cannot align a room. You align a plane through it**, and
+choosing where that plane sits is the job. The usual answer is well back, at
+something like two thirds of the way, for two reasons: more of the audience is
+behind the mix position than in front of it, and **an early screen is the
+version people notice**. Sound arriving after the picture is ordinary life.
+A hand landing on a drum after you have heard it is not.
+
+#### What is actually in the video chain
+
+Every box costs frames, and at 25 fps a frame is 40 ms.
+
+| Stage | Typical |
+|-------|---------|
+| Camera, sensor to output | 1 to 2 frames |
+| Switcher or vision mixer | 1 frame |
+| Scaler or format conversion | 1 to 2 frames |
+| LED processor | 1 to 2 frames |
+| Total, camera to wall | **3 to 7 frames, so 120 to 280 ms** |
+
+Against an audio path of perhaps 8 ms, that is the whole problem in one table.
+**The first fix is never more delay, it is fewer boxes**: a conversion removed
+is worth more than any amount of alignment afterwards, because delay you have
+added is delay somebody is living with.
+
+#### The one number to measure, not estimate
+
+Latency claims on a spec sheet are measured under conditions that are not
+yours. Measure the real chain: put a clap or a clapperboard in front of the
+camera, record the wall and the PA together on a phone at high frame rate, and
+count. Twenty minutes, once, and the number goes in the paperwork.
+
+### Delay towers, and the effect that makes them disappear
+
+The same arithmetic, one department along, and it is the clearest example in
+the module of a perceptual fact being load bearing.
+
+A second speaker halfway back makes the rear of the room louder and puts the
+band in the wrong place, because **your ears take direction from whichever
+wavefront arrives first**, whatever the levels are. Undelayed, the tower is
+first, so the whole show moves to the middle of the field.
+
+<!--anim:delay-tower-->
+
+Delay the tower by the time sound takes to travel from the PA to the tower, and
+the PA arrives first again. Then a window opens:
+
+| Gap between the two arrivals | What the ear does |
+|------------------------------|-------------------|
+| Tower first | the sound comes from the tower. Wrong, and loud. |
+| 0 to about 5 ms | comb filtering: hollow and phasey, worse than either alone |
+| **about 5 to 35 ms** | **fused into one event, localised to the first arrival** |
+| beyond about 40 ms | a distinct echo |
+
+That middle band is the **precedence effect**, sometimes called the Haas
+effect, and it is why a delay tower works at all: the listener gets the tower's
+level and the stage's position. The setting is the distance from the PA to the
+tower expressed in milliseconds, plus about 10 to 15 ms so the PA is reliably
+first.
+
+**And it is the same idea as the screen.** A delay tower is an alignment plane
+for sound, chosen deliberately, with a known tolerance either side. The video
+question is that question with a longer wavelength.
+
 ### Extension: Inside ST 2110, and the one idea worth stealing from it
 
 Even if you never touch a broadcast plant, ST 2110 contains one idea that changes how you think

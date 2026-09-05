@@ -1,7 +1,7 @@
 # Glossary 詞彙表
 ## Computer Systems & Networking for Theatre and Entertainment Arts
 
-Roughly 346 terms, grouped by domain. Bring it to every session. Add to it.
+Roughly 351 terms, grouped by domain. Bring it to every session. Add to it.
 
 **On the Chinese:** 繁中 terms follow Taiwan convention, with common Hong Kong variants noted
 where they differ meaningfully. Where a term also appears in
@@ -378,6 +378,11 @@ headset.
 | Boundary clock | 邊界時鐘 | A switch that terminates and regenerates PTP rather than passing it through. What makes timing survive a network. |
 | Transparent clock | 透明時鐘 | A switch that corrects each timing message for the time it spent inside. The other way to keep PTP honest. |
 | Path asymmetry | 路徑不對稱 | The two directions taking different times. PTP averages them, so the follower is wrong by half the difference and reports itself locked. |
+| Precedence effect (Haas) | 優先效應／哈斯效應 | Between about 5 and 35 ms the ear fuses two arrivals into one and takes its direction from the first. The reason a delay tower works. |
+| Delay tower | 延遲喇叭塔 | A speaker further back, delayed by the time sound takes to reach it from the PA, plus 10 to 15 ms so the PA is still heard first. |
+| Comb filtering | 梳狀濾波 | Two copies of a signal a few milliseconds apart cancelling and reinforcing by frequency. Hollow and phasey, and worse than either source alone. |
+| Alignment plane | 對齊平面 | The one distance at which picture and sound coincide. You cannot align a room, only a plane through it. |
+| IMAG | 影像放大 | Image magnification: the live screen beside the stage. Its chain latency is what puts the picture out of step with the sound. |
 | Latency budget | 延遲預算 | The total of every stage in the chain. About 10 ms is where a performer on in-ears feels it, about 40 ms is where lip sync shows. |
 | Oversubscription | 超額訂閱 | More traffic able to arrive at a switch than can leave it. Fine for an office, fatal for media. |
 | ST 2022-7 | 無縫保護 | Send the same stream down two networks and rebuild from whichever packets arrive. The fastest failover is the one that already happened. |
