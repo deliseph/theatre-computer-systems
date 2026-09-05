@@ -489,6 +489,7 @@ for (const c of classData) {
     <button class="teach-nav" id="tprev">← Previous</button>
     <div class="teach-dots" id="tdots"></div>
     <span class="teach-next" id="tnextup" hidden></span>
+    <span class="teach-loc" id="tloc" hidden title="The same page on a phone. Press l to show it big for the room."><span class="teach-loc-p" id="tlocp"></span><kbd>l</kbd></span>
     <button class="teach-btn" id="tgrid" title="Overview of every screen (o)">▦ Overview <kbd>o</kbd></button>
     <button class="teach-btn" id="tanswers" aria-pressed="true" title="Hold each figure&#39;s conclusion until you press n. Your choice is remembered on this laptop."><span>Answers: held</span> <kbd>a</kbd></button>
     <button class="teach-nav" id="tnext">Next →</button>

@@ -57,4 +57,7 @@ prefers over `../` when it exists.
 
 Teach mode splits at every `##` and `###`, one section per screen, and its clock is a plain
 stopwatch you start when a block starts. The course deliberately carries no fixed schedule:
-blocks are an order of work, not a timetable.
+blocks are an order of work, not a timetable. The footer also prints the anchor of the screen on
+show, and `l` puts that address up big for the room: the same figure, with the
+same controls, is live on the class page there, so a student who lost the thread
+two sentences ago can pick it up on their own device without stopping the class.

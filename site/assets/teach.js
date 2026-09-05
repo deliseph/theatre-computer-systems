@@ -19,6 +19,14 @@ if (track) {
   const prevBtn = $('#tprev');
   const nextBtn = $('#tnext');
   const startBtn = $('#tstart');
+  const foot = document.querySelector('.teach-foot');
+  const locWrap = $('#tloc');
+  const locPath = $('#tlocp');
+  const classN = document.querySelector('.teach').dataset.class;
+  let locTimer = null;
+  const LOC_FIG = 'The same figure is on that page, with the same controls. Push it yourself.';
+  const LOC_SECTION = 'This section is on that page, under Learn. You can read it again at your own speed.';
+  const LOC_WHOLE = 'The whole class is on that page, under Learn. You can read it again at your own speed.';
   const answersBtn = $('#tanswers');
   const ANSWERS_KEY = 'tcs-teach-answers';
   let answersShown = false;
@@ -65,6 +73,41 @@ if (track) {
 
 
 
+  // The locator, big enough for the back row, on the lecturer's key only.
+  // It never appears by itself: an address nobody asked for on a projector
+  // is an instruction to get your phone out, and this is not that.
+  const locBig = document.createElement('div');
+  locBig.className = 'teach-loc-big';
+  locBig.hidden = true;
+  locBig.innerHTML = '<span class="tloc-u"></span><span class="tloc-w"></span>';
+  document.body.append(locBig);
+  locBig.addEventListener('click', hideLoc);
+
+  // Three screens out of every deck fold a thin "Block C:" divider into the
+  // screen that follows, so they carry two headings. The last one is the
+  // section the screen is actually about, and the one whose anchor a student
+  // wants.
+  function locatorFor(n) {
+    const hs = slides[n].querySelectorAll('.slide-inner h2[id], .slide-inner h3[id]');
+    const id = hs.length ? hs[hs.length - 1].id : '';
+    return { id, path: `/class/${classN}#${id || 'tab=content'}` };
+  }
+
+  function showLoc() {
+    const { id } = locatorFor(i);
+    locBig.querySelector('.tloc-u').textContent = location.host + locPath.textContent;
+    locBig.querySelector('.tloc-w').textContent =
+      slides[i].dataset.fig === '1' ? LOC_FIG : (id ? LOC_SECTION : LOC_WHOLE);
+    // The band sits under the footer, so the lecturer keeps Next and Overview.
+    locBig.style.paddingBottom = `${foot.offsetHeight + 14}px`;
+    locBig.hidden = false;
+    clearTimeout(locTimer);
+    locTimer = setTimeout(hideLoc, 10000);
+  }
+
+  function hideLoc() { clearTimeout(locTimer); locBig.hidden = true; }
+  function toggleLoc() { if (locBig.hidden) showLoc(); else hideLoc(); }
+
   // Hold the note. A figure that prints its own conclusion turns a prediction
   // into a reading exercise, so on the projector the conclusion waits for the
   // room. Nothing is scored, counted or stored per note: it is one class on one
@@ -108,6 +151,12 @@ if (track) {
       nextLbl.textContent = nx ? `next: ${nx.dataset.title}` : 'last screen';
       nextLbl.hidden = false;
     }
+
+    locPath.textContent = locatorFor(i).path;
+    locWrap.hidden = false;
+    // An address must never outlive the screen it belongs to: a room copying
+    // a URL while the deck moves on would copy the wrong one.
+    hideLoc();
 
     // The planned window lives on the parent h2, so a sub-section inherits it.
     const block = slides[i].dataset.block || slides[i].dataset.title;
@@ -194,7 +243,9 @@ if (track) {
       case 't': startBtn.click(); break;
       case 'n': e.preventDefault(); toggleNote(); break;
       case 'a': e.preventDefault(); answersBtn?.click(); break;
+      case 'l': case 'L': e.preventDefault(); toggleLoc(); break;
       case 'Escape':
+        if (!locBig.hidden) { hideLoc(); break; }
         if (!grid.hidden) { grid.hidden = true; break; }
         if (!document.fullscreenElement) location.href = $('.teach-exit').getAttribute('href');
         break;
