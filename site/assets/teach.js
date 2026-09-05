@@ -124,7 +124,19 @@ if (track) {
   });
 
   addEventListener('keydown', (e) => {
-    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    const tag = e.target.tagName;
+    const type = (e.target.type || '').toLowerCase();
+    // A slider inside a figure keeps focus after you drag it, and that is the
+    // moment a lecturer presses a key. Only real text entry swallows keys;
+    // on a slider the left and right arrows stay with the slider and every
+    // other key still drives the deck.
+    const textEntry = tag === 'TEXTAREA' || tag === 'SELECT' ||
+      (tag === 'INPUT' && !/^(range|checkbox|radio|button)$/.test(type));
+    if (textEntry) return;
+    const onSlider = tag === 'INPUT' && type === 'range';
+    if (onSlider && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) return;
+    // Space on a focused button would both press it and turn the page.
+    if (e.key === ' ' && tag === 'BUTTON') return;
     switch (e.key) {
       case 'ArrowRight': case 'PageDown': case ' ': e.preventDefault(); show(i + 1); break;
       case 'ArrowLeft': case 'PageUp': e.preventDefault(); show(i - 1); break;

@@ -201,7 +201,7 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
 <title>${esc(title)} · Theatre Computer Systems</title>
 <meta name="description" content="${esc(desc || '')}">
 <meta name="color-scheme" content="dark light">
-<link rel="stylesheet" href="/assets/styles.css">
+<link rel="stylesheet" href="/assets/styles.css?v=${STAMP.commit}">
 <link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0d0f13"/><circle cx="16" cy="12" r="5" fill="#f0a038"/><path d="M8 26c1.6-4.6 4.4-7 8-7s6.4 2.4 8 7z" fill="#4fb3c8"/></svg>'
   )}">
@@ -246,8 +246,8 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
   </div>
 </div>
 
-<script src="/assets/app.js" type="module"></script>
-${scripts.map((s) => `<script src="${s}" type="module"></script>`).join('\n')}
+<script src="/assets/app.js?v=${STAMP.commit}" type="module"></script>
+${scripts.map((s) => `<script src="${s}?v=${STAMP.commit}" type="module"></script>`).join('\n')}
 </body>
 </html>`;
 }
@@ -459,7 +459,7 @@ for (const c of classData) {
     <button class="teach-nav" id="tprev">← Previous</button>
     <div class="teach-dots" id="tdots"></div>
     <span class="teach-next" id="tnextup" hidden></span>
-    <button class="teach-btn" id="tgrid" title="Overview (o)">▦</button>
+    <button class="teach-btn" id="tgrid" title="Overview of every screen (o)">▦ Overview <kbd>o</kbd></button>
     <button class="teach-nav" id="tnext">Next →</button>
   </footer>
 </div>`;
