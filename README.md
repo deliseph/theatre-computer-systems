@@ -49,7 +49,7 @@ guide is the lecturer's own working document. Both live in a private pack.
 - **A preparation path.** Every class states what you must already be able to do and where to get
   it, three concrete tasks, and what to bring. A five question readiness check tests the
   prerequisite rather than the content, and names the exact thing to go and fix.
-- **60 interactive explainers**, placed inline where each idea is taught. Every one shows a real
+- **63 interactive explainers**, placed inline where each idea is taught. Every one shows a real
   mechanism with the numbers used in the prose, and the controls exist to break it: starve the
   clock with a file copy, drag a subnet boundary through 32 bits, contain a broadcast inside a
   VLAN, watch IGMP memberships time out hours after everything looked fine.
@@ -73,6 +73,7 @@ guide is the lecturer's own working document. Both live in a private pack.
 | `02-session-02-production-visit.md` | The venue visit, with observation sheet |
 | `study-guide.md` | Student facing, per class, with self tests |
 | `glossary.md` | 344 terms, EN and 繁中 |
+| `where-next.md` | Certifications, free courses, standards and books |
 | `field-commands.md` | The field card: commands, and setting an address on four platforms |
 | `lineage.md` | How we got here: why each technology exists and what it charged for it |
 | `numbers-to-know.md` | The reference card |

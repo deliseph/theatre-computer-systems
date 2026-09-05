@@ -243,6 +243,8 @@ a wrong guess is a visible failure in front of an audience.
 
 ### Quantum teleportation, and what it actually does
 
+<!--anim:teleport-protocol-->
+
 This one is worth doing properly, because the popular version of it is wrong in a specific way you
 can check, and because "we will teleport the signal" is a sentence somebody will say to you.
 

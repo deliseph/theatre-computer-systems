@@ -1023,3 +1023,188 @@ register('quantise-noise', (host) => {
   );
   upd();
 });
+
+// ============================================================================
+// 9. Why a DAW plays sixty tracks at once and never drifts
+// ============================================================================
+
+register('daw-mixdown', (host) => {
+  const st = { tracks: 8, buf: 256, cost: 0.10 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'How sixty tracks come out as one, on time',
+    sub: 'They are not sixty streams. They are one buffer, filled from sixty lists, before the card asks for it.',
+    note: '&nbsp;',
+  });
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 320,
+    animated: true,
+    controls,
+    draw(g, w, hgt, t) {
+      const p = palette();
+      const W = Math.min(580, w - 24), ox = (w - W) / 2;
+      const period = st.buf / 48000;                       // seconds per buffer
+      const shown = Math.min(12, st.tracks);
+      const lane = 15, laneW = W * 0.52, oy = 40;
+
+      // One playhead, which is a sample index, not a clock per track.
+      const cycle = 6;
+      const ph = (t % cycle) / cycle;
+      const px = ox + ph * laneW;
+      const sampleIdx = Math.floor(ph * 48000 * 4);
+
+      label(g, `playhead at sample ${sampleIdx.toLocaleString('en-US')}`, ox, 14,
+        { color: p.ink, size: 12, weight: 650, ...mono });
+      label(g, `= ${(sampleIdx / 48000).toFixed(3)} s, on every track, always`, ox + 250, 14,
+        { color: p.muted, size: 11 });
+
+      for (let i = 0; i < shown; i++) {
+        const y = oy + i * lane;
+        line(g, ox, y, ox + laneW, y, { color: alpha(p.line, 0.55), lw: 1 });
+        // A different waveform per track, so it is clear they are different data.
+        g.beginPath();
+        for (let k = 0; k <= laneW; k += 2) {
+          const u = k / laneW;
+          const a = Math.sin(u * 60 + i * 1.7) * Math.sin(u * 7 + i) * 5.2;
+          g.lineTo(ox + k, y + a);
+        }
+        g.strokeStyle = alpha(p.cyan, 0.6); g.lineWidth = 1; g.stroke();
+        label(g, String(i + 1).padStart(2, ' '), ox - 18, y, { color: p.muted, size: 9.5, ...mono });
+      }
+      if (st.tracks > shown) {
+        label(g, `+ ${st.tracks - shown} more`, ox - 18, oy + shown * lane + 4, { color: p.muted, size: 9.5, ...mono });
+      }
+
+      // The block being read: the SAME sample range on every track at once.
+      const bw = Math.max(4, (st.buf / 48000 / 4) * laneW);
+      box(g, px, oy - 10, bw, shown * lane + 6, { fill: alpha(p.amber, 0.2), stroke: p.amber, r: 2, lw: 1.2 });
+      line(g, px, oy - 16, px, oy + shown * lane + 2, { color: p.amber, lw: 1.5 });
+
+      // Sum into one buffer, which is what actually leaves the machine.
+      const sx = ox + laneW + 34, sy = oy + (shown * lane) / 2 - 22;
+      line(g, px + bw, oy + (shown * lane) / 2, sx - 8, sy + 22, { color: alpha(p.amber, 0.7), lw: 2 });
+      box(g, sx, sy, W - laneW - 34, 44, { fill: alpha(p.green, 0.14), stroke: p.green, r: 6, lw: 1.5 });
+      g.save(); g.beginPath(); g.rect(sx + 4, sy + 4, W - laneW - 42, 36); g.clip();
+      g.beginPath();
+      for (let k = 0; k <= W - laneW - 42; k += 2) {
+        const u = k / (W - laneW - 42);
+        let a = 0;
+        for (let i = 0; i < Math.min(st.tracks, 24); i++) a += Math.sin(u * 60 + i * 1.7) * Math.sin(u * 7 + i);
+        g.lineTo(sx + 4 + k, sy + 22 + (a / Math.sqrt(Math.min(st.tracks, 24))) * 7);
+      }
+      g.strokeStyle = p.green; g.lineWidth = 1.4; g.stroke(); g.restore();
+      label(g, 'one mix buffer', sx, sy - 9, { color: p.green, size: 11, weight: 650 });
+      label(g, `${st.buf} samples`, sx, sy + 58, { color: p.muted, size: 10.5, ...mono });
+
+      // The deadline. Work per buffer against the time available.
+      const budget = period * 1000;
+      const work = st.tracks * st.cost;
+      const late = work > budget;
+      const dy = oy + shown * lane + 40;
+      label(g, 'work to do in one buffer period', ox, dy - 8, { color: p.ink2, size: 11.5, weight: 600 });
+      const dw = W - 90;
+      box(g, ox, dy, dw, 20, { fill: alpha(p.line, 0.35), stroke: 'transparent', r: 4 });
+      box(g, ox, dy, Math.min(dw, dw * (work / budget)), 20,
+        { fill: alpha(late ? p.red : p.green, 0.55), stroke: late ? p.red : p.green, r: 4, lw: 1 });
+      line(g, ox + dw, dy - 5, ox + dw, dy + 25, { color: p.ink, lw: 2 });
+      label(g, 'deadline', ox + dw + 6, dy + 10, { color: p.ink, size: 10, ...mono });
+      label(g, `${st.tracks} tracks × ${st.cost.toFixed(2)} ms = ${work.toFixed(2)} ms, and there are ${budget.toFixed(2)} ms`,
+        ox, dy + 38, { color: late ? p.red : p.muted, size: 11.5, ...mono });
+      if (late) label(g, 'CLICK', ox + dw - 54, dy + 10, { color: p.red, size: 13, weight: 800, ...mono });
+      fit(dy + 56);
+    },
+  });
+
+  const upd = () => {
+    const budget = (st.buf / 48000) * 1000;
+    const work = st.tracks * st.cost;
+    if (work > budget) setNote(`<b>${work.toFixed(1)} ms of work and ${budget.toFixed(2)} ms to do it in.</b> The card asks for the next block and it is not ready, so it plays whatever is in the buffer, and that discontinuity is the click. Note what did <i>not</i> happen: nothing went out of sync. It failed as a <b>dropout</b>, not as drift, and that is the whole point of the design.`);
+    else setNote(`<b>Sync is not maintained here, it is structural.</b> Every track is a list of samples, and the playhead is one number: sample 480,000 is ten seconds in, on every track, forever. There is no per-track clock to drift, because there is no per-track clock. The mixer reads the same sample range from all ${st.tracks} tracks, sums them into <b>one</b> buffer, and hands that to the card. Sixty tracks and one track are the same job to the driver.`);
+  };
+
+  controls.append(
+    slider('Tracks', { min: 1, max: 64, step: 1, value: 8, fmt: (v) => v, on: (v) => { st.tracks = v; upd(); } }).node,
+    choice('Buffer', [['64', '64'], ['128', '128'], ['256', '256'], ['512', '512'], ['1024', '1024']], { value: '256', on: (v) => { st.buf = +v; upd(); } }).node,
+    slider('Work per track', { min: 0.01, max: 1.2, step: 0.01, value: 0.10, fmt: (v) => `${v.toFixed(2)} ms`, on: (v) => { st.cost = v; upd(); } }).node
+  );
+  upd();
+});
+
+// ============================================================================
+// 10. Plugin delay compensation, and the one case it cannot fix
+// ============================================================================
+
+register('pdc-align', (host) => {
+  const st = { pdc: true, live: false };
+  const TR = [
+    ['Drums', 0, 'dry'],
+    ['Bass', 1024, 'linear phase EQ'],
+    ['Mix bus', 2048, 'lookahead limiter'],
+    ['Vocal, being recorded', 0, 'live input'],
+  ];
+  const { controls, stage, setNote } = figure(host, {
+    title: 'Why the tracks still line up when the plugins do not',
+    sub: 'Some processing has to look ahead, which means it runs late. The DAW hides that by making everything else late to match.',
+    note: '&nbsp;',
+  });
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 300,
+    animated: false,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(560, w - 24), ox = (w - W) / 2;
+      const maxD = Math.max(...TR.map((t) => t[1]));
+      const scale = (W - 190) / 4096;
+      const oy = 34;
+
+      label(g, 'a transient at the same moment on every track', ox, 16, { color: p.ink2, size: 11.5, weight: 600 });
+
+      TR.forEach(([name, delay, why], i) => {
+        const y = oy + i * 46;
+        const isLive = i === 3;
+        const shift = st.pdc ? (isLive && st.live ? 0 : maxD - delay) : 0;
+        const out = delay + shift;
+        label(g, name, ox, y + 8, { color: p.ink2, size: 11.5 });
+        label(g, why, ox, y + 24, { color: p.muted, size: 10 });
+        const lx = ox + 150, lw = W - 190;
+        line(g, lx, y + 14, lx + lw, y + 14, { color: alpha(p.line, 0.6), lw: 1 });
+        // The transient, where it actually comes out.
+        const tx = lx + out * scale;
+        const col = isLive && st.live && st.pdc ? p.red : (out === maxD || (st.pdc && !(isLive && st.live)) ? p.green : p.amber);
+        line(g, tx, y + 4, tx, y + 24, { color: col, lw: 2.5 });
+        g.fillStyle = col; g.beginPath(); g.arc(tx, y + 14, 3.5, 0, 7); g.fill();
+        if (delay) label(g, `plugin: ${delay} samples`, lx + lw + 8, y + 8, { color: p.muted, size: 9.5, ...mono });
+        if (shift) label(g, `+ ${shift} delayed to match`, lx + lw + 8, y + 22, { color: p.cyan, size: 9.5, ...mono });
+      });
+
+      // The alignment line, and what the compensation cost.
+      const ax = ox + 150 + (st.pdc ? maxD : 0) * scale;
+      line(g, ax, oy - 6, ax, oy + 4 * 46 - 12, { color: alpha(p.ink, 0.55), lw: 1, dash: [4, 3] });
+      const ms = (maxD / 48000) * 1000;
+      const fy = oy + 4 * 46 + 4;
+      label(g, st.pdc
+        ? `everything delayed to ${maxD} samples = ${ms.toFixed(1)} ms of monitoring latency`
+        : 'no compensation: the transients arrive at three different moments',
+        ox, fy, { color: st.pdc ? p.cyan : p.red, size: 12, weight: 650 });
+      fit(fy + 26);
+    },
+  });
+
+  const upd = () => {
+    cv.once();
+    if (!st.pdc) setNote('<b>Compensation off.</b> A lookahead limiter cannot limit a peak it has not seen yet, so it holds the audio back 2,048 samples in order to see it coming. That track now comes out late. The others do not. The mix does not sound wrong so much as <b>smeared</b>: the kick and the bass no longer land together, and no amount of nudging fixes it because the delay is inside a plugin.');
+    else if (st.live) setNote('<b>The case compensation cannot fix.</b> A track being recorded is arriving from the outside world right now, and you cannot delay a live signal into the past to match the others. So the DAW leaves it uncompensated and the performer hears themselves 42.7 ms early relative to the mix, or the mix late relative to themselves. That is the real reason overdubbing onto a heavily processed session feels wrong, and the fix is to <b>monitor around it</b>, not to argue with the maths.');
+    else setNote('<b>Compensation on.</b> The DAW adds up the delay of every path, finds the longest, and delays everything else to match it. All the transients now line up, exactly, and the price is on the label: the whole mix is 42.7 ms late. That is why a session gets less responsive as it gets heavier, and it is not the CPU, it is the arithmetic doing its job.');
+  };
+
+  controls.append(
+    toggle('Delay compensation', { value: true, on: (v) => { st.pdc = v; upd(); } }).node,
+    toggle('Recording a live input', { on: (v) => { st.live = v; upd(); } }).node
+  );
+  upd();
+});

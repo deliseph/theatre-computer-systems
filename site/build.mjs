@@ -177,6 +177,7 @@ const NAV_RESOURCES = [
   ['/numbers', 'Numbers', 'The reference card'],
   ['/field', 'Field card', 'Commands and settings'],
   ['/lineage', 'How we got here', 'Why each technology exists'],
+  ['/next', 'Where to go next', 'Certifications, courses and books'],
 ];
 
 function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] }) {
@@ -277,6 +278,7 @@ const studyMd = renumber(read('study-guide.md'));
 const numbersMd = renumber(read('numbers-to-know.md'));
 const fieldMd = renumber(read('field-commands.md'));
 const lineageMd = renumber(read('lineage.md'));
+const nextMd = renumber(read('where-next.md'));
 const glossaryMd = read('glossary.md');
 
 const drillCards = [];
@@ -369,13 +371,16 @@ for (const c of classData) {
     .map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`)
     .join('');
 
+  // The order is the learning loop: prepare, learn, do it, test yourself, look
+  // it up. Reference used to sit in the middle of that, which put a lookup
+  // between the learning and the doing.
   const tabs = [
     ['prepare', 'Prepare', c.prep.html],
-    ['content', 'Class content', c.doc.html],
-    ['study', 'Study &amp; self-test', c.study.html + selfTestHtml(c.n)],
-    ['numbers', 'Numbers', c.numbers.html],
+    ['content', 'Learn', c.doc.html],
     ['tools', 'Tools', toolsHtml(c.tools)],
     ['practice', 'Practice', practiceHtml(c.practice, c.n)],
+    ['study', 'Test yourself', c.study.html + selfTestHtml(c.n)],
+    ['numbers', 'Numbers', c.numbers.html],
   ];
 
   const tabBtns = tabs
@@ -393,6 +398,7 @@ for (const c of classData) {
     <p class="strap">${esc(c.strap)}</p>
     <div class="head-actions">
       <a class="btn btn-primary" href="#tab=prepare">Prepare for this class</a>
+      <a class="btn" href="#tab=content">Start learning</a>
       <a class="btn" href="/teach/${c.n}">▶ Teach mode</a>
       <button class="btn js-done" data-class="${c.n}">Mark as studied</button>
     </div>
@@ -452,6 +458,8 @@ for (const c of classData) {
   <footer class="teach-foot">
     <button class="teach-nav" id="tprev">← Previous</button>
     <div class="teach-dots" id="tdots"></div>
+    <span class="teach-next" id="tnextup" hidden></span>
+    <button class="teach-btn" id="tgrid" title="Overview (o)">▦</button>
     <button class="teach-nav" id="tnext">Next →</button>
   </footer>
 </div>`;
@@ -536,6 +544,21 @@ write('/lineage', shell({
   scripts: ['/assets/anim.js'],
 }));
 for (const b of lineageDoc.blocks) addSearch('/lineage', 'How we got here', b.title, b.html);
+
+const nextDoc = render(nextMd.replace(/^#\s+[^\n]*\n/, ''));
+write('/next', shell({
+  title: 'Where to go next',
+  desc: 'Certifications, free courses, standards and books, and how to choose a direction.',
+  body: `<article class="doc"><header class="page-head">
+      <p class="eyebrow"><span class="pill">Reference</span></p>
+      <h1>Where to go next</h1>
+      <p class="strap">This module is an introduction: deliberately wide, deliberately shallow. By
+      the end of it you should know which direction you want to go deeper in. Here is where each
+      direction leads, what it costs, and what is free.</p>
+    </header>${nextDoc.html}</article>`,
+  active: '/next',
+}));
+for (const b of nextDoc.blocks) addSearch('/next', 'Where to go next', b.title, b.html);
 
 const glossDoc = render(glossaryMd.replace(/^#\s+[^\n]*\n/, '').replace(/^##\s+Computer Systems[^\n]*\n/m, ''));
 write('/glossary', shell({
@@ -743,7 +766,7 @@ fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex
 fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
 fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify(STAMP, null, 2));
 
-const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field', '/lineage',
+const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field', '/lineage', '/next',
   ...CLASSES.map((c) => `/class/${c.n}`), ...CLASSES.map((c) => `/teach/${c.n}`)];
 
 console.log(`Built ${routes.length} routes`);

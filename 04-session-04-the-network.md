@@ -134,7 +134,7 @@ TCP/IP because it is what the room will say.
 
 ### The diagnostic ladder
 
-This is the payload of the whole block. Write it on the board and leave it up for the rest of
+This is the payload of the whole block, and it is worth keeping in front of you for the rest of
 the module.
 
 > **Fault find from the bottom up. Never start at the top.**
@@ -150,7 +150,7 @@ the module.
 Every rung you skip is a rung you will come back to. The student who reinstalls the lighting
 software first has spent forty minutes to arrive back at rung 1.
 
-### Layer 1 in detail: copper
+### Extension: Layer 1 in detail: copper
 
 - Categories: Cat5e (1 Gbit), Cat6 (1 Gbit reliably, 10 Gbit on short runs), Cat6a (10 Gbit to 100 m).
 - **The 100 metre rule.** 100 m total channel, conventionally 90 m of solid core plus 10 m of
@@ -163,14 +163,14 @@ software first has spent forty minutes to arrive back at rung 1.
 - Most network faults on a show are physical. Bad termination, crushed cable, a lead that was
   fine yesterday. This is why we test cables.
 
-### Layer 1 in detail: fibre
+### Extension: Layer 1 in detail: fibre
 
 - Multi mode for in building runs of hundreds of metres, single mode for kilometres.
 - Immune to electrical interference, which is why it goes between buildings and past dimmer racks.
 - **LC** is the common small connector, **opticalCON** the rigged and abused version.
 - **SFP** is the swappable transceiver that turns a switch port into a fibre port. Hold one up.
 
-### Layer 1 in detail: speed and power
+### Extension: Layer 1 in detail: speed and power
 
 | Link speed | Practical use |
 |-----------|---------------|
@@ -227,6 +227,8 @@ give it to the right program.
 <!--anim:layer-stack-->
 
 ### Layer 2: the frame, and the local wire
+
+<!--anim:frame-anatomy-->
 
 The unit is a **frame**. A frame can only travel within one local network. It cannot cross a
 router, and that single fact explains most of what follows.
@@ -350,7 +352,7 @@ firewall on the receiving machine quietly discarding it.
 
 ### The three boxes
 
-Three devices, three layers, three jobs. Students conflate all three, mostly because the box at
+Three devices, three layers, three jobs. They are easy to run together, mostly because the box at
 home does all of them at once.
 
 | | **Switch** | **Router** | **Access point** |
@@ -376,7 +378,7 @@ from Class 3 about wireless applies: a shared, contended medium with no delivery
 
 <!--anim:device-roles-->
 
-### What is actually inside the box you call a router
+### Extension: What is actually inside the box you call a router
 
 This one clarification saves more confusion than anything else in the block.
 
@@ -410,7 +412,7 @@ need one controlled path between them.
 ## Block C: Addressing and subnet arithmetic
 
 The hardest 50 minutes in the module for a first year, and the most valuable. Go slowly, do
-everything on the board, and make them calculate out loud.
+everything written down, and the arithmetic done out loud.
 
 ### The binary you actually need
 
@@ -434,7 +436,7 @@ That is the whole of the binary requirement. Nine numbers to recognise on sight:
 | 3 | 224 | 8 | 255 |
 | 4 | 240 | | |
 
-Make them learn this column. It is nine numbers and it unlocks everything that follows.
+Learn this column. It is nine numbers and it unlocks everything that follows.
 
 ### The mask is a run of ones
 
@@ -475,8 +477,8 @@ Subnet mask   255 . 255 . 255 .   0        =  /24
 
 ### The four calculations
 
-For any address and mask, a technician needs four answers. Do this worked example on the board,
-then make them do two more themselves.
+For any address and mask, four answers are needed. Here is the worked example,
+then do two more yourself.
 
 **Given `10.101.3.150 /26`:**
 
@@ -561,7 +563,7 @@ Four subnets needs 2 borrowed bits, because 2^2 = 4.
 
 **The rule:** to get N subnets, borrow enough bits that 2^bits is greater than or equal to N.
 
-### Within a range, reserve blocks by device type
+### Extension: Within a range, reserve blocks by device type
 
 Any scheme works. Having one, writing it down, and labelling the devices to match is the skill.
 
@@ -572,7 +574,9 @@ Any scheme works. Having one, writing it down, and labelling the devices to matc
 .200 up        temporary and test devices
 ```
 
-### Public and private addresses, and the other thing called "public network"
+### Extension: Public and private addresses, and the other thing called "public network"
+
+<!--anim:address-space-->
 
 Two different things share the word, and mixing them up wastes an evening.
 
@@ -700,9 +704,9 @@ On a corporate network that isolation is a problem to be solved. On a show netwo
 the entire objective. Do not add inter VLAN routing because it feels incomplete. Add it only
 where a specific, named thing needs to cross, and then allow only that thing.
 
-### A worked VLAN scheme
+### Extension: A worked VLAN scheme
 
-The design to give them, and the one they will reproduce in the lab.
+The design worth learning, and the one reproduced in the lab.
 
 | VLAN ID | Name | Subnet | Carries | Switch ports |
 |---------|------|--------|---------|--------------|
@@ -766,7 +770,7 @@ first year should recognise that timing signature.
 **Rule of thumb:** use an unmanaged switch, or a managed switch configured properly. Never a
 managed switch configured halfway. The half measure is worse than neither.
 
-### QoS
+### Extension: QoS
 
 Priority. When a link is congested, the switch decides what goes first. Clock traffic gets the
 highest priority, then media, then everything else.
@@ -776,7 +780,7 @@ that has none. It is the technical answer to the villain of Class 1.
 
 ### Segmentation strategy
 
-Four options. Have them argue for one before you give your view.
+Four options. Argue for one before you read on.
 
 **Option 1: fully separate physical networks.**
 - Gains: near total isolation, simple to reason about, very hard to break catastrophically.
@@ -802,7 +806,9 @@ failure is a safety issue.
 
 ### Wireless
 
-Said firmly, one slide. Wi-Fi is a **shared, contended medium with no delivery guarantee and
+<!--anim:wifi-channels-->
+
+Put plainly. Wi-Fi is a **shared, contended medium with no delivery guarantee and
 variable delay**, and in a room with 900 audience phones it degrades at exactly the moment you
 need it.
 
@@ -915,6 +921,8 @@ Small moment, long memory. The protocol stops being an acronym and becomes visib
 
 ## Sources and further study
 
+**If this class interested you:** Cisco's Networking Academy runs a free Networking Basics course, and CCNA is the road after it. Both are on [Where to go next](/next).
+
 ### The index this module checks itself against
 
 **[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
@@ -957,7 +965,7 @@ night for a week beats three hours the day before.** Target: ten correct in a ro
 
 ---
 
-## Homework before session 5
+## Homework before Class 4
 
 1. Write up your fault log properly: symptom, hypothesis, test, result, conclusion, for each fault.
 2. **Subnetting drill on the platform until you can score 10 out of 10 twice in a row.** This is

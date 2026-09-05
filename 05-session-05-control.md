@@ -109,12 +109,12 @@ the behaviour of a protocol they have never met.
 This is why the light held and the video froze. DMX repeats itself into eternity, so the node had
 a value to keep outputting. The video was waiting for a "go to next" event that never came.
 
-**The design rule to write on the board:**
+**The design rule worth writing down:**
 
 > Anything that must happen, exactly once, at exactly the right moment, is the fragile part of
 > your system. Protect it.
 
-Ask them where the fragile points were in the venue they visited. Good discussion, five minutes.
+Where were the fragile points in the venue you visited? Worth five minutes of argument.
 
 ### The three parts of any control message
 
@@ -164,7 +164,7 @@ cheap, and good enough.
 
 ### The refresh rate calculation
 
-Do this on the board. It explains a lot of behaviour they will see.
+Worth working through. It explains a lot of behaviour you will see.
 
 Each slot is sent as 11 bits (a start bit, 8 data bits, 2 stop bits). Plus a break and a mark
 before the first slot.
@@ -269,6 +269,37 @@ that arrives smoothly, which is the same argument as 16 bit dimming, one departm
 bands. The same DMX value means different things on two fixtures, so the manual's channel chart is
 not optional reading.
 
+### Extension: Colour, and why two fixtures at the same temperature do not match
+
+Class 2 established that three numbers make a colour, because your eye has three cone types. Here
+is what that leaves out, and it is the part that decides which fixture you specify.
+
+**Hitting a colour and rendering a colour are different problems.** An object does not have three
+cone types: it reflects whatever wavelengths it happens to reflect. Point a three spike RGB source
+at a costume that only reflects between 610 and 660 nm, and if the red emitter peaks at 632 nm with
+nothing either side, there is very little there for it to reflect. Objects that line up with a
+spike come back over saturated; objects that sit in a gap come back muddy or the wrong hue. The
+meter still says you are on target.
+
+<!--anim:spectral-render-->
+
+That is what a **CRI** or **TM-30** figure on a spec sheet is trying to describe, and it is what
+the extra emitters in a seven colour fixture are buying. It is also the honest answer to why one
+costs four times the other.
+
+**Then colour temperature, and the axis nobody prints on the fixture.** Kelvin says where a white
+sits along one curve, the Planckian locus, running from warm tungsten through daylight to cold
+blue. It does not say how far *off* that curve you are sitting.
+
+That second axis is green against magenta, sometimes labelled Duv, sometimes just a plus green
+control. **Two fixtures can agree on 5,600 K and still not match**, because one is sitting green of
+the curve. Correcting it with the Kelvin control makes it worse. It needs the green control, or a
+minus green gel.
+
+<!--anim:colour-temperature-->
+
+> White is not a colour. It is an agreement, and a white balance is where the agreement is set.
+
 ### Patching arithmetic
 
 Patching is addition, and the mistake is always the same one.
@@ -296,7 +327,7 @@ controller can discover fixtures, read and set their addresses, and read status 
 and temperature. It is bidirectional DMX. It requires RDM capable splitters, which is why it
 often does not work in a venue that has RDM capable fixtures.
 
-### Effects, which are not programmed one cue at a time
+### Extension: Effects, which are not programmed one cue at a time
 
 A rig that appears to be doing something complicated is usually doing something very simple to
 every fixture at a different moment. An effect engine holds three numbers:
@@ -393,7 +424,7 @@ unless you have thought hard about it.
 
 The `2.x.x.x` trap deserves a full minute: an Art-Net node on `2.0.0.10/8` and a laptop on
 `192.168.1.5/24` share a cable and cannot talk. This is the number one reason a year one student
-declares a node "broken". Link back to session 4, row 4 of the subnet table.
+declares a node "broken". Link back to Class 3, row 4 of the subnet table.
 
 ### Universe maths for pixel work
 
@@ -439,8 +470,8 @@ count, node port count and processing. Bandwidth is not the enemy here. Configur
   almost every modern show product speaks it.
 - **Weakness, and it is a real one:** there is no standard namespace. Every manufacturer invents
   its own paths. `/cue/12/start` on one product means nothing on another. You must read the
-  manufacturer's OSC documentation every single time. Tell them this plainly, because the
-  flexibility looks like a promise it does not keep.
+  manufacturer's OSC documentation every single time. The flexibility looks like a promise, and
+  it is not one.
 - It is event based. A lost OSC message is a cue that did not happen.
 
 **OSC in audio, specifically.** Most current digital mixing desks accept OSC, and this is how a
@@ -481,7 +512,9 @@ computer and dies when that computer sleeps. And a control change carries **7 bi
 driven by MIDI has 128 steps, which is the resolution argument from the lighting block arriving in
 a different department.
 
-### Tracking: telling the rig where somebody is
+### Extension: Tracking: telling the rig where somebody is
+
+<!--anim:psn-stream-->
 
 A control message usually says *do this*. A tracking message says *this is where the thing is now*,
 sixty times a second, and lets every department decide what to do about it.
@@ -524,7 +557,7 @@ being wrong rather than the network being busy.
 *Ports, packet structures and the full gotcha list are in*
 *[showstack](https://showstack-inky.vercel.app/), which is where these numbers came from.*
 
-### PJLink, and controlling a projector
+### Extension: PJLink, and controlling a projector
 
 Projectors are the department that everyone forgets is on the network until somebody has to turn
 forty of them off.
@@ -582,7 +615,7 @@ The choice underneath everything above.
 | Right for | A cue list sync, a file transfer, a command that must confirm | Streaming state, media, anything where a late packet is useless |
 | Used by | Some show control, most management | DMX over IP, Dante, NDI, OSC usually |
 
-The insight to give them, which is genuinely counterintuitive: **for real time media, a
+The genuinely counterintuitive part: **for real time media, a
 retransmitted packet is worthless.** By the time it arrives, its moment has passed. That is why
 almost all show media runs on UDP, the "unreliable" one. Reliability and timeliness are different
 goals, and we choose timeliness.
@@ -676,7 +709,7 @@ Teams of four, one from each specialism where the cohort allows. Each team build
    (a phone camera at high frame rate pointed at the trigger and the output works, and is a
    genuinely used professional technique). State the method and the number.
 5. **A failure analysis.** Name three things that would break this chain, and what you would do
-   about each. At least one must be a network fault from session 4.
+   about each. At least one must be a network fault from Class 3.
 6. **One paragraph on protocol choice.** Why OSC and not MIDI here, or the reverse. Trade offs
    named.
 
@@ -684,10 +717,10 @@ Teams of four, one from each specialism where the cohort allows. Each team build
 
 Do not give these until the chain runs. Then walk round and do one to each team.
 
-- Unplug the network mid cue. Ask them to explain what happened to each department, using the
+- Unplug the network mid cue, and explain what happened to each department, using the
   state versus event model from Block A. This is the session 1 cold open, closed.
 - Change one node's IP by one digit. Time how long they take to find it.
-- Ask them to add a fourth department, and see whether their diagram made that easy or hard.
+- Add a fourth department, and see whether your diagram made that easy or hard.
   This is criterion 3 of the rubric arriving in person.
 
 ---
@@ -712,6 +745,8 @@ Do not give these until the chain runs. Then walk round and do one to each team.
 ---
 
 ## Sources and further study
+
+**If this class interested you:** the ESTA standards themselves are free to download, and ETC publish free console training. Both are on [Where to go next](/next).
 
 ### The index this module checks itself against
 
@@ -750,7 +785,7 @@ the frame rate list and the drop frame rule, both of which are in the reference 
 
 ---
 
-## Homework before session 6
+## Homework before Class 5
 
 1. Finish and submit the trigger chain documentation pack.
 2. Calculate the universe requirement for this rig: 36 LED battens of 40 RGBW pixels each, plus

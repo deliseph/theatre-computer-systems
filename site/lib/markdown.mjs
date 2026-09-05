@@ -106,11 +106,16 @@ export function render(md) {
     if (h) {
       para();
       const level = h[1].length;
-      const raw = h[2].trim();
+      let raw = h[2].trim();
+      // A heading beginning "Extension: " marks material that is not on the
+      // spine of the class: worth reading, not worth cutting the lab for.
+      const ext = raw.startsWith('Extension: ');
+      if (ext) raw = raw.slice(11);
       const id = uid(slugify(raw));
-      headings.push({ level, text: raw.replace(/\*\*/g, '').replace(/`/g, ''), id });
+      headings.push({ level, text: raw.replace(/\*\*/g, '').replace(/`/g, ''), id, ext });
       out.push(
-        `<h${level} id="${id}" class="hd hd-${level}">${inline(raw)}` +
+        `<h${level} id="${id}" class="hd hd-${level}${ext ? ' hd-ext' : ''}">` +
+          (ext ? '<span class="ext-badge">Going deeper</span>' : '') + inline(raw) +
           `<a class="anchor" href="#${id}" aria-label="Link to this section">#</a></h${level}>`
       );
       i++;
@@ -287,7 +292,10 @@ function splitBlocks(html) {
       continue;
     }
     const level = Number(m[1]);
-    const title = m[3].replace(/<[^>]+>/g, '').trim();
+    // Drop the "Going deeper" badge before it becomes a slide title, or every
+    // extension slide is named after its badge.
+    const title = m[3].replace(/<span class="ext-badge">.*?<\/span>/g, '')
+      .replace(/<[^>]+>/g, '').trim();
     if (level === 2) parent = title;
     blocks.push({ id: m[2], title, level, parent, html: part });
   }

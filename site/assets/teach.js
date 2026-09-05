@@ -23,9 +23,40 @@ if (track) {
   let i = 0;
   let started = null;   // epoch ms when the current block's stopwatch began
 
+  // Thirty seven identical dots are not navigation. Group them by block, so
+  // the row reads as the shape of the class rather than as a progress bar.
+  let lastBlock = null;
   dots.innerHTML = slides
-    .map((s, n) => `<button class="tdot" data-i="${n}" title="${s.dataset.title}"></button>`)
+    .map((s, n) => {
+      const b = s.dataset.block || s.dataset.title;
+      const gap = b !== lastBlock && n > 0 ? ' tdot-new' : '';
+      lastBlock = b;
+      return `<button class="tdot${gap}" data-i="${n}" title="${b} — ${s.dataset.title}"></button>`;
+    })
     .join('');
+
+  // An overview, because scrubbing one slide at a time to find something is
+  // the thing that makes a projector view feel slow in front of a room.
+  const grid = document.createElement('div');
+  grid.className = 'teach-grid';
+  grid.hidden = true;
+  grid.innerHTML = slides.map((s, n) => {
+    const b = s.dataset.block || s.dataset.title;
+    return `<button class="tcard" data-i="${n}"><span class="tcard-b">${b}</span>
+      <span class="tcard-t">${s.dataset.title}</span><span class="tcard-n">${n + 1}</span></button>`;
+  }).join('');
+  document.body.append(grid);
+  grid.addEventListener('click', (e) => {
+    const c = e.target.closest('.tcard');
+    if (c) { grid.hidden = true; show(+c.dataset.i); }
+  });
+  const toggleGrid = () => {
+    grid.hidden = !grid.hidden;
+    if (!grid.hidden) {
+      grid.querySelectorAll('.tcard').forEach((c, k) => c.classList.toggle('on', k === i));
+      grid.querySelector('.tcard.on')?.scrollIntoView({ block: 'center' });
+    }
+  };
 
 
 
@@ -36,6 +67,12 @@ if (track) {
     prevBtn.disabled = i === 0;
     nextBtn.disabled = i === slides.length - 1;
     posLbl.textContent = `${i + 1} / ${slides.length}`;
+    const nx = slides[i + 1];
+    const nextLbl = document.getElementById('tnextup');
+    if (nextLbl) {
+      nextLbl.textContent = nx ? `next: ${nx.dataset.title}` : 'last screen';
+      nextLbl.hidden = false;
+    }
 
     // The planned window lives on the parent h2, so a sub-section inherits it.
     const block = slides[i].dataset.block || slides[i].dataset.title;
@@ -72,6 +109,8 @@ if (track) {
     paintClock();
   });
 
+  $('#tgrid')?.addEventListener('click', toggleGrid);
+
   $('#tfull').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen?.();
@@ -92,8 +131,10 @@ if (track) {
       case 'Home': show(0); break;
       case 'End': show(slides.length - 1); break;
       case 'f': $('#tfull').click(); break;
+      case 'o': case 'g': e.preventDefault(); toggleGrid(); break;
       case 't': startBtn.click(); break;
       case 'Escape':
+        if (!grid.hidden) { grid.hidden = true; break; }
         if (!document.fullscreenElement) location.href = $('.teach-exit').getAttribute('href');
         break;
       default: break;

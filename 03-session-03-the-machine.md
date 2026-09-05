@@ -5,8 +5,8 @@
 have ever used?*
 
 This is the session where "a computer" stops being a black box and becomes a set of components
-with rates, limits and trade offs that they will have to choose between for the rest of their
-careers.
+with rates, limits and trade offs you will be choosing between for the rest of your
+career.
 
 ---
 
@@ -101,6 +101,39 @@ specification. Same price bracket is not required, the point is which numbers ar
 Then walk the components. For each, the discipline is the same: **what it is, what it limits,
 what happens on a show when it runs out.**
 
+### What a computer actually is, before we name the parts
+
+Strip away the case and there are only two ideas.
+
+**One: everything is a number in a memory, and the processor changes numbers.** Fetch an
+instruction, work out what it means, do it, repeat. Billions of times a second, and it can only
+work on what is already in memory.
+
+**Two: nothing runs from the disk.** A program on a drive is inert. Something has to copy it into
+RAM before the processor can touch it, and the same is true of every frame of video and every
+second of audio. That single fact explains most of what follows: why RAM size decides how much
+media can be held ready, why a slow drive causes a stutter on first play and not on the second, and
+why "it is on the server" is not the same as "it is ready".
+
+<!--anim:machine-map-->
+
+The parts, and the one thing each is responsible for:
+
+| Part | What it is responsible for | How it shows up when it is the limit |
+|------|---------------------------|--------------------------------------|
+| **CPU** | doing the work, one instruction at a time, very fast | audio crackles, video drops frames under load |
+| **RAM** | holding what is being worked on right now | machine crawls, disk light on constantly |
+| **Storage** | remembering things when the power is off | stutter on the first play, fine on the second |
+| **GPU** | the same operation applied to a great many pixels | layer count collapses, an output will not come up |
+| **Motherboard and bus** | the roads between all of the above | a fast drive in the wrong slot is not a fast drive |
+| **Firmware (BIOS / UEFI)** | starting all of it, before any disk is involved | machine does nothing, or does not see the drive |
+| **Power supply** | turning mains into the voltages everything needs | random restarts, and the blame lands elsewhere |
+
+**On the bus, briefly.** Nearly everything talks over **PCI Express**, and it comes in lanes: a
+slot might be x1, x4, x8 or x16, and that number is how many lanes it actually gets. A drive rated
+at 7 GB/s in a slot with one lane is not a 7 GB/s drive, and the machine will not tell you. This is
+the same argument as an oversubscribed switch uplink in Class 3, inside the box.
+
 ### CPU
 
 - Cores and clock speed. More cores helps parallel work (video encoding, many plugins). Higher
@@ -141,7 +174,9 @@ This is where the most useful teaching is, because it is where the numbers bite.
 
 ### GPU
 
-- Three separate jobs, and students conflate them: **render** (making pixels), **decode**
+<!--anim:gpu-heads-->
+
+- Three separate jobs, and they are easy to run together in your head: **render** (making pixels), **decode**
   (turning a compressed file into frames), **output** (getting frames to physical connectors).
 - **What it limits:** layer counts, effects, output count and resolution.
 - **On a show:** dropped frames, tearing, an output that will not come up at the right resolution.
@@ -184,19 +219,74 @@ four facts above are what stops a bad specification.*
 - PCIe lanes, Thunderbolt, USB. Everything plugged in shares a finite path to the CPU.
 - **On a show:** the classic. A USB to DMX widget on the same controller as a USB drive and a
   USB audio interface, and the lighting output stutters when someone copies a file.
-- Rule of thumb worth giving them: for anything show critical, prefer a dedicated network node
+- Rule of thumb: for anything show critical, prefer a dedicated network node
   over a USB dongle. USB was designed for convenience, not for a deadline.
 
 ### The synthesis
 
-Put this on the board and leave it up:
+The line worth keeping in front of you:
 
 > A show computer is not a fast computer. It is a **predictable** computer. We trade peak
 > performance for the guarantee that the next frame arrives on time, every time, for three hours.
 
 ---
 
+### Extension: Booting: what happens between the button and the desktop
+
+Worth knowing in order, because the order tells you where a machine stopped.
+
+<!--anim:boot-sequence-->
+
+Two things fall out of that sequence and both are practical.
+
+**The firmware runs before any disk.** So a machine that beeps or flashes and shows nothing has
+failed before it ever looked for an operating system, and no amount of reinstalling helps. "No boot
+device" is the opposite: the firmware worked and found nothing to start.
+
+**Interfaces get claimed during startup.** Audio and video devices are taken over by drivers as the
+system comes up, which is why a device plugged in at the wrong moment is sometimes invisible until
+a restart, and why a show machine is powered on in an order that somebody wrote down.
+
+### Extension: The other kind of computer
+
+Not everything on a show is a computer in the sense above. A great deal of it is a
+**microcontroller**: one chip, one program, no operating system, running from the instant it has
+power.
+
+<!--anim:micro-vs-computer-->
+
+The trade is exact and it is the trade this whole module keeps returning to. A microcontroller runs
+one program, so nothing can decide your code is less important than an update, and its timing is
+predictable to the microsecond. It also cannot do anything else. A general purpose computer shares
+one processor between hundreds of programs, which is what makes it flexible and what makes its
+timing a matter of probability rather than promise.
+
+That is why a rig contains both. The console is a computer. The relay box that fires the pyro on a
+contact closure is a microcontroller, deliberately, and it would be a worse product if it were not.
+
 ## Block B: The operating system as a traffic cop
+
+### Extension: Operating systems, and why show machines are picky
+
+The operating system is in charge, not you. It decides which program runs next, who owns which
+device, and what happens when two things want the same thing. Three you will meet:
+
+| | **Windows** | **macOS** | **Linux** |
+|---|---|---|---|
+| Where it dominates | media servers, lighting consoles, most show software | audio production, QLab, video editing | consoles, embedded devices, media servers, infrastructure |
+| Audio driver model | ASIO for low latency, WDM otherwise | Core Audio, low latency built in | ALSA and JACK, or PipeWire |
+| Strength for a show | the widest hardware and software support in the industry | audio latency and stability, with no driver hunting | it can be stripped to exactly what is needed and nothing else |
+| Weakness for a show | updates that arrive when they feel like it | narrow hardware choice, and it costs | more configuration, and less commercial show software |
+
+**Why show machines are configured differently.** A general purpose OS is tuned to feel responsive
+while doing many things. A show machine has one job and a deadline, so the tuning is the opposite:
+turn off the updates, the indexing, the sleep, the power saving, the network discovery and the
+antivirus scan, because every one of those is a background task that will decide, at some point, to
+run during a cue.
+
+That is not superstition. It is the same argument as the audio buffer, one level up: **you are
+buying predictability by giving up flexibility**, and the machine will not make that trade unless
+you tell it to.
 
 ### Why a general purpose OS cannot promise you anything
 
@@ -211,7 +301,7 @@ That is the honest framing, and it justifies everything in the hygiene list belo
 
 ### Audio buffers, with the actual maths
 
-The clearest demonstration of a deadline in the whole module. Do this live with an audio
+The clearest demonstration of a deadline in the whole module, and it is worth hearing rather than reading. With an audio
 interface and a synth or a DAW.
 
 The sound card asks for a block of samples. The computer must fill that block before the card
@@ -235,16 +325,68 @@ Buffer size 128 samples at 48,000 Hz
 Round trip latency is roughly double the buffer plus converter time, so a 128 sample buffer is
 commonly 6 to 8 ms in and out.
 
-**Demo:** set the buffer to 1024, play something percussive live, let them hear it. Drop to 64,
-let them hear the difference, then load the CPU (open twenty browser tabs, start a file copy)
-until it clicks. They will remember the click.
+**Try it.** Set the buffer to 1024 and play something percussive. Drop to 64 and play it again.
+Then load the machine (twenty browser tabs, a file copy running) until it clicks.
 
-Then say the sentence: **the buffer is the trade between latency and safety, and there is no
-setting that wins both.**
+Once you have heard the click, the rule states itself: **the buffer is the trade between latency
+and safety, and there is no setting that wins both.**
+
+### Why sixty tracks play at once and never drift apart
+
+This is the question every audio student asks eventually, and the answer explains the whole
+architecture.
+
+**They are not sixty streams.** The DAW is not running sixty things in parallel and hoping they
+stay together. When the driver asks for the next block, the DAW reads the **same sample range from
+every track**, applies each track's processing, sums them into **one** buffer, and hands that
+single buffer to the card. Sixty tracks and one track are the same job as far as the driver is
+concerned. The output was never sixty of anything.
+
+<!--anim:daw-mixdown-->
+
+**And sync is not maintained, it is structural.** Every track is a list of samples, and the
+playhead is a single number: sample 480,000 is ten seconds in, on every track, always. There is no
+per-track clock, so there is nothing to drift. Position is **arithmetic on one counter**, not a
+measurement of a signal.
+
+That is worth sitting with, because it is the exact opposite of everything in Class 5. Two separate
+machines have two crystals and therefore drift, which is why PTP exists. One machine has one sample
+counter and therefore cannot. **Drift is a symptom of having more than one clock.**
+
+Three things follow, and all three turn up in practice:
+
+- **It fails as a dropout, not as drift.** Run out of time and the card plays whatever was in the
+  buffer, which is a click. Nothing goes out of sync, because sync was never the fragile part.
+- **The disk never touches the audio thread.** A separate thread reads ahead into memory, so a slow
+  drive causes dropouts rather than lateness. That is the Class 2 storage argument arriving with a
+  mechanism.
+- **Parallel work is per track, serial work is not.** Twelve tracks can be processed on several
+  cores inside one buffer period. One track with twenty plugins in series cannot, because each one
+  needs the previous one's output. This is why clock speed still matters on a machine with plenty
+  of cores.
+
+### Extension: The complication: some plugins have to look ahead
+
+A lookahead limiter cannot limit a peak it has not seen yet, so it holds the audio back a couple of
+thousand samples in order to see it coming. A linear phase EQ does the same. Those tracks now come
+out **late**, and the others do not.
+
+<!--anim:pdc-align-->
+
+The DAW's answer is **plugin delay compensation**: add up the delay of every path, find the longest,
+and delay everything else to match it. The transients line up again, exactly, and the price is on
+the label: the whole mix is now as late as the slowest path. **A session gets less responsive as it
+gets heavier, and that is the arithmetic working, not the CPU struggling.**
+
+Then the case it cannot fix. **A track being recorded is arriving from the outside world right
+now**, and you cannot delay a live signal into the past. So it stays uncompensated, the performer
+hears themselves offset against the mix, and the fix is to monitor around it rather than to argue
+with the maths. This is the single most common "why does overdubbing feel wrong" question, and it
+has a real answer.
 
 ### Drivers
 
-Fast, but name them, because the menus will say these words:
+Quickly, because the menus will use these words:
 - **ASIO** on Windows, the professional low latency path.
 - **Core Audio** on macOS, built in and low latency by default.
 - **WASAPI** and **MME** on Windows, the consumer paths. MME is high latency and is the reason a
@@ -252,7 +394,7 @@ Fast, but name them, because the menus will say these words:
 
 ### Show machine hygiene
 
-Give this as a checklist. It is directly employable knowledge and they will use it within a year.
+A checklist. It is directly employable, and you will use it within a year.
 
 - [ ] Automatic updates off, and a stated policy for when updates do happen.
 - [ ] Sleep, hibernate and display power saving off. Power plan set to maximum performance.
@@ -311,7 +453,7 @@ mastering engineer dithers on the way down to 16 bit instead of simply truncatin
   this is cheap compression that mostly works, until you put fine coloured text on screen, when
   it very visibly does not.
 - **The consequence:** 1080p60, 10 bit, 4:2:2 is about 2.5 Gbit/s uncompressed. Repeat the
-  calculation from session 1 and have them do 4K UHD themselves. Answer: about 10 Gbit/s.
+  calculation from Class 1 and do 4K UHD yourself. Answer: about 10 Gbit/s.
 
 ### Lighting
 
@@ -322,7 +464,7 @@ mastering engineer dithers on the way down to 16 bit instead of simply truncatin
   8 bit, then in 16 bit. The steps in the 8 bit version are obvious once you know to look, and
   once they see it they cannot unsee it. This is the "if an ordinary person can feel it" test
   passing in front of them.
-- Pixel maths, which they will need in session 5: an RGB pixel is 3 channels, so a universe of
+- Pixel maths, which comes back in Class 4: an RGB pixel is 3 channels, so a universe of
   512 channels holds 170 RGB pixels.
 
 ### Images, and why this is the same idea twice
@@ -352,7 +494,7 @@ that out loud is worth more than either explanation on its own.
   exists because our eyes are non-linear too. It is the reason two systems can agree on the
   numbers and disagree about the picture, and it gets its own section below.
 
-The arithmetic students should reach for automatically:
+The arithmetic worth reaching for automatically:
 
 ```
 one frame  =  width × height × channels × bit depth ÷ 8   bytes
@@ -361,37 +503,19 @@ data rate  =  that × frame rate
 
 ### Colour: what the three numbers actually mean
 
-This section belongs to all three specialisms at once. A pixel on an LED wall and a colour
-mixing fixture store colour the same way, and both are lying to you in the same useful manner.
+This belongs to all three specialisms at once. A pixel on an LED wall and a colour mixing fixture
+store colour the same way, and both are lying to you in the same useful manner.
 
-**Additive mixing.** Red plus green makes yellow. Nothing in the beam is yellow: two lights land
-in the same place and the eye reports one colour. That single fact is what makes a video wall and
-an LED fixture possible, and it is why lighting and video colour are the same subject.
+**Additive mixing.** Red plus green makes yellow. Nothing in the beam is yellow: two lights land in
+the same place and the eye reports one colour. That single fact is what makes a video wall and an
+LED fixture possible, and it is why lighting and video colour are the same subject.
 
 <!--anim:additive-mixing-->
 
 Three bytes, one colour. On a screen those bytes are a pixel. On a rig they are three DMX slots.
 The arithmetic does not change when the job title does.
 
-#### The number is a target, not a description
-
-Here is where it stops being tidy. Two fixtures can hit the same colour target and light the same
-costume differently, because **hitting a colour and rendering a colour are different problems.**
-
-Your eye has three cone types, so any colour you can see can be matched by some mixture of three
-primaries. That is why three emitters are enough to fool you. But an *object* does not have three
-cone types: it reflects whatever wavelengths it happens to reflect. Point a three spike RGB source
-at a red costume that only reflects between 610 and 660 nm, and if the red emitter peaks at 632 nm
-with nothing either side, there is very little there to reflect. The costume goes dull, the skin
-goes waxy, and the meter still says you are on target.
-
-<!--anim:spectral-render-->
-
-That is what a **CRI** or **TM-30** number on a spec sheet is trying to describe, and it is what
-the extra emitters in a seven colour fixture are buying. It is also the honest answer to "why does
-this cost four times as much".
-
-#### Gamma, properly
+#### Gamma, and where the code values go
 
 Your eye's response to light is roughly a cube root: doubling the photons does not double the
 sensation. So if you spend your code values evenly across *light*, you waste most of them at the
@@ -403,48 +527,18 @@ shadows band.
 
 <!--anim:gamma-curve-->
 
-Two consequences you will meet within a year:
+This is the same argument as bit depth, one step further on: bit depth asks how many levels there
+are, gamma asks where you put them. Two consequences follow.
 
 - A file, a camera and a screen must agree on the curve. When they do not, the picture comes out
   washed out or with crushed blacks, and nothing is broken. **A gamma mismatch is a paperwork
   failure, not an equipment failure.**
 - The same reasoning is why lighting consoles have dimmer curves. Same eye, same maths, different
-  department. That comes back in Class 4.
+  department, and it comes back in Class 4.
 
-#### Gamut: the triangle inside the horseshoe
-
-Every colour a human can see fits inside one horseshoe shaped region. Every colour a given display
-can make fits inside the **triangle** formed by its three primaries. Those are not the same shape,
-and the triangle is much smaller than people expect.
-
-| Gamut | Where you meet it |
-|-------|------------------|
-| Rec.709 / sRGB | ordinary HD video, most computer content, most projectors |
-| DCI-P3 | cinema, better LED walls, recent phones and displays |
-| Rec.2020 | the UHD container standard. No display fills it. |
-
-<!--anim:colour-gamut-->
-
-When a colour sits outside the triangle, something has to give, and the choice is a look: clip it
-to the edge of the triangle and it goes flat, or squeeze the whole picture inwards and every other
-colour shifts with it. Somebody should be making that choice deliberately. This is also the honest
-reason a lighting designer's deep congo blue never photographs: the camera is not failing, it is
-telling you what fits.
-
-#### Colour temperature, and the axis nobody prints on the fixture
-
-Kelvin says where a white sits along one curve, the **Planckian locus**, running from warm
-tungsten through daylight to cold blue. It does not say how far *off* that curve you are sitting.
-
-That second axis is green against magenta, sometimes labelled Duv, sometimes just a plus green
-control. **Two fixtures can agree on 5,600 K and still not match**, because one of them is sitting
-green of the curve. Correcting it with the Kelvin control makes it worse. It needs the green
-control, or a minus green gel.
-
-<!--anim:colour-temperature-->
-
-> White is not a colour. It is an agreement, and a white balance is where the agreement is set.
-
+Two questions this raises are answered where they are actually decided: **which colours a fixture
+can render** is in Class 4 with the rest of lighting, and **which colours a display can reproduce**
+is in Class 5 with the pixel pipeline.
 
 ### The formats you will actually meet, by domain
 
@@ -459,7 +553,7 @@ control, or a minus green gel.
 | Video | `.mov` | ProRes, HAP, DXV (intra frame) | **What you play back from.** |
 | Video | `.mp4` | H.264, H.265 (inter frame, lossy) | **What you receive.** Transcode it. |
 
-**The rule to give them, and to repeat until it is automatic:** you receive lossy inter frame
+**The rule, worth repeating until it is automatic:** you receive lossy inter frame
 media, you play back intra frame media, and the transcode is a required step in your workflow,
 not an optional tidy-up.
 
@@ -479,7 +573,7 @@ The distinction that decides whether a cue jump is instant or stalls.
 
 <!--anim:intra-inter-->
 
-The practical rule to give them: **you receive H.264, you play back HAP or ProRes.** The
+The practical rule: **you receive H.264, you play back HAP or ProRes.** The
 transcode is not optional bureaucracy, it is what makes a cue jump instantly instead of stalling.
 
 GPU accelerated codecs (HAP, DXV) decompress on the graphics card rather than the CPU, which is
@@ -582,7 +676,7 @@ like the photograph. The Cb and Cr planes look like vague coloured fog.**
 That is why it is **4:2:2**, never "half the pixels". The brightness is untouched. Only the
 colour is thinned.
 
-### Lossless compression: making it smaller and getting it all back
+### Extension: Lossless compression: making it smaller and getting it all back
 
 Two ideas do most of the work, and neither loses anything.
 
@@ -743,6 +837,8 @@ Marked against the four criteria rubric. Criterion 4, failure, is worth as much 
 
 ## Sources and further study
 
+**If this class interested you:** Ben Eater's 8 bit computer series builds one from individual wires, and the Nand2Tetris book does it from logic gates upward. Both are on [Where to go next](/next).
+
 ### The index this module checks itself against
 
 **[showstack](https://showstack-inky.vercel.app/)**, the open index of live entertainment
@@ -777,9 +873,9 @@ from three sources and the distinction stops being theoretical.
 
 ---
 
-## Homework before session 4
+## Homework before Class 3
 
 1. Finish the machine specification if the team did not complete it in the lab.
 2. Learn the storage and buffer numbers in `numbers-to-know.md`.
 3. Find the IP address, subnet mask and gateway of your own laptop and write them down. Do not
-   change anything. Bring the numbers to session 4.
+   change anything. Bring the numbers to Class 3.

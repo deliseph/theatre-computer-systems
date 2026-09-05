@@ -51,8 +51,18 @@ function showTab(id, push) {
   document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === id));
   if (push) history.replaceState(null, '', `#tab=${id}`);
 }
-tabs.forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab, true)));
+// Which tab this reader had open last, per page. Prepare is the right landing
+// place the first time and friction on every visit after it.
+const TABKEY = `tcs:tab:${location.pathname}`;
+const remember = (id) => { try { localStorage.setItem(TABKEY, id); } catch { /* private window */ } };
+const recall = () => { try { return localStorage.getItem(TABKEY); } catch { return null; } };
+
+tabs.forEach((t) => t.addEventListener('click', () => { showTab(t.dataset.tab, true); remember(t.dataset.tab); }));
 if (location.hash.startsWith('#tab=')) showTab(location.hash.slice(5), false);
+else {
+  const last = recall();
+  if (last && tabs.some((t) => t.dataset.tab === last)) showTab(last, false);
+}
 
 // A link to a heading inside a hidden panel must open that panel first,
 // otherwise the anchor lands on nothing.

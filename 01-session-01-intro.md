@@ -76,13 +76,13 @@ Say nothing about the syllabus. Do not introduce yourself yet. Start with the ri
 
 Let it run for thirty seconds. Then ask: **"How many cables are carrying the show right now?"**
 
-They will count three or more. Walk over and show them: one Cat lead from the laptop to the
+Count them. There are three or more: one Cat lead from the laptop to the
 switch. Light, sound and picture, all on one wire.
 
 Then **pull the Cat lead.** Everything stops at once. Light freezes or goes to last look, audio
 drops, video freezes.
 
-Plug it back in. Let it recover. Then say the sentence:
+Plug it back in. Watch it recover. The sentence that follows is the spine of the whole module:
 
 > Every signal in a modern show is, at some point, a number in a computer's memory, travelling
 > over a shared network, with a deadline.
@@ -91,7 +91,7 @@ That is the module. Now introduce yourself.
 
 **Facilitation note:** the freeze behaviour when you pull the lead is itself a lesson. The light
 holds its last value (DMX is state based, and the node keeps outputting), the audio stops dead,
-the video freezes on a frame. Point it out now without explaining it. Promise it for session 5.
+the video freezes on a frame. Point it out now without explaining it. Promise it for Class 4.
 
 ---
 
@@ -125,7 +125,7 @@ The industry replaced dedicated single purpose cables with a shared general purp
 | SDI per screen | NDI or ST 2110 | Routing flexibility, distance | A signal that did not care about switch settings |
 
 The trade is always the same: **flexibility bought with configuration risk.** That is the
-sentence to write on the board.
+sentence worth writing down.
 
 **Claim 3: your craft judgement is now a systems judgement.**
 
@@ -152,7 +152,7 @@ reason this module exists.
 
 ## Block 3: The Four Flows
 
-Introduce the model on the board, then make them use it immediately.
+The model is worth having in your head before the examples, because you will use it immediately.
 
 | Flow | Character | Examples | What kills it |
 |------|-----------|----------|---------------|
@@ -184,7 +184,7 @@ Suggested cards, with the intended answer and the teaching point:
 | A projector's lamp hours being read by a monitoring system | Management | Useful, and it can wait |
 
 Debrief question, the one that matters: **"Which flows can share a wire safely, and which
-cannot?"** Do not answer it yet. Tell them session 4 answers it. Leaving a real question open
+cannot?"** That one is not answered yet. Class 3 answers it. A real question left open
 across three weeks is good pedagogy.
 
 ---
@@ -197,7 +197,7 @@ across three weeks is good pedagogy.
 
 ### Data rate maths
 
-Do this on the board, slowly, with them calling out the numbers.
+Work it through slowly, out loud, with the numbers in front of you.
 
 **Audio, one channel, CD style quality but professional rate:**
 
@@ -231,7 +231,7 @@ DMX512: 512 slots at roughly 44 refreshes per second ≈ 0.25 Mbit/s per univers
 A hundred universes of lighting control is still smaller than one channel pair of audio. Control
 is tiny. Media is enormous. Clock is nothing. Management is unbounded.
 
-Write the ranking on the board and leave it up: **clock < control < audio < video.**
+The ranking, worth keeping in front of you: **clock < control < audio < video.**
 
 ### Latency budget, and the physical anchor
 
@@ -240,7 +240,7 @@ Sound travels at about 343 metres per second, so roughly **3 milliseconds per me
 Ask a student in the back row how far they are from the speaker. Say 15 m. That is 44 ms of
 delay they are currently experiencing and have never once complained about.
 
-Now put up a latency chain for a typical digital audio path and add it up with them:
+Here is a latency chain for a typical digital audio path, added up:
 
 | Stage | Typical |
 |-------|---------|
@@ -265,7 +265,7 @@ Latency, when it is known and constant, is a budget you spend deliberately.
 
 <!--anim:latency-jitter-->
 
-Perceptual anchors to give them now, and to repeat all module:
+Perceptual anchors worth carrying from here on:
 
 | Threshold | Number | Where it comes from |
 |-----------|--------|---------------------|
@@ -351,11 +351,11 @@ Brisk. Put the seven session table on screen. Cover:
 
 - The shape: 2 intro, 2 visit, 16 content, 4 practical exam.
 - The assessment map and the four criteria rubric. Spend the most time on criterion 3,
-  "can someone else run it", because it is the one they will underestimate.
+  "can someone else run it", because it is the one most people underestimate.
 - The glossary is a working tool. Bring it every session. Add to it.
 - `numbers-to-know.md` is a memorisation task. There is a five minute verbal quiz at the start
   of every session. It carries no marks and it is not optional.
-- Software install list, due before session 3.
+- Software install list, due before Class 2.
 
 ---
 
@@ -386,6 +386,8 @@ Brisk. Put the seven session table on screen. Cover:
 ---
 
 ## Sources and further study
+
+**If this class interested you**, the map of where each direction leads, what is free and what costs, is on [Where to go next](/next).
 
 ### The index this module checks itself against
 

@@ -103,8 +103,8 @@ configuration risk.**
 - **Ravenna**, the open standards route, close to a default in broadcast. Dante discovers; Ravenna
   is configured.
 
-Name them so students recognise the connectors, then move on. The full story, and what each
-generation charged for what it solved, is on [How we got here](/lineage).
+Worth recognising the connectors on sight. The full story, and what each generation charged for
+what it solved, is on [How we got here](/lineage).
 
 ### Dante
 
@@ -120,7 +120,7 @@ The dominant system in live production, so teach it as the worked example.
   - Higher is safer and costs delay.
   - The whole path runs at the highest setting in use, so one badly set device slows everything.
   - **1 ms is the common, safe default** on a well built network.
-  - This is the session 3 buffer trade off appearing again, in a different domain. Point that out
+  - This is the Class 2 buffer trade off appearing again, in a different domain. Point that out
     explicitly, because the transfer is the learning.
 - **Redundancy.** Dante devices with two ports can run primary and secondary on two physically
   separate networks. If the primary fails, the secondary is already carrying the same audio, so
@@ -160,7 +160,7 @@ How clock is distributed:
 
 **The classic failure to describe:** two clock masters on one network. Each is confident. Devices
 follow different masters, drift apart, and you get clicks that appear to move around the system.
-Link straight back to session 4: the Four Flows table said clock is killed by "a second master".
+Link straight back to Class 3: the Four Flows table said clock is killed by "a second master".
 Here is what that actually sounds like.
 
 ### PTP, the mechanism, and the switch that quietly ruins it
@@ -231,7 +231,7 @@ Before the network, one signal, one coaxial cable, no configuration.
 | 6G-SDI | 6 Gbit/s | UHD30 |
 | 12G-SDI | 12 Gbit/s | UHD60 |
 
-Note that these numbers match the raw video maths from session 3 almost exactly, because SDI
+Note that these numbers match the raw video maths from Class 2 almost exactly, because SDI
 carries the picture uncompressed. That correspondence is worth pointing out. It makes the numbers
 feel real rather than arbitrary.
 
@@ -253,7 +253,7 @@ The teaching point for year one: **compression buys you bandwidth and costs you 
 some level, quality.** ST 2110 refuses that trade and pays for it in infrastructure. Neither is
 correct in general. Both are correct for particular jobs.
 
-Practical guidance to give them plainly: NDI is enormously useful and is used constantly in the
+Put plainly: NDI is enormously useful and is used constantly in the
 industry, and it is not automatically the right choice for a show critical main screen feed
 unless the network was designed for it. Know which of those two situations you are in.
 
@@ -266,7 +266,7 @@ and cannot afford 2110's bandwidth.
 
 *Side by side, with the latency and bandwidth of each, on [How we got here](/lineage).*
 
-### Inside ST 2110, and the one idea worth stealing from it
+### Extension: Inside ST 2110, and the one idea worth stealing from it
 
 Even if you never touch a broadcast plant, ST 2110 contains one idea that changes how you think
 about a video signal.
@@ -299,7 +299,7 @@ can is that it never had to detect the failure or switch anything.
 That is worth carrying into every system you design, at any budget: **the fastest failover is the
 one that already happened.**
 
-### Visually lossless, and what that phrase is doing
+### Extension: Visually lossless, and what that phrase is doing
 
 Between "uncompressed" and "H.264" sits a category the industry calls **visually lossless**, or
 mezzanine compression: JPEG XS, TICO, and the intra frame codecs from Class 2 wearing a different
@@ -312,7 +312,30 @@ coloured text, hard saturated edges, noise. The phrase is an engineering claim a
 material, not a guarantee, and knowing that is the difference between using it well and being
 surprised by it once.
 
+### Gamut: the triangle inside the horseshoe
+
+Every colour a human can see fits inside one horseshoe shaped region. Every colour a given display
+can make fits inside the **triangle** formed by its three primaries. Those are not the same shape,
+and the triangle is much smaller than people expect.
+
+| Gamut | Where you meet it |
+|-------|------------------|
+| Rec.709 / sRGB | ordinary HD video, most computer content, most projectors |
+| DCI-P3 | cinema, better LED walls, recent phones and displays |
+| Rec.2020 | the UHD container standard. No display fills it. |
+
+<!--anim:colour-gamut-->
+
+When a colour sits outside the triangle something has to give, and the choice is a look: clip it to
+the edge and it goes flat, or squeeze the whole picture inwards and every other colour shifts with
+it. Somebody should be making that choice deliberately.
+
+This is also the honest reason a lighting designer's deep congo blue never photographs. The camera
+is not failing. It is telling you what fits.
+
 ### The LED wall pipeline, end to end
+
+<!--anim:led-pipeline-->
 
 An LED wall is not a screen you plug into. It is a chain, and every link can be the one that is
 wrong.
@@ -346,7 +369,7 @@ Class 4, one department along, and you now know both the cause and the word for 
 
 ### The pixel pipeline
 
-Trace it on the board, left to right, and name the failure at every stage. This diagram is the
+Trace it left to right and name the failure at every stage. This diagram is the
 one students photograph.
 
 ```
@@ -554,14 +577,14 @@ Practical positions, in decreasing order of safety:
 - **Firewalled show network.** Convenient, and it depends on a configuration nobody in the
   building fully understands.
 
-Non negotiables to give them as habits, not policies:
+Non negotiables, as habits rather than policies:
 - No software updates during a production period. Update between shows, never during.
 - USB discipline. A found USB stick does not go in the media server.
 - Change the default password on every managed switch and every node. Write it in the handover
   pack, not on a sticky note on the rack.
 - Know who has remote access and be able to revoke it.
 
-### Commissioning: proving it works before the client does
+### Extension: Commissioning: proving it works before the client does
 
 A system that has never been tested under load has not been tested. Commissioning is the
 difference between "we built it" and "we know what it does", and it is a written procedure, not a
@@ -588,7 +611,7 @@ A minimum commissioning list for a small show system:
 counts, PTP offset, the media server's frame rate, the temperature. During a show, "is this
 number bad" is unanswerable unless somebody wrote down what the number was on a good day.
 
-### Monitoring during the show
+### Extension: Monitoring during the show
 
 Two rules, and neither is technical.
 
@@ -659,7 +682,7 @@ Presented in 8 minutes, with a one page handout.
 
 1. **A system diagram.** Devices, connections, protocols, media.
 2. **A network design.** Segmentation strategy, chosen and justified against the four options
-   from session 4. Switch count and placement. Copper or fibre for each significant run.
+   from Class 3. Switch count and placement. Copper or fibre for each significant run.
 3. **An IP schedule extract.** At least the convention, plus ten real example rows.
 4. **A bandwidth budget.** The heaviest link in the system, with the arithmetic.
 5. **A latency budget.** One complete path from trigger to audience, staged and totalled, with a
@@ -698,6 +721,8 @@ place to learn it.
 ---
 
 ## Sources and further study
+
+**If this class interested you:** Dante Certification is free and runs to three levels, and AVIXA's CTS is the general AV credential. Both are on [Where to go next](/next).
 
 ### The index this module checks itself against
 
