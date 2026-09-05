@@ -22,11 +22,11 @@ const statKey = (k) => `tcs-stat-${k}`;
 const getStat = (k) => { try { return JSON.parse(localStorage.getItem(statKey(k))) || { right: 0, wrong: 0, best: 0 }; } catch { return { right: 0, wrong: 0, best: 0 }; } };
 const setStat = (k, v) => { try { localStorage.setItem(statKey(k), JSON.stringify(v)); } catch { /* ignore */ } };
 
-const scorebar = (right, wrong, streak, best) => `<div class="scorebar">
+const scorebar = (right, wrong, a, b, labels = ['streak', 'best']) => `<div class="scorebar">
   <span class="score good">✓ ${right}</span>
   <span class="score bad">✗ ${wrong}</span>
-  <span class="score">streak ${streak}</span>
-  <span class="score">best ${best}</span></div>`;
+  <span class="score">${labels[0]} ${a}</span>
+  <span class="score">${labels[1]} ${b}</span></div>`;
 
 // ============================================================================
 // IPv4 helpers, duplicated deliberately so practice works without tools.js
@@ -402,7 +402,7 @@ async function mountDrill(root, classNum) {
       return;
     }
     box.innerHTML = header() + `
-      ${scorebar(stat.right, stat.wrong, i, deck.length)}
+      ${scorebar(stat.right, stat.wrong, i + 1, deck.length, ['card', 'of'])}
       <div class="q-card flash">
         <div class="flash-tag">${card.tag}</div>
         <div class="flash-q">${card.q}</div>

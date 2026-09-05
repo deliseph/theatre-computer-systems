@@ -116,7 +116,13 @@ function twoColumnCards(md, tag) {
     if (/^:?-+:?$/.test(cells[0]) || /^:?-+:?$/.test(cells[1])) continue;
     if (/^(Thing|English|Prefix|Bits set|#)$/i.test(cells[0])) continue;
     if (!cells[0] || !cells[1]) continue;
-    cards.push({ q: cells[0], a: cells[1], tag });
+    // The cells are markdown, so `code`, **bold** and *italic* have to be
+    // rendered or the card shows its own backticks and asterisks.
+    const md2html = (t) => esc(t)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>');
+    cards.push({ q: md2html(cells[0]), a: md2html(cells[1]), tag });
   }
   return cards;
 }
