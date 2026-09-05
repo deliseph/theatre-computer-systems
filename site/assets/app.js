@@ -51,6 +51,12 @@ function showTab(id, push) {
   document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === id));
   if (push) history.replaceState(null, '', `#tab=${id}`);
 }
+// The class currently being read, so the home page can offer to continue it.
+const classMatch = /^\/class\/(\d)/.exec(location.pathname);
+if (classMatch) {
+  try { localStorage.setItem('tcs-last-class', classMatch[1]); } catch { /* private window */ }
+}
+
 // Which tab this reader had open last, per page. Prepare is the right landing
 // place the first time and friction on every visit after it.
 const TABKEY = `tcs:tab:${location.pathname}`;
@@ -131,15 +137,47 @@ if (doneBtn) {
   paint();
 }
 
+// The home strip used to greet a brand new student with "0 of 5 classes, 0%",
+// which is a scoreboard reporting that they have failed to start. It now says
+// what to do next, and only shows a bar once there is something in it.
 const strip = document.getElementById('progress-strip');
 if (strip) {
   const p = getProgress();
-  const done = [1, 2, 3, 4, 5].filter((n) => p[`class-${n}`]).length;
+  const doneList = [1, 2, 3, 4, 5].filter((n) => p[`class-${n}`]);
+  const done = doneList.length;
   const pct = Math.round((done / 5) * 100);
-  strip.innerHTML = `<div class="pbar">
+  const TITLES = ['', 'Why this class exists', 'The machine', 'The network', 'Control', 'Media over IP and systems'];
+
+  // Where they were last, from the per-page tab memory, so "continue" is real.
+  let lastClass = 0;
+  try { lastClass = Number(localStorage.getItem('tcs-last-class')) || 0; } catch { /* private window */ }
+
+  const next = done < 5 ? ([1, 2, 3, 4, 5].find((n) => !p[`class-${n}`]) || 1) : 0;
+  let card;
+  if (!done && !lastClass) {
+    card = `<div class="next-up">
+      <span class="next-up-t">Start with Class 1</span>
+      <span class="next-up-s">Two hours, no prerequisites. It ends with one sentence that the
+        other four classes spend their time proving.</span>
+      <a class="btn btn-primary" href="/class/1">Open Class 1</a></div>`;
+  } else if (next) {
+    const where = lastClass && !p[`class-${lastClass}`] ? lastClass : next;
+    card = `<div class="next-up">
+      <span class="next-up-t">Class ${where} · ${TITLES[where]}</span>
+      <span class="next-up-s">${done ? `${done} of 5 done.` : 'Picking up where you left off.'}
+        <a href="/practice#drill">Cards due</a> when you want them.</span>
+      <a class="btn btn-primary" href="/class/${where}">Continue</a></div>`;
+  } else {
+    card = `<div class="next-up">
+      <span class="next-up-t">All five classes marked as studied</span>
+      <span class="next-up-s">The useful thing now is retrieval, not rereading.</span>
+      <a class="btn btn-primary" href="/practice#drill">Practise what is due</a></div>`;
+  }
+
+  strip.innerHTML = card + (done ? `<div class="pbar">
     <span class="pbar-lbl">${done} of 5 classes</span>
     <span class="pbar-track"><span class="pbar-fill" style="width:${pct}%"></span></span>
-    <span class="pbar-lbl">${pct}%</span></div>`;
+    <span class="pbar-lbl">${pct}%</span></div>` : '');
 }
 
 // --- Search -----------------------------------------------------------------

@@ -138,7 +138,42 @@ export function figure(host, { title, sub, note }) {
   controls.addEventListener('change', repaint);
   controls.addEventListener('click', repaint);
 
-  return { fig, controls, stage, repaint, setNote: (t) => { if (noteEl) noteEl.innerHTML = t; } };
+  /**
+   * A goal to reach with the controls.
+   *
+   * A figure you can only fiddle with is a toy; a figure with something to
+   * reach is a question. This adds one line above the controls saying what to
+   * try, and marks it done when `test()` passes. There is no score, no timer
+   * and no streak: it is a prompt that gets out of the way once you have had
+   * the idea, which is the whole of the design brief.
+   */
+  function challenge(text, test) {
+    const el = h(`<div class="anim-goal"><span class="anim-goal-tag">Try this</span>
+      <span class="anim-goal-t">${text}</span></div>`);
+    fig.insertBefore(el, controls);
+    let done = false;
+    const check = () => {
+      let ok = false;
+      try { ok = !!test(); } catch { ok = false; }
+      if (ok && !done) {
+        done = true;
+        el.classList.add('got');
+        el.querySelector('.anim-goal-tag').textContent = 'Got it';
+      } else if (!ok && done) {
+        // Let it go again, so a student can re-find it rather than being told
+        // once that they are finished.
+        done = false;
+        el.classList.remove('got');
+        el.querySelector('.anim-goal-tag').textContent = 'Try this';
+      }
+    };
+    controls.addEventListener('input', check);
+    controls.addEventListener('change', check);
+    controls.addEventListener('click', () => requestAnimationFrame(check));
+    return { check };
+  }
+
+  return { fig, controls, stage, repaint, challenge, setNote: (t) => { if (noteEl) noteEl.innerHTML = t; } };
 }
 
 /**

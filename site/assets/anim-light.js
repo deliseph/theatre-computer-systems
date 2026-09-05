@@ -179,11 +179,14 @@ register('dim-resolution', (host) => {
 
 register('pwm-flicker', (host) => {
   const st = { freq: 480, duty: 45, shutter: 250, rolling: true };
-  const { controls, stage, setNote } = figure(host, {
+  const { controls, stage, setNote, challenge } = figure(host, {
     title: 'How an LED dims, and why the camera sees bands',
     sub: 'An LED does not dim. It switches, fast, and stays on for part of each cycle. Your eye averages it. A shutter does not.',
     note: '&nbsp;',
   });
+
+  challenge('Get a clean frame on a 1/1000 shutter without turning the dimmer up.',
+    () => st.shutter === 1000 && (1 / st.shutter) / (1 / st.freq) > 40);
 
   let cv;
   cv = canvas(stage, {
@@ -375,11 +378,17 @@ register('dmx-patch', (host) => {
     { name: 'Batten', addr: 41, fp: 60, col: 'red' },
   ];
   let sel = 2;
-  const { controls, stage, setNote } = figure(host, {
+  const { controls, stage, setNote, challenge } = figure(host, {
     title: 'Patching is addition, and the mistake is always the same',
     sub: 'Each fixture owns a run of slots starting at its address. Move one and watch what it lands on.',
     note: '&nbsp;',
   });
+
+  challenge('Give Spot 1 a 24 channel mode and find an address where it does not clash with anything.',
+    () => { const f = fixtures[2]; if (f.fp !== 24) return false;
+      const own = new Array(600).fill(-1); let clash = 0;
+      fixtures.forEach((x, i) => { for (let s = x.addr; s < x.addr + x.fp; s++) { if (own[s] >= 0) clash++; else own[s] = i; } });
+      return clash === 0; });
 
   let cv;
   cv = canvas(stage, {

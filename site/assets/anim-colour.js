@@ -342,11 +342,18 @@ const GAMUTS = {
 
 register('colour-gamut', (host) => {
   const st = { show: { r709: true, p3: true, r2020: false }, px: 0.62, py: 0.32 };
-  const { controls, stage, setNote } = figure(host, {
+  const { controls, stage, setNote, challenge } = figure(host, {
     title: 'The gamut triangle, and what "out of gamut" means',
     sub: 'Every colour a human can see is inside the horseshoe. Every colour a display can make is inside its triangle. Those are not the same shape.',
     note: '&nbsp;',
   });
+
+  challenge('Find a colour your eye can see that Rec.709 cannot make, then one that nothing here can.',
+    () => { const inside = (pts) => { let s = 0;
+        for (let i = 0; i < 3; i++) { const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % 3];
+          s += Math.sign((bx - ax) * (st.py - ay) - (by - ay) * (st.px - ax)); }
+        return Math.abs(s) === 3; };
+      return !inside(GAMUTS.r709.pts) && !inside(GAMUTS.r2020.pts); });
 
   // Spectral locus, computed from the colour matching functions.
   const locus = [];

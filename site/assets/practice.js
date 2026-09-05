@@ -5,6 +5,8 @@
 // anywhere, which is the point: a drill you are being marked on is a test, and
 // people stop taking risks on tests.
 
+import { due, counts, grade as gradeCard, nextDue, describeWhen } from './review.js';
+
 const $ = (s, r = document) => r.querySelector(s);
 const h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -12,6 +14,7 @@ const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[
 
 let DATA = null;
 const loadData = async () => (DATA ||= await (await fetch('/assets/data.json')).json());
+
 
 // --- Stat store -------------------------------------------------------------
 
@@ -342,26 +345,64 @@ async function mountDrill(root, classNum) {
   const tags = [...new Set(drillCards.map((c) => c.tag))];
   const box = h('<div></div>');
   root.append(h(`<p class="tool-sub">Flashcards built from the reference card, so they can never drift
-    out of date. Self-graded: be honest, nobody sees this but you.</p>`), box);
+    out of date. A card you get right comes back later; a card you miss comes back tomorrow. Nobody
+    sees any of this but you.</p>`), box);
 
   let filter = classNum > 0 ? `Class ${classNum}` : 'all';
-  let deck = [], i = 0, shown = false;
+  // 'due' is the sitting that ends. 'all' is the deck, for the night before.
+  let mode = 'due';
+  let deck = [], i = 0, shown = false, sessionRight = 0, sessionWrong = 0, finished = false;
   const stat = getStat('drill');
 
+  const pool = () => drillCards.filter((c) => filter === 'all' || c.tag === filter);
+
   const build = () => {
-    deck = shuffle(drillCards.filter((c) => filter === 'all' || c.tag === filter));
-    i = 0; shown = false;
+    const p = pool();
+    if (mode === 'all') {
+      deck = shuffle(p);
+    } else {
+      // Cards that have come back first, then a few new ones, so a sitting is
+      // mostly revision with a little new ground. Capped, because a sitting
+      // that never ends is a cage.
+      const { fresh, ready } = due(p);
+      deck = [...ready.slice(0, 20), ...shuffle(fresh).slice(0, 8)];
+    }
+    i = 0; shown = false; finished = false; sessionRight = 0; sessionWrong = 0;
+  };
+
+  const header = () => {
+    const c = counts(pool());
+    return `<div class="chip-row">
+        <button class="chip${filter === 'all' ? ' on' : ''}" data-t="all">All ${drillCards.length}</button>
+        ${tags.map((t) => `<button class="chip${filter === t ? ' on' : ''}" data-t="${t}">${t}</button>`).join('')}
+      </div>
+      <div class="chip-row rv-modes">
+        <button class="chip${mode === 'due' ? ' on' : ''}" data-m="due">Due now
+          ${c.ready + Math.min(c.fresh, 8) > 0 ? `<b class="rv-n">${c.ready + Math.min(c.fresh, 8)}</b>` : ''}</button>
+        <button class="chip${mode === 'all' ? ' on' : ''}" data-m="all">Whole deck</button>
+        <span class="rv-state">${c.known} known · ${c.learning} still landing · ${c.total - c.known - c.learning - c.fresh + c.fresh} in the deck</span>
+      </div>`;
   };
 
   const paint = () => {
     const card = deck[i];
-    box.innerHTML = `
-      <div class="chip-row">
-        <button class="chip${filter === 'all' ? ' on' : ''}" data-t="all">All ${drillCards.length}</button>
-        ${tags.map((t) => `<button class="chip${filter === t ? ' on' : ''}" data-t="${t}">${t}</button>`).join('')}
-      </div>
+    if (finished || !card) {
+      const c = counts(pool());
+      const when = describeWhen(nextDue(pool()));
+      box.innerHTML = header() + `<div class="q-card rv-done">
+        <h3>${sessionRight + sessionWrong > 0 ? 'Done for now.' : 'Nothing is due.'}</h3>
+        ${sessionRight + sessionWrong > 0
+          ? `<p>${sessionRight} right, ${sessionWrong} to come back to, out of ${sessionRight + sessionWrong}.</p>`
+          : ''}
+        <p class="rv-next">${when ? `Next cards come back <b>${when}</b>.` : 'Every card in this set is new. Start whenever you like.'}
+          ${c.known ? ` You have ${c.known} of ${c.total} settled.` : ''}</p>
+        <div class="chip-row" style="justify-content:center">
+          <button class="chip" data-m="all">Keep going through the whole deck</button>
+        </div></div>`;
+      return;
+    }
+    box.innerHTML = header() + `
       ${scorebar(stat.right, stat.wrong, i, deck.length)}
-      ${!card ? '<p>No cards for that filter.</p>' : `
       <div class="q-card flash">
         <div class="flash-tag">${card.tag}</div>
         <div class="flash-q">${card.q}</div>
@@ -371,18 +412,26 @@ async function mountDrill(root, classNum) {
             <button class="chip on" data-g="got">✓ Got it</button></div>`
         : `<div class="chip-row" style="justify-content:center;margin-top:18px">
             <button class="chip on" id="dr-show">Reveal the answer</button></div>`}
-      </div>`}`;
+      </div>`;
   };
 
   box.addEventListener('click', (e) => {
     const t = e.target.closest('[data-t]');
     if (t) { filter = t.dataset.t; build(); return paint(); }
+    const m = e.target.closest('[data-m]');
+    if (m) { mode = m.dataset.m; build(); return paint(); }
     if (e.target.closest('#dr-show')) { shown = true; return paint(); }
     const g = e.target.closest('[data-g]');
     if (g) {
-      g.dataset.g === 'got' ? stat.right++ : stat.wrong++;
+      const right = g.dataset.g === 'got';
+      right ? (stat.right++, sessionRight++) : (stat.wrong++, sessionWrong++);
       setStat('drill', stat);
-      i = (i + 1) % deck.length; shown = false;
+      gradeCard(deck[i], right);
+      // A card you just missed is seen again before you leave, at the back of
+      // the queue. Retrieval works when the second attempt is not immediate.
+      if (!right && deck.length > 1) deck.push(deck[i]);
+      i++; shown = false;
+      if (i >= deck.length) finished = true;
       return paint();
     }
   });

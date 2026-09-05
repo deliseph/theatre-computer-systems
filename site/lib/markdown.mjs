@@ -367,6 +367,21 @@ function paginate(part, headingHtml) {
     if (visualWeight(cur.join('')) > WORD_BUDGET) { chunks.push(cur); cur = []; }
   }
   if (cur.length) chunks.push(cur);
+
+  // Orphan control. A split can leave a trailing scrap of one short paragraph
+  // on a screen of its own, which reads as a mistake rather than as a page.
+  // Fold anything that light back into the screen before it, unless that
+  // screen is a figure whose whole point is to stand alone.
+  for (let k = chunks.length - 1; k > 0; k--) {
+    const light = visualWeight(chunks[k].join('')) < WORD_BUDGET * 0.34;
+    const prevIsFigure = chunks[k - 1].some((n) => isFigure(n));
+    const selfIsFigure = chunks[k].some((n) => isFigure(n) || isTable(n));
+    if (light && !selfIsFigure && !prevIsFigure) {
+      chunks[k - 1] = chunks[k - 1].concat(chunks[k]);
+      chunks.splice(k, 1);
+    }
+  }
+
   if (chunks.length <= 1) return [{ html: part, page: 1, pages: 1 }];
 
   return chunks.map((c, k) => ({

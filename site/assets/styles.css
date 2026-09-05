@@ -889,3 +889,50 @@ body.teach-mode main { padding: 0; }
 @media (max-width: 760px) {
   .table-wrap.can-scroll { box-shadow: inset -14px 0 12px -14px rgba(0, 0, 0, .28); }
 }
+
+/* --- Spaced retrieval ------------------------------------------------------ */
+
+.rv-modes { align-items: center; margin-top: 10px; }
+.rv-n {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: var(--amber); color: #fff; font: 700 11px/1.5 var(--mono);
+}
+.chip.on .rv-n { background: rgba(255, 255, 255, .28); }
+.rv-state { font: 500 12px/1 var(--mono); color: var(--muted); margin-left: 4px; }
+.rv-done { text-align: center; padding: 30px 22px; }
+.rv-done h3 { margin: 0 0 10px; font-size: 20px; color: var(--green); }
+.rv-done p { margin: 0 0 8px; color: var(--ink-2); }
+.rv-next { color: var(--muted) !important; font-size: 14px; }
+
+/* The home strip: what to do next, not a score. */
+.next-up {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  padding: 15px 18px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--raised); margin: 26px 0 8px;
+}
+.next-up-t { font: 600 15px/1.4 var(--sans); color: var(--ink); }
+.next-up-s { font: 400 13.5px/1.5 var(--sans); color: var(--muted); flex: 1 1 240px; }
+.next-up .btn { margin-left: auto; }
+
+/* A goal to reach with a figure's controls. A prompt, not a score: no timer,
+   no streak, and it gets out of the way once the idea has landed. */
+.anim-goal {
+  display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap;
+  margin: 0 0 12px; padding: 9px 12px; border-radius: 8px;
+  border: 1px dashed var(--line); background: var(--raised);
+}
+.anim-goal-tag {
+  flex: none; font: 700 10px/1.6 var(--mono); letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted);
+  padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line);
+}
+.anim-goal-t { font: 400 13.5px/1.5 var(--sans); color: var(--ink-2); }
+.anim-goal.got { border-style: solid; border-color: var(--green); background: transparent; }
+.anim-goal.got .anim-goal-tag { color: var(--green); border-color: var(--green); }
+.anim-goal.got .anim-goal-t { color: var(--ink); }
+
+/* On a projector the goal is a question the room answers out loud, so it stays
+   but takes one compact line rather than eating the figure's headroom. */
+.teach .slide[data-fig] .anim-goal { margin: 0 0 8px; padding: 5px 10px; gap: 7px; }
+.teach .slide[data-fig] .anim-goal-t { font-size: 12.5px; }
+.teach .slide[data-fig] .anim-goal-tag { font-size: 9px; padding: 0 6px; }

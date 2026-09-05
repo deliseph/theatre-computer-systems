@@ -303,11 +303,14 @@ const LINKS = [
 
 register('video-link', (host) => {
   const st = { res: '3840x2160', fps: 60, bits: 8, chroma: 3 };
-  const { controls, stage, setNote } = figure(host, {
+  const { controls, stage, setNote, challenge } = figure(host, {
     title: 'Will this picture fit down that cable?',
     sub: 'The connector evolution is one number getting bigger. Pick a format and see exactly where each generation stops.',
     note: '&nbsp;',
   });
+
+  challenge('Find the earliest connector that carries 4K at 60 in 10 bit 4:4:4. What has to change to make DVI enough?',
+    () => st.res === '3840x2160' && st.fps === 60 && st.bits === 10 && st.chroma === 3);
 
   let cv;
   cv = canvas(stage, {

@@ -228,11 +228,14 @@ const DESIGNS = {
 register('spof-map', (host) => {
   let key = 'single';
   let dead = new Set();
-  const { controls, stage, setNote } = figure(host, {
+  const { controls, stage, setNote, challenge } = figure(host, {
     title: 'Kill one box and see what goes dark',
     sub: 'Click any node to fail it. Redundancy is not a word, it is whether a path still exists.',
     note: '&nbsp;',
   });
+
+  challenge('On the dual path design, kill two boxes and keep both outputs live. Then find the two that stop the show.',
+    () => key !== 'single' && dead.size >= 2 && DESIGNS[key].outputs.every((o) => alive(DESIGNS[key]).reach.has(o)));
 
   // Which outputs are still fed, given the failures.
   function alive(d) {

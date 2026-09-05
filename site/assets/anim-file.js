@@ -1030,11 +1030,14 @@ register('quantise-noise', (host) => {
 
 register('daw-mixdown', (host) => {
   const st = { tracks: 8, buf: 256, cost: 0.10 };
-  const { controls, stage, setNote } = figure(host, {
+  const { controls, stage, setNote, challenge } = figure(host, {
     title: 'How sixty tracks come out as one, on time',
     sub: 'They are not sixty streams. They are one buffer, filled from sixty lists, before the card asks for it.',
     note: '&nbsp;',
   });
+
+  challenge('Make 32 tracks click, then fix it without removing a single track.',
+    () => st.tracks >= 32 && st.tracks * st.cost <= (st.buf / 48000) * 1000);
 
   let cv;
   const fit = fitter(() => cv);

@@ -427,7 +427,23 @@ for (const c of classData) {
 // not an attempt to auto-generate slides that would be worse than the notes.
 
 for (const c of classData) {
-  const slides = c.doc.blocks
+  // A "Block C:" divider with nothing under it spends a whole projected screen
+  // saying a title the toolbar already shows. Fold those into the screen that
+  // follows, so the block announces itself and then gets on with it.
+  const merged = [];
+  for (const b of c.doc.blocks) {
+    const bare = b.html.replace(/<h[23][\s\S]*?<\/h[23]>/, '');
+    const words = (bare.replace(/<[^>]+>/g, ' ').match(/\S+/g) || []).length;
+    const prev = merged[merged.length - 1];
+    if (prev && prev.level === 2 && prev.thin && b.level === 3) {
+      b.html = prev.html + b.html;
+      merged[merged.length - 1] = b;
+      continue;
+    }
+    merged.push({ ...b, thin: b.level === 2 && words < 25 });
+  }
+
+  const slides = merged
     .map((b, i) => {
       // The block chip in the toolbar already shows the planned window, so drop
       // it from the projected heading: at this size it costs a whole line.
@@ -614,6 +630,11 @@ write('/practice', shell({
       <h1>Practice</h1>
       <p class="strap">Three of these reward doing them badly at first. The subnetting trainer in
       particular needs twenty minutes a night for a week, not three hours the day before.</p>
+      <p class="note"><b>The cards come back on their own.</b> A card you get right returns in a
+      few days, then a week, then three. A card you miss comes back tomorrow, and again before you
+      leave. So a sitting is short and it <b>ends</b>: when nothing is due, the page says so and
+      you stop. Miss a week and nothing is lost or broken, there are simply more cards waiting.
+      None of it leaves your browser.</p>
     </header>
     <div class="practice" data-practice="subnetdrill" data-class="3"><h3 class="tool-h" id="subnetdrill">Subnetting trainer</h3></div>
     <div class="practice" data-practice="faults" data-class="3"><h3 class="tool-h" id="faults">Fault diagnosis simulator</h3></div>
@@ -707,8 +728,8 @@ write('/', shell({
     <p class="strap">Five classes. Everything here exists to unpack that one sentence and to make it
     usable at 18:00 on a Friday when something has stopped working.</p>
     <div class="head-actions">
-      <a class="btn btn-primary" href="/prepare">Prepare for class</a>
-      <a class="btn" href="/class/1">Start with Class 1</a>
+      <a class="btn btn-primary" href="/class/1">Start with Class 1</a>
+      <a class="btn" href="/prepare">What to do before a class</a>
       <a class="btn" href="/tools">Open the tools</a>
     </div>
   </header>
