@@ -353,6 +353,11 @@ async function mountDrill(root, classNum) {
   const missed = new Map();   // cardId -> misses in THIS sitting, never stored
   let tipOff = false;         // the student said "no, that is it"
   let pointerFor = null;      // the card whose second miss earned a pointer
+  // What the student committed to before the reveal. It lives for the length of
+  // one card and no longer: not graded, not compared, not stored. A string
+  // comparison that told a correct student they were wrong would be worse than
+  // having no field at all.
+  let said = '', typedLast = false;
   const stat = getStat('drill');
 
   const pool = () => drillCards.filter((c) => filter === 'all' || c.tag === filter);
@@ -365,8 +370,16 @@ async function mountDrill(root, classNum) {
     if (mode === 'all') deck = shuffle(p);
     else if (mode === 'new') deck = shuffle(due(p).fresh).slice(0, 8);
     else deck = due(p).ready.slice(0, 20);
-    i = 0; shown = false; pointerFor = null; finished = false; sessionRight = 0; sessionWrong = 0;
+    i = 0; shown = false; pointerFor = null; finished = false; sessionRight = 0; sessionWrong = 0; said = ''; typedLast = false;
     missed.clear(); tipOff = false;
+  };
+
+  // Read the field before paint() blows the DOM away. 160 characters is longer
+  // than the longest answer on any card, so it is a paste guard, not a limit
+  // anybody types into.
+  const grab = () => {
+    said = ($('.flash-say', box)?.value || '').trim().slice(0, 160);
+    if (said) typedLast = true;
   };
 
   const header = () => {
@@ -444,7 +457,9 @@ async function mountDrill(root, classNum) {
       <div class="q-card flash">
         <div class="flash-tag">${card.tag}</div>
         <div class="flash-q">${card.q}</div>
-        ${shown ? `<div class="flash-a">${card.a}</div>
+        ${shown ? `${said ? `<div class="flash-said"><span class="flash-said-k">You said</span><span class="flash-said-t"></span></div>
+          <div class="flash-a-k">The card says</div>
+          ` : ''}<div class="flash-a">${card.a}</div>
           ${pointerFor ? `<div class="rv-where">
             <span class="rv-where-s">This one has not landed yet. It is taught here:</span>
             <a class="rv-where-l" href="${card.src.to}">${card.src.label} →</a></div>
@@ -453,10 +468,27 @@ async function mountDrill(root, classNum) {
           : `<div class="chip-row" style="justify-content:center">
             <button class="chip" data-g="miss">✗ Missed it</button>
             <button class="chip on" data-g="got">✓ Got it</button></div>`}`
-        : `<div class="chip-row" style="justify-content:center;margin-top:18px">
+        : `<div class="flash-sayrow">
+            <input class="flash-say" type="text" maxlength="160" autocomplete="off"
+              autocapitalize="off" spellcheck="false" enterkeyhint="go"
+              aria-label="Say it out loud, or type it here."
+              placeholder="Say it out loud, or type it here.">
+            <p class="flash-say-note">Nothing here is marked or saved. On a show you have to produce the number, not recognise it.</p>
+          </div>
+          <div class="chip-row" style="justify-content:center;margin-top:18px">
             <button class="chip on" id="dr-show">Reveal the answer</button></div>`}
       </div>`;
+    // Set as text, never as markup: every other face on this card is a built
+    // HTML fragment, a student's answer is not.
+    const saidEl = $('.flash-said-t', box);
+    if (saidEl) saidEl.textContent = said;
     if (pointerFor) $('#dr-next', box)?.focus({ preventScroll: true });
+    // One keystroke to the next answer for somebody who is using the field, and
+    // never on a phone, where focus means the keyboard covers the card. Never on
+    // the first card of a sitting either, because typedLast starts false.
+    if (!shown && typedLast && matchMedia('(min-width: 700px)').matches) {
+      $('.flash-say', box)?.focus({ preventScroll: true });
+    }
   };
 
   box.addEventListener('click', (e) => {
@@ -465,7 +497,7 @@ async function mountDrill(root, classNum) {
     const m = e.target.closest('[data-m]');
     if (m) { mode = m.dataset.m; build(); return paint(); }
     if (e.target.closest('[data-tip]')) { tipOff = true; return paint(); }
-    if (e.target.closest('#dr-show')) { shown = true; return paint(); }
+    if (e.target.closest('#dr-show')) { grab(); shown = true; return paint(); }
     if (e.target.closest('#dr-next')) {
       pointerFor = null; i++; shown = false;
       if (i >= deck.length) finished = true;
@@ -484,10 +516,21 @@ async function mountDrill(root, classNum) {
       // A second miss is not a card that needs repeating faster. It is a card
       // that was never taught, or was taught and not followed, so say where.
       if (!right && st.miss >= 2 && deck[i].src) { pointerFor = deck[i]; return paint(); }
-      i++; shown = false; pointerFor = null;
+      i++; shown = false; pointerFor = null; said = '';
       if (i >= deck.length) finished = true;
       return paint();
     }
+  });
+
+  // Enter reveals, because reaching for the mouse after writing the answer is
+  // the friction that stops people writing it. The composition guard is not
+  // optional: an IME commits its 繁中 candidate with Enter, and that must not
+  // flip the card.
+  box.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+    if (!e.target.classList?.contains('flash-say')) return;
+    e.preventDefault();
+    grab(); shown = true; paint();
   });
 
   build(); paint();
@@ -665,7 +708,7 @@ function mountGlossary() {
 
   const flashBtn = $('#gloss-cards');
   const flashBox = $('#gloss-flash');
-  let on = false, deck = [], i = 0, shown = false;
+  let on = false, deck = [], i = 0, shown = false, said = '';
 
   const paint = () => {
     const c = deck[i];
@@ -673,12 +716,23 @@ function mountGlossary() {
       <div class="q-card flash">
         <div class="flash-tag">${c.tag} · ${i + 1} of ${deck.length}</div>
         <div class="flash-q">${c.q}</div>
-        ${shown ? `<div class="flash-zh">${c.zh}</div><div class="flash-a" style="font-family:var(--sans);font-size:16px;color:var(--ink-2)">${c.a}</div>` : ''}
+        ${shown
+          ? `${said ? `<div class="flash-said"><span class="flash-said-k">You said</span><span class="flash-said-t"></span></div>
+          ` : ''}<div class="flash-zh">${c.zh}</div><div class="flash-a" style="font-family:var(--sans);font-size:16px;color:var(--ink-2)">${c.a}</div>`
+          : `<div class="flash-sayrow">
+            <input class="flash-say" type="text" maxlength="160" autocomplete="off"
+              autocapitalize="off" spellcheck="false" enterkeyhint="go"
+              aria-label="Say it out loud, or type it here."
+              placeholder="Say it out loud, or type it here.">
+            <p class="flash-say-note">Nothing here is marked or saved. Knowing a term means being able to say it, not recognising it when you see it.</p>
+          </div>`}
         <div class="chip-row" style="justify-content:center;margin-top:16px">
           ${shown ? '' : '<button class="chip on" data-a="show">Reveal</button>'}
           <button class="chip" data-a="next">Next card →</button>
           <button class="chip" data-a="exit">Back to the list</button>
         </div></div>`;
+    const saidEl = $('.flash-said-t', flashBox);
+    if (saidEl) saidEl.textContent = said;
   };
 
   flashBtn?.addEventListener('click', async () => {
@@ -691,9 +745,16 @@ function mountGlossary() {
   flashBox?.addEventListener('click', (e) => {
     const a = e.target.closest('[data-a]')?.dataset.a;
     if (!a) return;
-    if (a === 'show') { shown = true; paint(); }
-    else if (a === 'next') { i = (i + 1) % deck.length; shown = false; paint(); }
-    else { on = false; body.hidden = false; flashBox.hidden = true; flashBox.innerHTML = ''; }
+    if (a === 'show') { said = ($('.flash-say', flashBox)?.value || '').trim().slice(0, 160); shown = true; paint(); }
+    else if (a === 'next') { i = (i + 1) % deck.length; shown = false; said = ''; paint(); }
+    else { on = false; said = ''; body.hidden = false; flashBox.hidden = true; flashBox.innerHTML = ''; }
+  });
+
+  flashBox?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+    if (!e.target.classList?.contains('flash-say')) return;
+    e.preventDefault();
+    said = e.target.value.trim().slice(0, 160); shown = true; paint();
   });
 }
 
