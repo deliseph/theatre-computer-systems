@@ -686,6 +686,80 @@ reach your machine. A network you have just plugged into is Public by default.
 > "It works one way" on a Windows machine is the network profile until proven otherwise. It is on
 > the [field card](/field), with the click path.
 
+### Why there is an IPv6, and why IPv4 has not gone away
+
+Everything above is IPv4, and IPv4 has a hard limit that no amount of engineering moves. The
+address is 32 bits, so there are 2³² of them and that is the end of the matter.
+
+```
+2³² = 4,294,967,296 addresses in total
+less the private, loopback, link local, multicast
+and reserved blocks you have just met     −   592,576,512
+leaves for the public internet             = 3,702,390,784
+÷ about 8.2 billion people                 =          0.45 each
+```
+
+Under half a public address each, before anybody owns a second device. IANA handed the last free
+blocks to the regional registries in **February 2011**, and the registries ran down over the
+following decade. The internet carried on anyway, and the reason it carried on is the box in every
+venue and every home: **NAT**.
+
+<!--anim:v4-runout-->
+
+NAT is a workaround that worked so well it delayed the fix by twenty years. A venue with two
+hundred devices consumes one public address. The cost is the thing to hold on to, because it is
+the cost you will meet at work: **behind NAT, nothing outside can start a conversation with
+anything inside.** Remote support into a rig, inbound control, anything peer to peer: all of it
+has to be arranged rather than simply working. Every awkward thing about connecting to a machine
+in a venue from outside that venue traces back to this one sentence.
+
+**IPv6 is the actual fix, and it is not a bigger IPv4.** The address is 128 bits:
+
+```
+2¹²⁸ ≈ 340 undecillion, or 3.4 × 10³⁸
+which is 6.7 × 10²³ addresses for every square metre of the Earth's surface
+```
+
+That is not enthusiasm, it is the arithmetic. The number is absurd on purpose, so that nobody ever
+has to do this again, and so that addresses can be handed out wastefully in exchange for
+simplicity elsewhere.
+
+<!--anim:ipv6-shape-->
+
+What actually changes, as against what merely looks different:
+
+| Change | Why it was done |
+|---|---|
+| Every subnet is a **/64**, always | The bottom 64 bits name the interface, so a host can build its own address from a prefix a router advertises. That is **SLAAC**, and it is why IPv6 does not need a DHCP server to work |
+| **No broadcast at all** | Gone, entirely. Everything that was broadcast is multicast, and a device only receives groups it joined. The two-switch loop from Block D still floods, but the ordinary background chatter does not |
+| **Link local is always present** | `fe80::/10` is on every interface whether anything is configured or not. Unlike `169.254` in IPv4, it is not a symptom of failure, it is how two devices on a cable find each other first |
+| **Unique local**, `fd00::/8` | The private address of IPv6, generated at random rather than assigned, so two rigs that have never met can be joined with a fair chance of not colliding |
+| **No NAT by design** | There is no shortage to work around, so a device can have a real address and still sit behind a firewall. The firewall was always the part doing the protecting; NAT only ever did it by accident |
+
+**So why is IPv4 still everywhere?** Because IPv6 is not backward compatible, and that single fact
+explains the whole slow transition. An IPv6-only host cannot talk to an IPv4-only host without
+something in the middle translating. So almost everything runs **dual stack**, both at once, which
+means running two networks and debugging two networks, and there is no day on which anybody can
+switch the old one off. NAT deferred the pain, and deferred pain does not create urgency.
+
+Adoption is worth looking up rather than memorising: Google publishes the share of its own users
+arriving over IPv6, and it has been climbing for years without ever getting near everybody. Check
+it before you quote it, because it moves.
+
+**What a year one in this department actually needs from this:**
+
+1. **Your rig floor will be IPv4 for a long time.** Art-Net is IPv4 only by specification. Dante is
+   IPv4 only. sACN defines both. None of that is changing on the timescale of your first job, so
+   every calculation in Block C still applies.
+2. **Where it bites is the building, not the rig.** Remote support, a hotel network, a cloud
+   service, a venue's own IT. That is where you meet an address with colons in it.
+3. **Learn one failure shape.** A machine has both, prefers IPv6, and the service it wants is IPv4
+   only, so it appears to hang rather than fail cleanly. **Happy Eyeballs** exists to fix exactly
+   that, by trying both at once and using whichever answers first.
+4. **"Turn off IPv6" is folklore.** It sometimes clears a symptom, which is why the advice
+   circulates. It is almost never the fault, and switching it off on a machine that needs it later
+   is a fault you have then built yourself.
+
 ### Static, DHCP, and the address that means failure
 
 - **DHCP** hands out addresses automatically. The address can change.

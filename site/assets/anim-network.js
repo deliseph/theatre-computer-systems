@@ -1277,3 +1277,255 @@ register('broadcast-storm', (host) => {
   );
   upd();
 });
+
+// ============================================================================
+// Why IPv4 ran out, and what an IPv6 address is actually shaped like
+// ============================================================================
+
+register('v4-runout', (host) => {
+  const st = { behind: 40 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'Four billion addresses, and why that was not enough',
+    sub: 'IPv4 is 32 bits, so there are 2³² of them and there is no way to make more. Everything since 1994 has been a way of living with that number.',
+    note: '&nbsp;',
+  });
+
+  // The blocks that were never available to hand out, at their real addresses.
+  // Drawing them stacked at the bottom of the bar would be tidier and would
+  // teach the wrong thing: multicast and the never-used quarter sit at the top,
+  // and seeing that is half the point of drawing the bar at all.
+  const A = (a, b, c, d) => ((a * 256 + b) * 256 + c) * 256 + d;
+  const RESERVED = [
+    ['0.0.0.0/8', 'this network', A(0, 0, 0, 0), 2 ** 24],
+    ['10.0.0.0/8', 'private', A(10, 0, 0, 0), 2 ** 24],
+    ['100.64.0.0/10', 'carrier NAT', A(100, 64, 0, 0), 2 ** 22],
+    ['127.0.0.0/8', 'loopback', A(127, 0, 0, 0), 2 ** 24],
+    ['169.254.0.0/16', 'link local', A(169, 254, 0, 0), 2 ** 16],
+    ['172.16.0.0/12', 'private', A(172, 16, 0, 0), 2 ** 20],
+    ['192.168.0.0/16', 'private', A(192, 168, 0, 0), 2 ** 16],
+    ['224.0.0.0/4', 'multicast', A(224, 0, 0, 0), 2 ** 28],
+    ['240.0.0.0/4', 'reserved, never used', A(240, 0, 0, 0), 2 ** 28],
+  ];
+  const TOTAL = 2 ** 32;
+  const HELD = RESERVED.reduce((n, r) => n + r[3], 0);
+  const PUBLIC = TOTAL - HELD;
+  const POP = 8.2e9;                    // world population, to the nearest sensible figure
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 340,
+    animated: false,
+    controls,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(620, w - 24), ox = (w - W) / 2;
+      const narrow = W < 470;
+
+      // --- the whole pool, with the parts nobody could ever have -------------
+      let y = 32;
+      label(g, 'EVERY IPv4 ADDRESS THERE WILL EVER BE', ox, y - 12, { color: p.muted, size: 10, weight: 700, max: W });
+      const bh = 30;
+      box(g, ox, y, W, bh, { fill: alpha(p.green, 0.22), stroke: p.line, r: 4, lw: 1 });
+      for (const [, , at, n] of RESERVED) {
+        // A /16 is a nine hundredth of a pixel on this bar. Give the small ones
+        // a hairline rather than dropping them: they are part of the answer.
+        const x0 = ox + (at / TOTAL) * W, wpx = Math.max(1, (n / TOTAL) * W);
+        box(g, x0, y, wpx, bh, { fill: alpha(p.red, 0.45), stroke: 'transparent', r: 0 });
+      }
+      // Only the two blocks big enough to read get named on the bar.
+      for (const [cidr, , at, n] of RESERVED.filter((r) => r[3] >= 2 ** 28)) {
+        // A /4 is a sixteenth of the bar, so the label has to be the short form
+        // or it gets cut, and a cut label is worse than no label.
+        label(g, cidr.replace(/\.0\.0\.0/, ''), ox + ((at + n / 2) / TOTAL) * W, y + bh / 2,
+          { color: p.ink, size: 9, align: 'center', max: (n / TOTAL) * W - 3, ...mono });
+      }
+      label(g, `${(HELD / 1e6).toFixed(0)}M held back`, ox, y + bh + 15, { color: p.red, size: 10, max: W * 0.42, ...mono });
+      label(g, `${(PUBLIC / 1e9).toFixed(2)} billion to hand out`, ox + W, y + bh + 15,
+        { color: p.green, size: 10, align: 'right', max: W * 0.55, ...mono });
+
+      // --- and the arithmetic that finished it ------------------------------
+      y += bh + 40;
+      const rows = [
+        ['addresses in total', TOTAL.toLocaleString(), p.ink2],
+        ['never available: private, multicast, loopback', `−${HELD.toLocaleString()}`, p.red],
+        ['left for the public internet', PUBLIC.toLocaleString(), p.green],
+        ['people on the planet', '8,200,000,000', p.ink2],
+        ['public addresses each', (PUBLIC / POP).toFixed(2), p.amber],
+      ];
+      rows.forEach(([k, v], i) => {
+        const ry = y + i * 22;
+        label(g, k, ox, ry, { color: p.muted, size: narrow ? 10.5 : 11.5, max: W * 0.58 });
+        label(g, v, ox + W, ry, { color: rows[i][2], size: narrow ? 10.5 : 11.5, weight: 650, align: 'right', max: W * 0.4, ...mono });
+      });
+
+      // --- what NAT did about it ---------------------------------------------
+      y += rows.length * 22 + 26;
+      label(g, 'WHAT KEPT IT WORKING', ox, y - 12, { color: p.cyan, size: 10, weight: 700, max: W });
+      const nh = 44;
+      const boxW = Math.min(120, W * 0.26);
+      box(g, ox + W - boxW, y, boxW, nh, { fill: alpha(p.amber, 0.16), stroke: p.amber, r: 6, lw: 1.4 });
+      label(g, 'one public', ox + W - boxW + 9, y + 16, { color: p.amber, size: 10.5, weight: 650, max: boxW - 18 });
+      label(g, 'address', ox + W - boxW + 9, y + 31, { color: p.amber, size: 10.5, weight: 650, max: boxW - 18 });
+      const many = Math.min(st.behind, 60);
+      const cols = Math.min(20, many);
+      const dw = Math.min(9, ((W - boxW - 30) / cols) - 2);
+      for (let i = 0; i < many; i++) {
+        const dx = ox + (i % cols) * (dw + 2);
+        const dy = y + ((i / cols) | 0) * (dw + 3);
+        box(g, dx, dy, dw, dw, { fill: alpha(p.cyan, 0.5), stroke: 'transparent', r: 1 });
+      }
+      line(g, ox + cols * (dw + 2) + 4, y + nh / 2, ox + W - boxW - 4, y + nh / 2,
+        { color: alpha(p.cyan, 0.6), lw: 1.4 });
+      label(g, `${st.behind} devices`, ox, y + nh + 14, { color: p.cyan, size: 10.5, max: W * 0.5, ...mono });
+
+      const capY = y + nh + 34;
+      const capH = labelWrap(g, `NAT swaps ${st.behind} private addresses for one public one on the way out and swaps them back on the way in. The building consumes exactly one address, and nothing outside can start a conversation with anything inside.`,
+        ox, capY, { color: p.ink, size: 11.5, weight: 600, max: W, maxLines: 3 });
+      fit(capY + capH + 10);
+    },
+  });
+
+  const upd = () => {
+    cv.once();
+    setNote(`<b>The pool was finished in 2011, and the internet did not stop.</b> IANA handed the last free blocks to the regional registries in February 2011, and each registry ran down over the following decade. What saved it was NAT: a venue with ${st.behind} devices on it consumes one public address, not ${st.behind}. The cost is the thing year one needs to hold on to. <b>Behind NAT, nothing outside can start a conversation with anything inside</b>, which is why remote support, inbound control and anything peer to peer all need arranging rather than just working.`);
+  };
+
+  controls.append(
+    slider('Devices behind the router', { min: 2, max: 60, step: 1, value: 40, fmt: (v) => v, on: (v) => { st.behind = v; upd(); } }).node
+  );
+  upd();
+});
+
+register('ipv6-shape', (host) => {
+  // Real addresses, each from a block that is genuinely reserved for the job.
+  // 2001:db8::/32 is the documentation block (RFC 3849), which is why every
+  // example anywhere uses it: writing examples on somebody's live address is
+  // how a textbook ends up generating traffic to a stranger.
+  const KIND = {
+    global: {
+      label: 'Global unicast',
+      groups: ['2001', '0db8', '85a3', '0000', '0000', '8a2e', '0370', '7334'],
+      where: 'What a device gets from a provider. Reachable from anywhere, with no NAT in the way.',
+    },
+    link: {
+      label: 'Link local',
+      groups: ['fe80', '0000', '0000', '0000', '0204', '61ff', 'fe9d', 'f156'],
+      where: 'Every IPv6 interface always has one. Unlike 169.254 in IPv4, this is normal, not a failure.',
+    },
+    ula: {
+      label: 'Unique local',
+      groups: ['fd3a', '9c2e', '1b40', '0001', '0000', '0000', '0000', '0042'],
+      where: 'The private address of IPv6, fd00::/8. This is what a show network would use.',
+    },
+    loop: {
+      label: 'Loopback',
+      groups: ['0000', '0000', '0000', '0000', '0000', '0000', '0000', '0001'],
+      where: 'The whole of 127.0.0.0/8 in IPv4 became this one address.',
+    },
+    mcast: {
+      label: 'Multicast, all nodes',
+      groups: ['ff02', '0000', '0000', '0000', '0000', '0000', '0000', '0001'],
+      where: 'IPv6 has no broadcast at all. This is what replaced it: everything on this link.',
+    },
+  };
+  const st = { kind: 'global' };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'An IPv6 address, and why it looks like that',
+    sub: '128 bits instead of 32. Written as eight groups of four hex digits, and then shortened by two rules that between them cause most of the confusion.',
+    note: '&nbsp;',
+  });
+
+  // Rule one: drop leading zeros in each group. Rule two: replace the longest
+  // run of all-zero groups with ::, once only, because twice would be ambiguous.
+  const shorten = (groups) => {
+    const trimmed = groups.map((x) => x.replace(/^0+(?=.)/, ''));
+    let best = { at: -1, len: 0 }, i = 0;
+    while (i < 8) {
+      if (trimmed[i] !== '0') { i++; continue; }
+      let j = i;
+      while (j < 8 && trimmed[j] === '0') j++;
+      if (j - i > best.len) best = { at: i, len: j - i };
+      i = j;
+    }
+    // A single zero group is left alone: "::" would save nothing and reads worse.
+    if (best.len < 2) return { text: trimmed.join(':'), at: -1, len: 0, trimmed };
+    const head = trimmed.slice(0, best.at).join(':');
+    const tail = trimmed.slice(best.at + best.len).join(':');
+    return { text: `${head}::${tail}`, ...best, trimmed };
+  };
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 330,
+    animated: false,
+    controls,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(640, w - 24), ox = (w - W) / 2;
+      const K = KIND[st.kind];
+      const s = shorten(K.groups);
+      const narrow = W < 500;
+
+      // --- written out in full ------------------------------------------------
+      let y = 32;
+      label(g, 'ALL 128 BITS, WRITTEN OUT', ox, y - 12, { color: p.muted, size: 10, weight: 700, max: W });
+      const gw = (W - 7 * 4) / 8;
+      K.groups.forEach((grp, i) => {
+        const gx = ox + i * (gw + 4);
+        const zero = grp === '0000';
+        const inRun = s.at >= 0 && i >= s.at && i < s.at + s.len;
+        box(g, gx, y, gw, 30, {
+          fill: alpha(inRun ? p.red : i < 4 ? p.cyan : p.green, zero ? 0.10 : 0.2),
+          stroke: inRun ? p.red : i < 4 ? p.cyan : p.green, r: 4, lw: 1.2,
+        });
+        label(g, grp, gx + gw / 2, y + 15, {
+          color: zero ? p.muted : p.ink, size: narrow ? 10.5 : 12.5, align: 'center', max: gw - 4, ...mono,
+        });
+      });
+      // The /64 split, which is where every IPv6 subnet is cut.
+      const mid = ox + 4 * (gw + 4) - 2;
+      line(g, mid, y - 8, mid, y + 38, { color: p.amber, lw: 1.6, dash: [4, 3] });
+      label(g, narrow ? 'network /64' : 'the network, 64 bits', ox, y + 48, { color: p.cyan, size: 10.5, max: W * 0.47 });
+      label(g, narrow ? 'interface' : 'this interface, 64 bits', ox + W, y + 48,
+        { color: p.green, size: 10.5, align: 'right', max: W * 0.47 });
+
+      // --- and then shortened -------------------------------------------------
+      y += 86;
+      label(g, 'THE SAME ADDRESS, SHORTENED', ox, y - 14, { color: p.muted, size: 10, weight: 700, max: W });
+      const steps = [
+        ['as written', K.groups.join(':'), p.muted],
+        ['drop leading zeros in each group', s.trimmed.join(':'), p.ink2],
+        [s.len >= 2 ? `replace the longest run of zeros with ::, once only` : 'no run of zeros to replace', s.text, p.amber],
+      ];
+      steps.forEach(([k, v, tone], i) => {
+        const ry = y + i * 34;
+        label(g, k, ox, ry, { color: p.muted, size: 10, max: W });
+        label(g, v, ox, ry + 16, { color: tone, size: narrow ? 11 : 13.5, weight: i === 2 ? 700 : 500, max: W, ...mono });
+      });
+
+      // --- what it is, and where you meet it ---------------------------------
+      y += steps.length * 34 + 12;
+      label(g, K.label, ox, y, { color: p.ink, size: 12.5, weight: 700, max: W });
+      const capH = labelWrap(g, K.where, ox, y + 20, { color: p.muted, size: 11.5, max: W, maxLines: 3 });
+      fit(y + 20 + capH + 12);
+    },
+  });
+
+  const upd = () => {
+    cv.once();
+    const s = shorten(KIND[st.kind].groups);
+    if (st.kind === 'loop') setNote(`<b>Sixteen million loopback addresses became one.</b> IPv4 reserved the whole of 127.0.0.0/8, sixteen and a half million addresses, so that a machine could talk to itself. IPv6 spends exactly one on it: <code>::1</code>. That is a fair summary of the difference in attitude between the two.`);
+    else if (st.kind === 'mcast') setNote(`<b>IPv6 has no broadcast.</b> None. The thing that lets two badly configured switches take a network down in Class 3 does not exist here, because everything that used to be broadcast is multicast now and a device only receives the groups it joined. <code>ff02::1</code> is every node on this link, which is the closest thing left.`);
+    else if (st.kind === 'link') setNote(`<b>Every IPv6 interface has one of these, always, whether anything is configured or not.</b> That is the difference from 169.254 in IPv4, which only turns up when DHCP failed. Here it is not a symptom, it is how two devices on a cable find each other before anything else has been decided.`);
+    else if (st.kind === 'ula') setNote(`<b>This is the private address of IPv6, and it is what a show network would use.</b> fd00::/8, generated at random rather than assigned, so two rigs that have never met can be plugged together with a decent chance of not colliding. No NAT is involved, because there is no shortage to work around.`);
+    else setNote(`<b>Every address is 128 bits, and every subnet is a /64.</b> Always: the bottom half names the interface and the top half names the network, so one ordinary subnet holds 18.4 quintillion addresses. It sounds absurd until you see why. A host can build its own address from the prefix a router advertises and never ask a server for one, and <code>${s.text}</code> is what that arrives looking like.`);
+  };
+
+  controls.append(
+    choice('Address', Object.entries(KIND).map(([k, v]) => [k, v.label]),
+      { value: 'global', on: (v) => { st.kind = v; upd(); } }).node
+  );
+  upd();
+});
