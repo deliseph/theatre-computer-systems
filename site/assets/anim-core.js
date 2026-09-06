@@ -314,13 +314,27 @@ export function canvas(stage, { height = 260, draw, animated = true, controls })
 
   // Off-screen figures do not burn frames. This matters on a laptop driving a
   // projector with several of these on one page.
+  //
+  // Coming back into view also repaints a still figure. A phone with twenty
+  // canvases on one page is over the memory a mobile browser will hold, and it
+  // reclaims the ones you scrolled past. An animated figure repaints itself on
+  // the next frame and never shows the damage; a still one had nothing that
+  // would ever draw it again, so it came back blank or half-painted. That is
+  // what the shading looked like on the way back up the page.
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
-      if (e.isIntersecting && animated && !REDUCED && api.wanted !== false) api.start();
-      else api.stop();
+      if (!e.isIntersecting) { api.stop(); continue; }
+      if (animated && !REDUCED && api.wanted !== false) api.start();
+      else { api.stop(); api.once(); }
     }
   }, { rootMargin: '80px' });
   io.observe(cv);
+
+  // Returning to a backgrounded tab is the other moment a reclaimed canvas
+  // shows, and no observer fires for it.
+  const revive = () => { if (!running && cv.isConnected) api.once(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) revive(); });
+  addEventListener('pageshow', revive);
 
   if (animated && controls) {
     // Reduced motion starts paused, and the button is how you opt in.

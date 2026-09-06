@@ -110,8 +110,22 @@ a:hover { color: var(--amber); }
   display: flex; align-items: center; gap: 10px;
   height: 58px; padding: 0 14px;
   background: color-mix(in srgb, var(--ground) 88%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
   backdrop-filter: saturate(160%) blur(12px);
   border-bottom: 1px solid var(--line);
+}
+/* A translucent sticky bar is only translucent if the blur behind it works. On
+   a browser without backdrop-filter the page scrolls visibly through the
+   header, which reads as the colour shifting as you scroll, so there the bar
+   is solid instead. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar { background: var(--ground); }
+}
+/* And on a touch device it is solid regardless. Blurring a sticky layer during
+   a momentum scroll is the expensive path and the one that bands and smears;
+   an opaque bar is steady, and on a phone nothing is lost by it. */
+@media (hover: none) and (pointer: coarse) {
+  .topbar { background: var(--ground); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 .topbar-sp { flex: 1; }
 
@@ -516,7 +530,8 @@ td code { white-space: nowrap; }
 
 /* --- Search modal -------------------------------------------------------- */
 
-.search-modal { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); padding: 12vh 16px 16px; }
+.search-modal { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); padding: 12vh 16px 16px; }
 .search-box { max-width: 620px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .search-input { width: 100%; padding: 17px 20px; background: none; border: 0; border-bottom: 1px solid var(--line); color: var(--ink); font: 400 17px/1.3 var(--sans); }
 .search-input:focus { outline: none; }
@@ -1020,3 +1035,19 @@ a.chip { text-decoration: none; display: inline-block; }
 .rv-tip p { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
 .rv-tip .chip-row { margin: 0; justify-content: center; }
 .rv-stop { margin-top: 16px !important; font-size: 14px; color: var(--muted) !important; }
+
+
+/* --- Sideways strips on a touch screen ----------------------------------- */
+/*
+ * Tabs, tables and code blocks scroll sideways inside themselves. Without
+ * this, a horizontal swipe that reaches the end of the strip chains into the
+ * page, and on iOS into the browser's back gesture, which drags the whole view
+ * and repaints it mid-gesture. Containing the overscroll keeps the swipe
+ * inside the thing being swiped.
+ */
+.tabs, .table-wrap, .anim-controls, pre, .chip-row {
+  overscroll-behavior-x: contain;
+}
+.tabs, .table-wrap, pre { -webkit-overflow-scrolling: touch; }
+/* A canvas paints itself; it never needs to be part of a neighbour's repaint. */
+.anim-canvas { contain: paint; }
