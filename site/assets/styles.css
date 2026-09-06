@@ -622,7 +622,21 @@ body.teach-mode main { padding: 0; }
   body { background: #fff; color: #000; font-size: 11pt; }
   .layout { display: block; }
   .doc { max-width: none; padding: 0; }
-  .panel { display: block !important; }
+  /* The tab you are reading is the one that prints. The Print study notes
+     button widens that to the Learn tab plus this class's numbers card, which
+     is the pair worth having on paper. */
+  .panel { display: none !important; }
+  .panel.on { display: block !important; }
+  body.print-notes .panel[data-panel="content"],
+  body.print-notes .panel[data-panel="numbers"] { display: block !important; }
+  body.print-notes .panel:not([data-panel="content"]):not([data-panel="numbers"]) { display: none !important; }
+  .print-head { display: block !important; font-size: 9.5pt; color: #444; margin: 0 0 14pt; }
+  .when { color: #000; }
+  .when-h { border: 1px solid #999; background: none; color: #000; }
+  .anim-fig { border: 1px solid #bbb; background: none; break-inside: avoid; }
+  .anim-tag { display: none; }
+  .anim-note { background: none; border-left: 2px solid #999; }
+  .sched-next, .byline, .side-by, .guess-btn { display: none !important; }
   .table-wrap { overflow: visible; border: 1px solid #999; break-inside: auto; }
   thead th { background: #eee; color: #000; position: static; }
   tr, .card, .tool, blockquote, pre.code { break-inside: avoid; }
@@ -1262,3 +1276,6 @@ a.chip { text-decoration: none; display: inline-block; }
 .sb-think.no { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber); }
 .sb-verdict.half { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
 .sb-verdict.half b { color: var(--amber); }
+
+/* A line that exists only on paper, so a printed class is identifiable. */
+.print-head { display: none; }

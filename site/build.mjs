@@ -538,10 +538,13 @@ for (const c of classData) {
     <p class="when" data-week="${c.slot.week}"><b>${longDate(c.slot.date)}</b>, ${slotOf(c.slot)}
       <span class="when-h">${hoursOf(c.slot)} hours</span></p>
     <p class="strap">${esc(c.strap)}</p>
+    <p class="print-head" aria-hidden="true">Computer Systems &amp; Networking for Theatre and
+      Entertainment Arts · Class ${c.n} of 5 · Week ${c.slot.week}, ${longDate(c.slot.date)}</p>
     <div class="head-actions">
       <a class="btn btn-primary" href="#tab=prepare">Prepare for this class</a>
       <a class="btn" href="#tab=content">Start learning</a>
       <a class="btn" href="/teach/${c.n}">▶ Teach mode</a>
+      <button class="btn js-print" data-class="${c.n}">Print study notes</button>
       <button class="btn js-done" data-class="${c.n}">Mark as studied</button>
     </div>
   </header>

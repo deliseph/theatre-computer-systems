@@ -369,3 +369,23 @@ if (prepBlocks.length) {
   line.innerHTML = `<b>Next:</b> ${title}, ${when}, ${time}. <span class="sched-away">${away}.</span>`;
   line.hidden = false;
 })();
+
+
+// --- Printing a class ------------------------------------------------------
+//
+// Printing a class page used to put all six tabs on paper: the prep, the
+// tools, the drills and the self test, most of which is not a study note and
+// none of which is readable without the interactivity. Two rules instead. By
+// default the tab you are looking at is the tab that prints. The button prints
+// the notes: the Learn tab and that class's own numbers card, which is the pair
+// somebody actually wants on paper or as a PDF.
+
+document.querySelector('.js-print')?.addEventListener('click', () => {
+  document.body.classList.add('print-notes');
+  const clear = () => document.body.classList.remove('print-notes');
+  // Chrome and Safari fire afterprint; a dialog that is dismissed without
+  // printing fires it too. The timeout is the belt for browsers that do not.
+  addEventListener('afterprint', clear, { once: true });
+  setTimeout(clear, 20000);
+  print();
+});
