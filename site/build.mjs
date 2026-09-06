@@ -637,6 +637,7 @@ for (const c of classData) {
     <div class="teach-dots" id="tdots"></div>
     <span class="teach-next" id="tnextup" hidden></span>
     <span class="teach-loc" id="tloc" hidden title="The same page on a phone. Press l to show it big for the room."><span class="teach-loc-p" id="tlocp"></span><kbd>l</kbd></span>
+    <button class="teach-btn" id="tboard" title="A surface to draw on, over this screen. What you draw stays until you clear it.">✎ Board <kbd>w</kbd></button>
     <button class="teach-btn" id="tgrid" title="Overview of every screen (o)">▦ Overview <kbd>o</kbd></button>
     <button class="teach-btn" id="tanswers" aria-pressed="true" title="Hold each figure&#39;s conclusion until you press n. Your choice is remembered on this laptop."><span>Answers: held</span> <kbd>a</kbd></button>
     <button class="teach-nav" id="tnext">Next →</button>
@@ -716,8 +717,8 @@ write('/lineage', shell({
       <h1>How we got here</h1>
       <p class="strap">Nothing here was designed. It accumulated, one problem at a time. Knowing why
       something exists tells you what it refuses to do, and that knowledge outlives the product names.</p>
-      <div class="head-actions"><a class="btn" href="/class/2">Class 2</a>
-      <a class="btn" href="/class/4">Class 4</a><a class="btn" href="/class/5">Class 5</a></div>
+      <div class="head-actions">${CLASSES.map((c) =>
+        `<a class="btn" href="/class/${c.n}">${c.n}. ${esc(c.title)}</a>`).join('')}</div>
     </header>${lineageDoc.html}</article>`,
   active: '/lineage',
   scripts: ['/assets/anim.js'],
@@ -950,8 +951,9 @@ write('/', shell({
     <h2 class="sched-h">Who made this, and what else there is</h2>
     <p class="byline-p">This site is built and maintained by
       <a href="${AUTHOR.links[0][1]}" rel="noopener" target="_blank">${AUTHOR.name}</a>, who teaches the
-      module it belongs to. If something here is wrong, or you want to argue with it, that is the
-      quickest way to reach him.</p>
+      module it belongs to. Questions are welcome, and so is a correction: if something here does not
+      hold up, or you would like to talk a part of it through, please do get in touch. Students who
+      have finished the module are still welcome to write.</p>
     <p class="byline-links">${AUTHOR.links.map(([n, u]) => `<a href="${u}" rel="noopener" target="_blank">${n}</a>`).join('')}</p>
     <ul class="byline-work">
       ${AUTHOR.work.map(([n, u, d]) => `<li><a href="${u}" rel="noopener" target="_blank">${n}</a> <span>${d}</span></li>`).join('')}

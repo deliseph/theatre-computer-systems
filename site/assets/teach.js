@@ -7,6 +7,8 @@
 // blocks are an order of work, not a timetable, so the clock reports elapsed
 // time and leaves the judgement to the person in the room.
 
+import { mountBoard } from './board.js';
+
 const $ = (s) => document.querySelector(s);
 const track = $('#ttrack');
 if (track) {
@@ -219,6 +221,13 @@ if (track) {
     if (d) show(+d.dataset.i);
   });
 
+  // A surface to draw on, over whatever screen is up. Mounted once, kept for
+  // the life of the page, so what was drawn survives going back to the slide
+  // and returning: the second half of an explanation usually arrives after a
+  // look at the diagram the first half was drawn on.
+  const board = mountBoard();
+  $('#tboard')?.addEventListener('click', () => board.toggle());
+
   addEventListener('keydown', (e) => {
     const tag = e.target.tagName;
     const type = (e.target.type || '').toLowerCase();
@@ -236,6 +245,13 @@ if (track) {
     if (onSlider && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) return;
     // Space on a focused button would both press it and turn the page.
     if (e.key === ' ' && tag === 'BUTTON') return;
+    if (board.isOpen() && e.key !== 'Escape' && !/^[wWzZeE]$/.test(e.key)) {
+      // Turning the page out from under a half drawn diagram is the one thing
+      // this feature must never do, so while the board is up the deck keys are
+      // inert and only the board's own keys answer.
+      if (/^(Arrow|Page|Home|End| )/.test(e.key)) e.preventDefault();
+      return;
+    }
     switch (e.key) {
       case 'ArrowRight': case 'PageDown': case ' ': e.preventDefault(); show(i + 1); break;
       case 'ArrowLeft': case 'PageUp': e.preventDefault(); show(i - 1); break;
@@ -247,7 +263,11 @@ if (track) {
       case 'n': e.preventDefault(); toggleNote(); break;
       case 'a': e.preventDefault(); answersBtn?.click(); break;
       case 'l': case 'L': e.preventDefault(); toggleLoc(); break;
+      case 'w': case 'W': e.preventDefault(); board.toggle(); break;
+      case 'z': case 'Z': if (board.isOpen()) { e.preventDefault(); $('.wb [data-act="undo"]')?.click(); } break;
+      case 'e': case 'E': if (board.isOpen()) { e.preventDefault(); $('.wb [data-act="erase"]')?.click(); } break;
       case 'Escape':
+        if (board.isOpen()) { board.hide(); break; }
         if (!locBig.hidden) { hideLoc(); break; }
         if (!grid.hidden) { grid.hidden = true; break; }
         if (!document.fullscreenElement) location.href = $('.teach-exit').getAttribute('href');

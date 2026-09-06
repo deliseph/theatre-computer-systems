@@ -1265,3 +1265,51 @@ a.chip { text-decoration: none; display: inline-block; }
 
 /* A line that exists only on paper, so a printed class is identifiable. */
 .print-head { display: none; }
+
+/* --- The board ------------------------------------------------------------ */
+/* A surface over whatever screen is up. It sits above everything including the
+   overview grid, because the point of it is that nothing else is in the way. */
+.wb { position: fixed; inset: 0; z-index: 400; background: var(--ground); }
+.wb-c { position: absolute; inset: 0; touch-action: none; cursor: crosshair; }
+.wb-bar {
+  /* left:50% caps a shrink-to-fit box at half the viewport, so the bar wrapped
+     with room to spare either side. max-content sizes it to its contents and
+     the max-width still catches a phone. */
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  width: max-content; max-width: calc(100vw - 24px);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 26px rgb(0 0 0 / 0.28);
+}
+.wb-pens, .wb-sizes { display: flex; align-items: center; gap: 6px; }
+.wb-pen {
+  width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
+  background: var(--p); border: 2px solid transparent; outline-offset: 2px;
+}
+.wb-pen.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ground) inset; }
+.wb-size {
+  display: grid; place-items: center; width: 30px; height: 26px; padding: 0; cursor: pointer;
+  border-radius: 7px; border: 1px solid var(--line); background: var(--raised);
+}
+.wb-size i { display: block; width: 15px; border-radius: 6px; background: var(--ink-2); }
+.wb-size.on { border-color: var(--cyan); }
+.wb-size.on i { background: var(--cyan); }
+.wb-b {
+  padding: 0 11px; height: 30px; cursor: pointer; white-space: nowrap;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--raised);
+  color: var(--ink-2); font: 600 12.5px/1 var(--sans);
+}
+.wb-b:hover { border-color: var(--cyan); color: var(--ink); }
+.wb-b.on { border-color: var(--amber); color: var(--amber); }
+.wb-b kbd { margin-left: 6px; }
+.wb-sp { width: 1px; height: 22px; background: var(--line); }
+/* Nothing behind the board should scroll while it is up. */
+body.wb-on { overflow: hidden; }
+@media (max-width: 720px) {
+  .wb-bar { gap: 7px; padding: 7px 9px; bottom: 12px; }
+  .wb-b { padding: 0 8px; font-size: 11.5px; }
+  .wb-close kbd { display: none; }
+}
+@media print { .wb { display: none !important; } }
