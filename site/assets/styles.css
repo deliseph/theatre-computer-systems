@@ -1166,3 +1166,56 @@ a.chip { text-decoration: none; display: inline-block; }
 @media (max-width: 700px) {
   .tool table { display: block; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
 }
+
+
+/* --- The timetable ------------------------------------------------------- */
+/*
+ * Seven rows, one per Saturday. The one coming next is marked; the ones gone
+ * are dimmed rather than removed, because the shape of the term is part of what
+ * the page is telling you.
+ */
+.when { margin: 0 0 10px; font-size: 15px; color: var(--ink-2); }
+.when b { color: var(--ink); }
+.when-h {
+  display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  background: var(--raised); color: var(--muted); font: 600 11.5px/1.5 var(--sans);
+}
+.sched { margin: 34px 0 30px; }
+.sched-h { margin: 0 0 8px; font: 650 20px/1.3 var(--sans); letter-spacing: -.01em; }
+.sched-sub { margin: 0 0 14px; max-width: 66ch; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+.sched-next {
+  margin: 0 0 14px; padding: 10px 14px; border-radius: 9px;
+  background: var(--amber-soft); border: 1px solid color-mix(in srgb, var(--amber) 32%, transparent);
+  font-size: 14.5px; color: var(--ink);
+}
+.sched-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.sched-row {
+  display: grid; gap: 4px 14px; align-items: baseline; padding: 11px 4px;
+  grid-template-columns: 74px 92px 104px minmax(0, 1fr);
+  border-bottom: 1px solid var(--line);
+}
+.sched-wk { font: 600 11px/1.6 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.sched-dt { font: 500 14px/1.4 var(--sans); color: var(--ink-2); }
+.sched-dt b { color: var(--ink); font-weight: 650; }
+.sched-day { color: var(--muted); font-size: 12.5px; }
+.sched-tm { font: 500 13px/1.4 var(--mono); color: var(--muted); }
+.sched-ti { min-width: 0; font-size: 15px; color: var(--ink-2); }
+.sched-ti a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+.sched-ti a:hover { border-bottom-color: var(--amber); color: var(--amber); }
+.sched-where {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: var(--cyan-soft); color: var(--cyan); font: 600 11px/1.6 var(--sans);
+}
+.sched-visit .sched-wk, .sched-exam .sched-wk { color: var(--cyan); }
+.sched-row.is-next { background: var(--amber-soft); border-radius: 8px; }
+.sched-row.is-next .sched-wk { color: var(--amber); }
+.sched-row.is-past { opacity: .5; }
+.sched-row.is-past .sched-ti a { border-bottom-color: transparent; }
+@media (max-width: 620px) {
+  .sched-row { grid-template-columns: 74px minmax(0, 1fr); }
+  .sched-tm { grid-column: 2; }
+  .sched-ti { grid-column: 1 / -1; }
+}
+@media print { .sched-next { display: none; } .sched-row.is-past { opacity: 1; } }
+.teach-when { font: 500 11.5px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+@media (max-width: 820px) { .teach-when { display: none; } }

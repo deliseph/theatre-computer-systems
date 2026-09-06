@@ -30,6 +30,43 @@ const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
 // published here, so cross references to them are rewritten into plain words.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// The timetable
+// ---------------------------------------------------------------------------
+//
+// Seven Saturdays. The module's own course map says the shape is 2 hours of
+// intro, 2 of visit, 16 of content and 4 of practical exam, and this is exactly
+// that: 2 + 2 + (4 × 4) + 4 = 24. Written once here and read everywhere else,
+// so a moved date is one edit.
+//
+// `kind` decides what a row links to: a taught class has a page, the visit and
+// the exam do not.
+const SCHEDULE = [
+  { week: 1, date: '2026-09-05', start: '14:00', end: '16:00', kind: 'class', n: 1 },
+  { week: 5, date: '2026-10-03', start: '11:00', end: '13:00', kind: 'visit', label: 'Production visit', where: 'Interstage' },
+  { week: 7, date: '2026-10-17', start: '14:00', end: '18:00', kind: 'class', n: 2 },
+  { week: 8, date: '2026-10-24', start: '14:00', end: '18:00', kind: 'class', n: 3 },
+  { week: 9, date: '2026-10-31', start: '14:00', end: '18:00', kind: 'class', n: 4 },
+  { week: 10, date: '2026-11-07', start: '14:00', end: '18:00', kind: 'class', n: 5 },
+  { week: 14, date: '2026-12-05', start: '14:00', end: '18:00', kind: 'exam', label: 'Practical exam' },
+];
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Dates are stamped at build time, so they are read as UTC rather than as
+// whatever the build machine thinks local midnight is.
+function dateParts(iso) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return { day: DAYS[d.getUTCDay()], dm: d.getUTCDate(), month: MONTHS[d.getUTCMonth()], year: d.getUTCFullYear() };
+}
+const longDate = (iso) => { const { day, dm, month } = dateParts(iso); return `${day} ${dm} ${month}`; };
+const shortDate = (iso) => { const { dm, month } = dateParts(iso); return `${dm} ${month.slice(0, 3)}`; };
+const hoursOf = (s) => (Number(s.end.slice(0, 2)) + Number(s.end.slice(3)) / 60)
+  - (Number(s.start.slice(0, 2)) + Number(s.start.slice(3)) / 60);
+const slotOf = (s) => `${s.start}\u2013${s.end}`;
+
 const CLASSES = [
   {
     n: 1, slug: 'why-this-class-exists', file: '01-session-01-intro.md',
@@ -62,6 +99,20 @@ const CLASSES = [
     tools: ['datarate', 'latency', 'storage', 'ledwall', 'timecode'], practice: ['myths', 'drill', 'selftest'],
   },
 ];
+
+// Every taught class carries its own date, and the build fails if one has no
+// slot: a course page that quietly stops saying when it meets is worse than a
+// build that stops.
+for (const c of CLASSES) {
+  const slot = SCHEDULE.find((x) => x.kind === 'class' && x.n === c.n);
+  if (!slot) throw new Error(`schedule: no slot for Class ${c.n}`);
+  c.slot = slot;
+}
+for (const s of SCHEDULE) {
+  if (s.kind === 'class' && !CLASSES.some((c) => c.n === s.n)) {
+    throw new Error(`schedule: week ${s.week} names Class ${s.n}, which does not exist`);
+  }
+}
 
 // Session numbers in the source become class numbers on the site. The two
 // unpublished sessions become plain descriptions so no reference dangles.
@@ -449,8 +500,10 @@ for (const c of classData) {
   const body = `
 <article class="doc">
   <header class="page-head">
-    <p class="eyebrow"><span class="pill">Class ${c.n} of 5</span></p>
+    <p class="eyebrow"><span class="pill">Class ${c.n} of 5</span><span class="pill pill-q">Week ${c.slot.week}</span></p>
     <h1>${esc(c.title)}</h1>
+    <p class="when" data-week="${c.slot.week}"><b>${longDate(c.slot.date)}</b>, ${slotOf(c.slot)}
+      <span class="when-h">${hoursOf(c.slot)} hours</span></p>
     <p class="strap">${esc(c.strap)}</p>
     <div class="head-actions">
       <a class="btn btn-primary" href="#tab=prepare">Prepare for this class</a>
@@ -534,6 +587,7 @@ for (const c of classData) {
   <header class="teach-bar">
     <a class="teach-exit" href="/class/${c.n}" title="Exit teach mode">✕</a>
     <h1 class="teach-title">Class ${c.n} · ${esc(c.title)}</h1>
+    <span class="teach-when">${shortDate(c.slot.date)} · ${slotOf(c.slot)}</span>
     <span class="teach-block" id="tblock"></span>
     <span class="teach-sub" id="tsub"></span>
     <div class="teach-sp"></div>
@@ -665,6 +719,9 @@ write('/map', shell({
   active: '/map',
   scripts: ['/assets/map.js'],
 }));
+addSearch('/#schedule', 'Home', 'Seven Saturdays',
+  SCHEDULE.map((x) => `Week ${x.week} ${longDate(x.date)} ${slotOf(x)} ${x.kind === 'class'
+    ? `Class ${x.n} ${CLASSES.find((c) => c.n === x.n).title}` : `${x.label}${x.where ? ` at ${x.where}` : ''}`}`).join(' · '));
 addSearch('/map', 'The map', 'The whole module',
   'Every figure and every card in the module in the order they are taught, with the ones you have opened filled in');
 
@@ -760,7 +817,7 @@ const prepCards = classData.map((c) => `<section class="prep-block" data-prep="$
       <span class="prep-n">${c.n}</span>
       <div>
         <h2 class="hd hd-2" id="prepare-class-${c.n}" style="margin:0;border:0;padding:0">${esc(c.title)}</h2>
-        <p class="prep-meta">Class ${c.n}</p>
+        <p class="prep-meta">Class ${c.n} · Week ${c.slot.week} · ${longDate(c.slot.date)}, ${slotOf(c.slot)}</p>
       </div>
       <a class="btn" href="/class/${c.n}#tab=prepare">Open Class ${c.n} →</a>
       <button class="btn prep-toggle" aria-expanded="false" data-prep-toggle="${c.n}">Show</button>
@@ -824,6 +881,33 @@ write('/', shell({
       <a class="btn" href="/tools">Open the tools</a>
     </div>
   </header>
+
+
+  <section class="sched" id="schedule">
+    <h2 class="sched-h">Seven Saturdays</h2>
+    <p class="sched-sub">Two hours to open, two on a production visit, sixteen of content across four
+    consecutive weeks, four for the practical exam. The run from week 7 to week 10 is the dense part:
+    four classes, one a week, nothing skipped.</p>
+    <p class="sched-next" id="sched-next" hidden></p>
+    <ol class="sched-list">
+      ${SCHEDULE.map((x) => {
+    const cls = x.kind === 'class' ? CLASSES.find((c) => c.n === x.n) : null;
+    const title = cls ? `Class ${cls.n} · ${esc(cls.title)}` : esc(x.label);
+    const inner = cls
+      ? `<a href="/class/${cls.n}">${title}</a>`
+      : `<span>${title}</span>${x.where ? ` <span class="sched-where">${esc(x.where)}</span>` : ''}`;
+    const plain = cls ? `Class ${cls.n}, ${esc(cls.title)}`
+      : `${esc(x.label)}${x.where ? ` at ${esc(x.where)}` : ''}`;
+    return `<li class="sched-row sched-${x.kind}" data-date="${x.date}" data-end="${x.end}"
+          data-title="${plain}" data-when="${dateParts(x.date).day} ${dateParts(x.date).dm} ${dateParts(x.date).month}">
+          <span class="sched-wk">Week ${x.week}</span>
+          <span class="sched-dt"><b>${shortDate(x.date)}</b> <span class="sched-day">${dateParts(x.date).day.slice(0, 3)}</span></span>
+          <span class="sched-tm">${slotOf(x)}</span>
+          <span class="sched-ti">${inner}</span>
+        </li>`;
+  }).join('')}
+    </ol>
+  </section>
 
   <section class="progress-strip" id="progress-strip"></section>
 
@@ -1005,6 +1089,7 @@ for (const f of fs.readdirSync(path.join(HERE, 'assets'))) {
 
 fs.writeFileSync(path.join(OUT, 'assets', 'data.json'), JSON.stringify({
   flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness, myths, mapFigures, classLinks,
+  schedule: SCHEDULE.map((x) => ({ ...x, hours: hoursOf(x), day: dateParts(x.date).day })),
 }));
 fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex));
 

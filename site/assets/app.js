@@ -332,3 +332,40 @@ if (prepBlocks.length) {
     if (m) setOpen(Number(m[1]), true);
   });
 }
+
+
+// --- The timetable ----------------------------------------------------------
+//
+// Which Saturday is next, worked out in the reader's own timezone from the
+// dates already on the page. A class counts as past only once its end time has
+// gone, so a student looking at this during the class still sees it as the
+// current one. After the last date it says so rather than pointing at nothing.
+
+(() => {
+  const rows = [...document.querySelectorAll('.sched-row[data-date]')];
+  if (!rows.length) return;
+  const now = Date.now();
+  const endOf = (r) => new Date(`${r.dataset.date}T${r.dataset.end || '23:59'}:00`).getTime();
+  let next = null;
+  for (const r of rows) {
+    if (endOf(r) < now) r.classList.add('is-past');
+    else if (!next) { next = r; r.classList.add('is-next'); }
+  }
+  const line = document.getElementById('sched-next');
+  if (!line) return;
+  if (!next) {
+    line.textContent = 'The taught weeks are over. Everything here stays up.';
+    line.hidden = false;
+    return;
+  }
+  // Read from the row's own data, not from the text in it: the table abbreviates
+  // for the column it lives in, and a sentence needs the words in a sentence's
+  // order.
+  const title = next.dataset.title;
+  const when = next.dataset.when;
+  const time = next.querySelector('.sched-tm')?.textContent.trim();
+  const days = Math.ceil((new Date(`${next.dataset.date}T00:00:00`).getTime() - now) / 86400000);
+  const away = days > 1 ? `${days} days away` : days === 1 ? 'tomorrow' : days === 0 ? 'today' : 'in progress';
+  line.innerHTML = `<b>Next:</b> ${title}, ${when}, ${time}. <span class="sched-away">${away}.</span>`;
+  line.hidden = false;
+})();

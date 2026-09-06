@@ -4,6 +4,24 @@ An interactive teaching platform for a module taught to year one BFA students in
 **Media Design and Technology (MDT)**, specialising in audio, lighting and video: five taught
 classes, a production visit and a practical exam.
 
+## When it meets
+
+Seven Saturdays. The module's own course map calls for 2 hours of intro, 2 on a visit, 16 of
+content and 4 for the practical exam, and this is exactly that.
+
+| Week | Date | Time | Session |
+| --- | --- | --- | --- |
+| 1 | Sat 5 Sep 2026 | 14:00–16:00 | Class 1, Why This Class Exists |
+| 5 | Sat 3 Oct 2026 | 11:00–13:00 | Production visit, Interstage |
+| 7 | Sat 17 Oct 2026 | 14:00–18:00 | Class 2, The Machine |
+| 8 | Sat 24 Oct 2026 | 14:00–18:00 | Class 3, The Network |
+| 9 | Sat 31 Oct 2026 | 14:00–18:00 | Class 4, Control |
+| 10 | Sat 7 Nov 2026 | 14:00–18:00 | Class 5, Media Over IP and Systems |
+| 14 | Sat 5 Dec 2026 | 14:00–18:00 | Practical exam |
+
+Weeks 7 to 10 are four consecutive Saturdays, which is where most of the content sits.
+The dates live in `site/build.mjs` as `SCHEDULE`; everything on the site reads them from there.
+
 It answers one question, repeatedly, from different angles:
 
 > Why does an audio, lighting or video artist need to understand computers and networks, and how
