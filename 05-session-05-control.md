@@ -838,4 +838,4 @@ the frame rate list and the drop frame rule, both of which are in the reference 
 1. Finish and submit the trigger chain documentation pack.
 2. Calculate the universe requirement for this rig: 36 LED battens of 40 RGBW pixels each, plus
    18 moving heads at 32 channels each, plus 24 conventional dimmer channels. Show the working.
-3. Learn the protocol block of `numbers-to-know.md`. The DMX refresh calculation will be in the quiz.
+3. Learn the protocol block of [the Numbers card](/numbers). The DMX refresh calculation will be in the quiz.

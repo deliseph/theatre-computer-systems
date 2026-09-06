@@ -57,7 +57,7 @@ computer, network, protocol, control, media, clock, management, latency, jitter,
 data rate, deadline
 
 ### Numbers
-`numbers-to-know.md` Block 1.
+Block 1 of [the Numbers card](/numbers).
 
 ### Self test
 1. A designer copies a 4 GB file to the media server during a technical rehearsal. Which flow is
@@ -128,7 +128,7 @@ endianness, luma, chroma, run length encoding, entropy coding, quantisation, mot
 I frame, P frame, B frame, CBR, VBR
 
 ### Numbers
-`numbers-to-know.md` Block 2.
+Block 2 of [the Numbers card](/numbers).
 
 ### The idea that matters most
 A show computer is not a fast computer, it is a **predictable** computer. We trade peak
@@ -188,7 +188,7 @@ VLAN, 802.1Q, VLAN ID, tag, access port, trunk port, native VLAN, broadcast doma
 routing, QoS, unicast, broadcast, multicast, IGMP snooping, IGMP querier, PoE, fibre, SFP, etherCON
 
 ### Numbers
-`numbers-to-know.md` Block 3, including the nine bit values, the prefix table and the OSI layers.
+Block 3 of [the Numbers card](/numbers), including the nine bit values, the prefix table and the OSI layers.
 
 ### The three things to drill
 1. **The nine bit values.** 0, 128, 192, 224, 240, 248, 252, 254, 255. Nine numbers, and they
@@ -255,7 +255,7 @@ splitter, opto isolator, RDM, Art-Net, sACN, E1.31, priority, merge, node, gatew
 MSC, MTC, LTC, timecode, drop frame, RS-232, RS-422, contact closure, GPIO, TCP, UDP
 
 ### Numbers
-`numbers-to-know.md` Block 4.
+Block 4 of [the Numbers card](/numbers).
 
 ### The idea that matters most
 **State based** control repeats itself constantly, so a lost packet costs you nothing. **Event
@@ -298,7 +298,7 @@ space, chroma subsampling, single point of failure, air gap, IP schedule, patch 
 map, handover pack
 
 ### Numbers
-`numbers-to-know.md` Block 5.
+Block 5 of [the Numbers card](/numbers).
 
 ### The three ideas that matter most
 1. **Clock is the foundation.** A regular periodic click that gets no better and no worse is a
@@ -345,7 +345,7 @@ Four stations, individually assessed. Build, diagnose, calculate, document and d
    minute on each and you never have to look it up.
 4. **Practise drawing a signal flow diagram fast and legibly.** Boxes named, lines labelled with
    protocol and medium.
-5. **Learn `numbers-to-know.md` completely.** You may bring it to the calculate station, and you
+5. **Learn [the Numbers card](/numbers) completely.** You may bring it to the calculate station, and you
    will still be faster if you know it.
 
 ### What loses marks, from the sessions that came before

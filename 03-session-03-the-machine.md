@@ -178,6 +178,73 @@ It is also what volatile means, literally rather than as a figure of speech: cut
 charge is gone in a fraction of a second. Every unsaved cue and every frame in the buffer lives
 exactly like that.
 
+### 32 bit and 64 bit, and what is actually being counted
+
+The label sits on operating systems, applications and processors, and almost nobody who uses it
+can say what the number refers to. It is not speed. It is the **width of a memory address**, and
+therefore how many different places the machine is able to name at all.
+
+Every byte of memory has an address. If an address is 32 bits wide, there are 2³² of them:
+
+```
+2³² = 4,294,967,296 addresses, one byte each = 4 GiB
+```
+
+That is a hard ceiling on what one process can reach, and no amount of memory in the machine
+moves it. Widen the address to 64 bits and it becomes 16 EiB, which is a number with no practical
+meaning: it is simply large enough that the question stops being interesting.
+
+<!--anim:address-bits-->
+
+Three things get bundled under the same label, and it is worth separating them:
+
+| What is 64 bits wide | What it buys |
+|---|---|
+| The **address** (the pointer) | The 4 GiB ceiling goes away. This is the one that mattered. |
+| The **registers** | 64 bit integers in one instruction instead of two. Rarely the bottleneck. |
+| The **register count**, on x86-64 | Doubled, 8 to 16. A real gain, and nothing to do with the number 64. |
+
+**The confusion worth clearing up.** A 32 bit machine could always hold more than 4 GiB of RAM.
+PAE widened the *physical* address to 36 bits from 1995, so the operating system could see 64 GiB.
+Each individual process was still stuck with a 4 GiB *virtual* address space, and on Windows half
+of that was reserved for the kernel, so an application actually had two. That is the distinction:
+what the machine holds against what one program can name. If you ever wondered why a 32 bit machine
+with 4 GB fitted reported about 3.25 GB usable, that is the graphics aperture and the other
+hardware windows taking their addresses out of the same 4 GiB.
+
+**Why show software moved, and it was not for speed.** One frame of 1080p, decoded, four bytes a
+pixel, is 7.9 MiB. Four gibibytes holds about 517 of them, which is twenty seconds at 25 fps
+before you count the program itself, the operating system, or anything else on the machine. At 4K
+it is five seconds. Media servers, samplers and plugin hosts went 64 bit because of that sum, not
+because anything got faster.
+
+In fact widening the pointer costs a little. Every pointer in every data structure is now eight
+bytes rather than four, so pointer heavy code uses more memory and touches more cache lines at
+64 bit than it did at 32. Worth it for the address space. Never worth it on its own.
+
+**What your machine really does.** The pointer is 64 bits, but x86-64 processors decode only 48 of
+them, giving 256 TiB, and require the top sixteen to be a copy of bit 47 or they fault. That is
+called a canonical address. Recent parts extend it to 57 bits. Nobody has needed the rest.
+
+**What this means at a production desk:**
+
+| Situation | Works? |
+|---|---|
+| 64 bit application on a 64 bit OS | Yes, and this is now the only combination new software ships in |
+| 32 bit application on a 64 bit OS | Yes on Windows and on Linux with the 32 bit libraries installed. **No on macOS since Catalina, 2019** |
+| 64 bit application on a 32 bit OS | No, and there is no workaround |
+| A 32 bit plugin in a 64 bit host | Only through a bridge, which adds latency and a second process that can crash |
+| A driver whose bitness differs from the kernel | No. Drivers run inside the kernel and must match it |
+
+The plugin row is the one that bites in a theatre: an old but perfectly good audio plugin, a
+64 bit host, and a bridge sitting between them that nobody documented. It is worth knowing before
+a tech run, not during one.
+
+**And where 32 bits is still exactly right.** The microcontroller in a scenic effect is 32 bit and
+will stay that way. An ESP32 or an STM32 has kilobytes of RAM, so a 4 GiB ceiling is not a ceiling
+it will ever touch, and a 64 bit pointer would double the size of its data structures for nothing.
+The right address width is the one that reaches your memory, and no wider.
+
 ### Storage
 
 This is where the most useful teaching is, because it is where the numbers bite.
@@ -998,6 +1065,6 @@ from three sources and the distinction stops being theoretical.
 ## Homework before Class 3
 
 1. Finish the machine specification if the team did not complete it in the lab.
-2. Learn the storage and buffer numbers in `numbers-to-know.md`.
+2. Learn the storage and buffer numbers in [the Numbers card](/numbers).
 3. Find the IP address, subnet mask and gateway of your own laptop and write them down. Do not
    change anything. Bring the numbers to Class 3.

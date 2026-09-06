@@ -859,5 +859,5 @@ are described, and about how much is left unsaid, than from any textbook.
 ## Homework before session 7
 
 1. Refine your team's system design pack in light of the feedback given in the room. Submit it.
-2. Revise the whole of `numbers-to-know.md`. All of it is examinable.
-3. Read the exam brief in `07-session-07-practical-exam.md` and bring one question about it.
+2. Revise the whole of [the Numbers card](/numbers). All of it is examinable.
+3. Read the practical exam brief and bring one question about it.

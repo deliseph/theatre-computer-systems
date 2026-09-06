@@ -189,4 +189,4 @@ can, ideally as a session 6 systems audit instead.
 
 1. Finish the Part E sketch, due in one week.
 2. Install the software list. This is now blocking. Session 3 has a lab.
-3. Learn the second block of `numbers-to-know.md`.
+3. Learn the second block of [the Numbers card](/numbers).

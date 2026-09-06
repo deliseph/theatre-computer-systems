@@ -771,3 +771,123 @@ register('char-encode', (host) => {
   );
   upd();
 });
+
+// ============================================================================
+// 8. Address bits, and the wall a 32 bit machine walks into
+// ============================================================================
+
+register('address-bits', (host) => {
+  const st = { bits: 32, installed: 16 };            // installed RAM in GiB
+  const { controls, stage, setNote } = figure(host, {
+    title: 'What "64 bit" is actually counting',
+    sub: 'Not speed. The width of a memory address, which decides how many different places the machine is able to name at all.',
+    note: '&nbsp;',
+  });
+
+  // 2^64 is far past what a JavaScript number holds exactly, so the size is
+  // formatted from the exponent rather than from the value: 2^n is 2^(n mod 10)
+  // of the unit at floor(n/10). Exact at every width, and it is also how a
+  // person reads it.
+  const UNITS = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
+  const size = (n) => {
+    const u = Math.min(UNITS.length - 1, Math.floor(n / 10));
+    return { n: 2 ** (n - u * 10), unit: UNITS[u] };
+  };
+  const fmt = (n) => { const s = size(n); return `${s.n.toLocaleString()} ${s.unit}`; };
+
+  // A frame of 1080p held uncompressed, four bytes a pixel, which is what a
+  // server actually has in memory once it has decoded one.
+  const FRAME = 1920 * 1080 * 4;
+  const LANDMARK = [
+    [16, 'a home computer, 1982'],
+    [32, 'the 4 GiB wall'],
+    [48, 'what x86-64 really implements'],
+    [64, 'the pointer width'],
+  ];
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 340,
+    animated: false,
+    controls,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(620, w - 24), ox = (w - W) / 2;
+      const narrow = W < 470;
+
+      // --- the address itself, one box per bit -------------------------------
+      let y = 30;
+      label(g, 'ONE ADDRESS, BIT BY BIT', ox, y - 12, { color: p.muted, size: 10, weight: 700, max: W });
+      const per = Math.min(64, st.bits);
+      const bw = (W - (per - 1) * 1.5) / per;
+      for (let i = 0; i < per; i++) {
+        box(g, ox + i * (bw + 1.5), y, bw, 18, {
+          fill: alpha(i < 32 ? p.cyan : p.green, 0.35),
+          stroke: i < 32 ? p.cyan : p.green, r: 1.5, lw: 0.8,
+        });
+      }
+      label(g, `${st.bits} bits`, ox, y + 32, { color: p.ink, size: 12, weight: 700, max: W * 0.4, ...mono });
+      label(g, `2^${st.bits} = ${fmt(st.bits)} of addressable space`, ox + W, y + 32,
+        { color: p.amber, size: 12, weight: 700, align: 'right', max: W * 0.58, ...mono });
+
+      // --- where that sits, on a scale where each bit is a doubling ----------
+      y += 62;
+      const sh = 26;
+      box(g, ox, y, W, sh, { fill: alpha(p.line, 0.4), stroke: p.line, r: 4, lw: 1 });
+      const bx = (b) => ox + ((b - 16) / 48) * W;
+      box(g, ox, y, Math.max(2, bx(st.bits) - ox), sh, { fill: alpha(p.amber, 0.3), stroke: 'transparent', r: 4 });
+      for (const [b, txt] of LANDMARK) {
+        line(g, bx(b), y - 4, bx(b), y + sh + 4, { color: alpha(p.muted, 0.6), lw: 1, dash: [3, 3] });
+        if (!narrow || b === 32 || b === 64) {
+          label(g, txt, clamp(bx(b), ox + 40, ox + W - 40), y + sh + 16,
+            { color: b === st.bits ? p.amber : p.muted, size: 9.5, align: 'center', max: W * 0.34 });
+        }
+        label(g, `${b}`, bx(b), y - 12, { color: p.muted, size: 9.5, align: 'center', max: 30, ...mono });
+      }
+
+      // --- and what it means for a machine you would actually buy ------------
+      y += sh + 44;
+      const rows = [];
+      const addressable = st.bits >= 63 ? Infinity : 2 ** st.bits;
+      const installed = st.installed * 2 ** 30;
+      const reachable = Math.min(addressable, installed);
+      rows.push(['RAM in the machine', `${st.installed} GiB`, p.ink2]);
+      rows.push(['one process can name', st.bits >= 64 ? 'more than you can fit' : fmt(st.bits),
+        addressable < installed ? p.red : p.green]);
+      rows.push(['so it can reach', `${(reachable / 2 ** 30).toFixed(reachable < 2 ** 30 ? 3 : 0)} GiB`,
+        addressable < installed ? p.red : p.green]);
+      rows.push(['1080p frames held decoded', `${Math.floor(reachable / FRAME).toLocaleString()}`, p.amber]);
+      rows.push(['which is, at 25 fps', `${(Math.floor(reachable / FRAME) / 25).toFixed(1)} seconds`, p.amber]);
+      rows.forEach(([k, v, tone], i) => {
+        const ry = y + i * 22;
+        label(g, k, ox, ry, { color: p.muted, size: 11.5, max: W * 0.56 });
+        label(g, v, ox + W, ry, { color: tone, size: 11.5, weight: 650, align: 'right', max: W * 0.42, ...mono });
+      });
+
+      const capY = y + rows.length * 22 + 8;
+      const capH = labelWrap(g, addressable < installed
+        ? `The RAM is in the machine and the process cannot name it. Adding more changes nothing.`
+        : `Every byte in the machine has an address this process can form.`,
+        ox, capY, { color: addressable < installed ? p.red : p.ink, size: 11.5, weight: 600, max: W, maxLines: 2 });
+      fit(capY + capH + 10);
+    },
+  });
+
+  const upd = () => {
+    cv.once();
+    const addressable = st.bits >= 63 ? Infinity : 2 ** st.bits;
+    const installed = st.installed * 2 ** 30;
+    if (st.bits === 32) setNote(`<b>Four gibibytes, and not one byte more.</b> 2³² addresses, one byte each, is 4 GiB, and that is the ceiling on what a single 32 bit process can name however much memory you bolt into the machine. Windows handed half of it to the kernel, so an application really had two. This is the whole reason media servers, samplers and plugin hosts moved, and it had nothing to do with speed.`);
+    else if (st.bits < 32) setNote(`<b>${fmt(st.bits)}.</b> Each bit you take away halves it, which is why old machines ran out so abruptly: 16 bits names 64 KiB, and one uncompressed 1080p frame is ${(FRAME / 1024 ** 2).toFixed(1)} MiB. The frame is ${Math.round(FRAME / 2 ** st.bits).toLocaleString()} times larger than everything this machine can address.`);
+    else if (st.bits === 48) setNote(`<b>This is what your machine actually does.</b> The pointer is 64 bits wide, but x86-64 implementations decode only 48 of them, giving 256 TiB. The top bits have to be a copy of bit 47 or the processor faults, which is called a canonical address. Newer parts extend it to 57 bits. Nobody has ever needed the other sixteen.`);
+    else if (addressable > installed * 1024) setNote(`<b>The address space stopped being the constraint.</b> ${fmt(st.bits)} against ${st.installed} GiB of actual memory: the machine could name the RAM of every machine in the building and then some. What limits a 64 bit show machine is how much memory you bought and how fast it is, which are ordinary questions with ordinary answers.`);
+    else setNote(`<b>${fmt(st.bits)} of addressable space, ${st.installed} GiB installed.</b> Above 32 bits the ceiling stops mattering and the practical limit goes back to being the memory itself. Note what widening the pointer costs: every pointer in every data structure is now twice the size, so pointer heavy code uses more memory and more cache lines at 64 bits than it did at 32. The address space is worth it. The speed was never the point.`);
+  };
+
+  controls.append(
+    slider('Address width', { min: 16, max: 64, step: 1, value: 32, fmt: (v) => `${v} bit`, on: (v) => { st.bits = v; upd(); } }).node,
+    slider('RAM installed', { min: 1, max: 256, step: 1, value: 16, fmt: (v) => `${v} GiB`, on: (v) => { st.installed = v; upd(); } }).node
+  );
+  upd();
+});

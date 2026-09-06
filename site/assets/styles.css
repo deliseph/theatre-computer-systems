@@ -630,7 +630,7 @@ body.teach-mode main { padding: 0; }
   body.print-notes .panel[data-panel="content"],
   body.print-notes .panel[data-panel="numbers"] { display: block !important; }
   body.print-notes .panel:not([data-panel="content"]):not([data-panel="numbers"]) { display: none !important; }
-  .print-head { display: block !important; font-size: 9.5pt; color: #444; margin: 0 0 14pt; }
+  .print-head { display: block !important; font-size: 9.5pt; line-height: 1.5; color: #444; margin: 0 0 14pt; }
   .when { color: #000; }
   .when-h { border: 1px solid #999; background: none; color: #000; }
   .anim-fig { border: 1px solid #bbb; background: none; break-inside: avoid; }

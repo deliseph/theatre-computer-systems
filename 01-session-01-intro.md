@@ -346,7 +346,7 @@ The shape of the module, quickly:
 - The assessment map and the four criteria rubric. Spend the most time on criterion 3,
   "can someone else run it", because it is the one most people underestimate.
 - The glossary is a working tool. Bring it every session. Add to it.
-- `numbers-to-know.md` is a memorisation task. There is a five minute verbal quiz at the start
+- [The Numbers card](/numbers) is a memorisation task. There is a five minute verbal quiz at the start
   of every session. It carries no marks and it is not optional.
 - Software install list, due before Class 2.
 
@@ -360,7 +360,7 @@ The shape of the module, quickly:
   not stand in a doorway, keep off headset channels, and if someone says move, move first and
   ask after.
 - Teams of three, allocated now, not on the day.
-- The observation sheet for the visit is in `02-session-02-production-visit.md`, and it is worth reading through
+- The observation sheet comes with the production visit brief, and it is worth reading through
   for two minutes so they know what they are hunting for.
 
 ---
@@ -424,6 +424,6 @@ title and the channel rather than assuming the resource has gone.
 ## Homework before session 2
 
 1. Read the study guide section for session 1 and self test.
-2. Learn the first block of `numbers-to-know.md` (the data rate numbers).
+2. Learn the first block of [the Numbers card](/numbers) (the data rate numbers).
 3. Read the observation sheet. Write down three things you expect to see at the venue and one
    question you want answered. Bring both to the visit.

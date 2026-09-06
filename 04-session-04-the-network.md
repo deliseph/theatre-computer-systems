@@ -1149,4 +1149,4 @@ night for a week beats three hours the day before.** Target: ten correct in a ro
 3. Produce a full VLAN and IP scheme for this rig: two lighting consoles, four DMX nodes, one audio
    console, two stage boxes, one media server, one management laptop. Give VLAN IDs, subnets, port
    assignments and a naming convention, and state the convention at the top.
-4. Learn the addressing block of `numbers-to-know.md`. The 169.254 one will be in the quiz.
+4. Learn the addressing block of [the Numbers card](/numbers). The 169.254 one will be in the quiz.

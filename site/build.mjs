@@ -537,7 +537,8 @@ for (const c of classData) {
       <span class="when-h">${hoursOf(c.slot)} hours</span></p>
     <p class="strap">${esc(c.strap)}</p>
     <p class="print-head" aria-hidden="true">Computer Systems &amp; Networking for Theatre and
-      Entertainment Arts · Class ${c.n} of 5 · Week ${c.slot.week}, ${longDate(c.slot.date)}</p>
+      Entertainment Arts · Class ${c.n} of 5 · Week ${c.slot.week}, ${longDate(c.slot.date)}<br>
+      Prepared by ${esc(AUTHOR.name)}</p>
     <div class="head-actions">
       <a class="btn btn-primary" href="#tab=prepare">Prepare for this class</a>
       <a class="btn" href="#tab=content">Start learning</a>

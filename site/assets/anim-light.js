@@ -783,8 +783,10 @@ register('dmx-16bit', (host) => {
       y += 78;
       label(g, `${st.coarse} × 256  +  ${st.fine}  =  ${v16().toLocaleString()}   of 65,535`,
         ox, y, { color: p.ink, size: narrow ? 12 : 13.5, weight: 650, max: W, ...mono });
-      label(g, `${deg16().toFixed(3)}${P().unit} of ${P().range}${P().unit}. With fine at zero the fixture would sit at ${deg8().toFixed(3)}${P().unit}.`,
-        ox, y + 20, { color: p.muted, size: 11, max: W });
+      labelWrap(g, narrow
+        ? `${deg16().toFixed(3)}${P().unit} of ${P().range}${P().unit}. Fine at zero would be ${deg8().toFixed(3)}${P().unit}.`
+        : `${deg16().toFixed(3)}${P().unit} of ${P().range}${P().unit}. With fine at zero the fixture would sit at ${deg8().toFixed(3)}${P().unit}.`,
+        ox, y + 20, { color: p.muted, size: 11, max: W, maxLines: 2 });
 
       // --- the whole sweep, for context --------------------------------------
       y += 56;
