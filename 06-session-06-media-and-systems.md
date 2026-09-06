@@ -4,7 +4,7 @@
 *How does the sound and the picture itself travel over the network, and how do we build a system
 that survives contact with a real show?*
 
-The heaviest session technically, and the one that closes the argument. Block D is the dress
+The heaviest session technically, and the one that closes the argument. Block E is the dress
 rehearsal for the practical exam, so protect its full run.
 
 ---
@@ -29,7 +29,7 @@ preparation is mostly revision rather than new material.
    preparation in this whole module, make it this one.
 2. **Work out the data rate of the largest screen you have ever seen on a show.** Guess its
    resolution, assume 60 fps and 10 bit 4:2:2, and do the arithmetic. Bring the number.
-3. **Re-read your Class 3 fault log.** Block C asks you to audit a system for single points of
+3. **Re-read your Class 3 fault log.** Block D asks you to audit a system for single points of
    failure, and your own diagnostic notes are the best starting material you have.
 
 ### Bring
@@ -66,14 +66,15 @@ By the end of this session a student can:
 | — | Numbers quiz |
 | A | Audio over IP, and the tyranny of clock |
 | — | Break |
-| B | Video over IP and the pixel pipeline |
+| B | Video over IP, and getting it to arrive together |
+| C | The wall, and the pipeline behind it |
 | — | Break |
-| C | Designing for failure, and the paperwork that makes it real |
+| D | Designing for failure, and the paperwork that makes it real |
 | — | Break |
-| D | Studio: design a system, present it |
+| E | Studio: design a system, present it |
 | | Wrap, and the exam brief |
 
-*If the class is split across two shorter meetings, split after Block B. Block D must run whole.*
+*If the class is split across two shorter meetings, split after Block C. Block E must run whole.*
 
 ---
 
@@ -218,7 +219,8 @@ It is a bridge, not a merger. Plan interop links deliberately and test them earl
 
 ---
 
-## Block B: Video over IP and the pixel pipeline
+
+## Block B: Video over IP, and getting it to arrive together
 
 ### The baseline: SDI
 
@@ -234,6 +236,8 @@ Before the network, one signal, one coaxial cable, no configuration.
 Note that these numbers match the raw video maths from Class 2 almost exactly, because SDI
 carries the picture uncompressed. That correspondence is worth pointing out. It makes the numbers
 feel real rather than arbitrary.
+
+---
 
 ### The three options for video on a network
 
@@ -265,6 +269,8 @@ latency instead of a whole one. That is the option for a live path that cannot a
 and cannot afford 2110's bandwidth.
 
 *Side by side, with the latency and bandwidth of each, on [How we got here](/lineage).*
+
+---
 
 ### Getting the picture and the sound to arrive together
 
@@ -323,6 +329,8 @@ yours. Measure the real chain: put a clap or a clapperboard in front of the
 camera, record the wall and the PA together on a phone at high frame rate, and
 count. Twenty minutes, once, and the number goes in the paperwork.
 
+---
+
 ### Delay towers, and the effect that makes them disappear
 
 The same arithmetic, one department along, and it is the clearest example in
@@ -354,6 +362,8 @@ first.
 **And it is the same idea as the screen.** A delay tower is an alignment plane
 for sound, chosen deliberately, with a known tolerance either side. The video
 question is that question with a longer wavelength.
+
+---
 
 ### Extension: Inside ST 2110, and the one idea worth stealing from it
 
@@ -388,6 +398,8 @@ can is that it never had to detect the failure or switch anything.
 That is worth carrying into every system you design, at any budget: **the fastest failover is the
 one that already happened.**
 
+---
+
 ### Extension: Visually lossless, and what that phrase is doing
 
 Between "uncompressed" and "H.264" sits a category the industry calls **visually lossless**, or
@@ -400,6 +412,9 @@ on normal picture content at normal viewing distance, which means it can still b
 coloured text, hard saturated edges, noise. The phrase is an engineering claim about typical
 material, not a guarantee, and knowing that is the difference between using it well and being
 surprised by it once.
+
+
+## Block C: The wall, and the pipeline behind it
 
 ### Gamut: the triangle inside the horseshoe
 
@@ -421,6 +436,8 @@ it. Somebody should be making that choice deliberately.
 
 This is also the honest reason a lighting designer's deep congo blue never photographs. The camera
 is not failing. It is telling you what fits.
+
+---
 
 ### The LED wall pipeline, end to end
 
@@ -455,6 +472,8 @@ camera at the actual shutter**.
 black, a wall runs out of PWM steps in the same way an 8 bit dimmer runs out at the bottom of a
 fade, so dark content posterises into blocks. It is the identical failure as the fade to black in
 Class 4, one department along, and you now know both the cause and the word for it.
+
+---
 
 ### The pixel pipeline
 
@@ -538,6 +557,9 @@ Three things follow, and they are the whole of latency management.
 faster, it is to **delay the audio to match**, deliberately, with a measured number rather than by
 ear. Measuring it is a commissioning task, and it belongs in the paperwork.
 
+
+## Block D: Designing for failure, and the paperwork that makes it real
+
 ### Designing the network the media has to cross
 
 Everything in Class 3 was about making a network work. This is about making one that can carry a
@@ -578,26 +600,7 @@ lighting node is using and takes the lighting down. The failure appears in a dep
 nothing to do with the change that caused it, which is why this is the fault that takes longest to
 find and why Class 3 spent so long on it.
 
-### What you leave behind
-
-The last thing a system does is get handed over, and this part is graded in the exam because it is
-the part that gets skipped.
-
-**A system nobody can operate without you is not finished.** Neither is one nobody can fix at
-19:45 when you are on a plane. The test is simple and unforgiving: could a competent person who
-has never seen this rig restore it from your paperwork?
-
-Three things make that true, and they take an afternoon:
-
-- **Labels that match the drawing.** Every one, both ends, in the same scheme the documentation
-  uses. A label that says something different from the paperwork is worse than no label.
-- **Addresses written down somewhere other than in the devices.** The IP schedule, the DMX patch,
-  the universe map, the PTP grandmaster. When a node is replaced at short notice, this is the
-  document that decides whether it takes four minutes or forty.
-- **A one page "if it breaks" sheet.** Not the manual. The three things that go wrong most often on
-  this specific rig, and what to do about each, in the order to try them.
-
-## Block C: Designing for failure, and the paperwork
+---
 
 ### The single point of failure audit
 
@@ -620,6 +623,7 @@ about what would be worst.
 
 <!--anim:spof-map-->
 
+---
 
 ### Redundancy patterns
 
@@ -641,6 +645,8 @@ Also worth a sentence: redundancy adds complexity, and complexity adds failure m
 implemented redundant system fails more often than a simple one. Redundancy is a design decision
 with a cost, not a virtue.
 
+---
+
 ### Power and network are the same problem
 
 A switch on unprotected power is a network failure waiting to happen. Ask: where does the switch
@@ -649,6 +655,8 @@ has anyone tested how long it actually lasts?
 
 Two minutes, and it reliably produces a moment of realisation in a class that has been thinking
 about protocols for four hours.
+
+---
 
 ### Security on show networks
 
@@ -672,6 +680,8 @@ Non negotiables, as habits rather than policies:
 - Change the default password on every managed switch and every node. Write it in the handover
   pack, not on a sticky note on the rack.
 - Know who has remote access and be able to revoke it.
+
+---
 
 ### Extension: Commissioning: proving it works before the client does
 
@@ -700,6 +710,8 @@ A minimum commissioning list for a small show system:
 counts, PTP offset, the media server's frame rate, the temperature. During a show, "is this
 number bad" is unanswerable unless somebody wrote down what the number was on a good day.
 
+---
+
 ### Extension: Monitoring during the show
 
 Two rules, and neither is technical.
@@ -710,6 +722,8 @@ screen that somebody actually looks at.
 
 **Alarms that nobody acts on are worse than no alarms**, because they train the room to ignore the
 screen. Fewer alerts, each with an owner and an action, beats a dashboard nobody reads.
+
+---
 
 ### The documentation set
 
@@ -735,7 +749,27 @@ Naming conventions, three rules, and they are the most portable thing in this se
 
 ---
 
-## Block D: Studio, design a system, present it
+### What you leave behind
+
+The last thing a system does is get handed over, and this part is graded in the exam because it is
+the part that gets skipped.
+
+**A system nobody can operate without you is not finished.** Neither is one nobody can fix at
+19:45 when you are on a plane. The test is simple and unforgiving: could a competent person who
+has never seen this rig restore it from your paperwork?
+
+Three things make that true, and they take an afternoon:
+
+- **Labels that match the drawing.** Every one, both ends, in the same scheme the documentation
+  uses. A label that says something different from the paperwork is worse than no label.
+- **Addresses written down somewhere other than in the devices.** The IP schedule, the DMX patch,
+  the universe map, the PTP grandmaster. When a node is replaced at short notice, this is the
+  document that decides whether it takes four minutes or forty.
+- **A one page "if it breaks" sheet.** Not the manual. The three things that go wrong most often on
+  this specific rig, and what to do about each, in the order to try them.
+
+
+## Block E: Studio, design a system, present it
 
 **Assessed, 15 percent.** This is the dress rehearsal for the practical exam. Say that.
 

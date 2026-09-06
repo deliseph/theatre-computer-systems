@@ -78,10 +78,12 @@ By the end of this session a student can:
 | B | Layers 2, 3 and 4, and the three boxes |
 | — | Break |
 | C | Addressing and subnet arithmetic |
+| D | Addresses in the world, not on the whiteboard |
 | — | Break |
-| D | Switching, VLANs and segmentation |
+| E | Switching, VLANs and segmentation |
+| F | Getting on and off the network: VPNs and wireless |
 | — | Break |
-| E | Lab, build it, subnet it, break it, fix it |
+| G | Lab, build it, subnet it, break it, fix it |
 | — | Wrap and homework |
 
 *If the class is split across two shorter meetings, split after Block C.*
@@ -603,7 +605,7 @@ almost any department needs.
 10.101.90.0/24    management    254 usable    10.101.90.1   to 10.101.90.254
 ```
 
-Note the third octet matches the VLAN ID we will assign in Block C. That is not a requirement,
+Note the third octet matches the VLAN ID we will assign in Block E. That is not a requirement,
 it is a convention, and it means anyone reading `10.101.20.14` knows immediately that it is audio
 on VLAN 20. **Conventions that let someone read the answer off the address are worth more than
 clever ones.**
@@ -623,6 +625,16 @@ Four subnets needs 2 borrowed bits, because 2^2 = 4.
 ```
 
 **The rule:** to get N subnets, borrow enough bits that 2^bits is greater than or equal to N.
+
+---
+
+## Block D: Addresses in the world, not on the whiteboard
+
+Block C is the arithmetic, and the arithmetic is examinable. This block is the other half:
+which addresses are already spoken for, which ones you are allowed to use, where they come
+from when nobody types them in, and why the whole scheme is being replaced by one with four
+times as many bits in it.
+
 
 ### Extension: Within a range, reserve blocks by device type
 
@@ -731,7 +743,7 @@ What actually changes, as against what merely looks different:
 | Change | Why it was done |
 |---|---|
 | Every subnet is a **/64**, always | The bottom 64 bits name the interface, so a host can build its own address from a prefix a router advertises. That is **SLAAC**, and it is why IPv6 does not need a DHCP server to work |
-| **No broadcast at all** | Gone, entirely. Everything that was broadcast is multicast, and a device only receives groups it joined. The two-switch loop from Block D still floods, but the ordinary background chatter does not |
+| **No broadcast at all** | Gone, entirely. Everything that was broadcast is multicast, and a device only receives groups it joined. The two-switch loop from Block E still floods, but the ordinary background chatter does not |
 | **Link local is always present** | `fe80::/10` is on every interface whether anything is configured or not. Unlike `169.254` in IPv4, it is not a symptom of failure, it is how two devices on a cable find each other first |
 | **Unique local**, `fd00::/8` | The private address of IPv6, generated at random rather than assigned, so two rigs that have never met can be joined with a fair chance of not colliding |
 | **No NAT by design** | There is no shortage to work around, so a device can have a real address and still sit behind a firewall. The firewall was always the part doing the protecting; NAT only ever did it by accident |
@@ -750,7 +762,7 @@ it before you quote it, because it moves.
 
 1. **Your rig floor will be IPv4 for a long time.** Art-Net is IPv4 only by specification. Dante is
    IPv4 only. sACN defines both. None of that is changing on the timescale of your first job, so
-   every calculation in Block C still applies.
+   every calculation in this block still applies.
 2. **Where it bites is the building, not the rig.** Remote support, a hotel network, a cloud
    service, a venue's own IT. That is where you meet an address with colons in it.
 3. **Learn one failure shape.** A machine has both, prefers IPv6, and the service it wants is IPv4
@@ -786,7 +798,7 @@ not cross one without a relay configured to carry it; and two DHCP servers on on
 is a race the device wins differently every time it boots, which is the intermittent fault that
 eats an afternoon.
 
-## Block D: Switching, VLANs and segmentation
+## Block E: Switching, VLANs and segmentation
 
 ### Managed versus unmanaged
 
@@ -991,6 +1003,14 @@ Four options. Argue for one before you read on.
 combined with Option 3, because you need the flexibility and you have the staff. Option 4 where a
 failure is a safety issue.
 
+---
+
+## Block F: Getting on and off the network: VPNs and wireless
+
+Everything in Block E assumed a device plugged into a switch you control. These two are the
+cases where that is not true, and both of them turn up on show networks whether you planned
+for them or not.
+
 ### VPNs, and why the node stopped answering
 
 A VPN does not encrypt your show network and it does not sit between your laptop and the rig. It
@@ -1075,7 +1095,7 @@ exactly the same reason: it is emptier, for now.
 
 ---
 
-## Block E: Lab, build it, subnet it, break it, fix it
+## Block G: Lab, build it, subnet it, break it, fix it
 
 Prepare the faults in advance. This lab lives or dies on preparation.
 

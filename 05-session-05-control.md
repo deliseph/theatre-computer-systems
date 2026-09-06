@@ -29,8 +29,8 @@ an IP address without looking it up.
 2. **Install a cue application and a software lighting console.** Both free versions are fine. The
    lab builds a chain between them and installation time is lab time lost.
 3. **Count the channels** on any fixture you have worked with. Find its manual, find the channel
-   count, and work out how many of them fit in one universe. Ten minutes, and it makes Block B
-   concrete rather than theoretical.
+   count, and work out how many of them fit in one universe. Ten minutes, and it makes Blocks B
+   and C concrete rather than theoretical.
 
 ### Bring
 
@@ -70,15 +70,16 @@ By the end of this session a student can:
 |-------|-------|
 | — | Numbers quiz |
 | A | The anatomy of a control message |
+| B | The lighting family: on the wire and in the fixture |
 | — | Break |
-| B | The lighting family: DMX, Art-Net, sACN |
+| C | The lighting family: from the desk to the rig, and onto the network |
 | — | Break |
-| C | The show control family: OSC, MIDI, serial, timecode |
+| D | The show control family: OSC, MIDI, serial, timecode |
 | — | Break |
-| D | Lab: build a cross department trigger chain |
+| E | Lab: build a cross department trigger chain |
 | — | Wrap and homework |
 
-*If the class is split across two shorter meetings, split after Block B.*
+*If the class is split across two shorter meetings, split after Block C.*
 
 ---
 
@@ -141,7 +142,7 @@ addressing.
 
 ---
 
-## Block B: The lighting family
+## Block B: The lighting family, on the wire and in the fixture
 
 ### DMX512, physically
 
@@ -375,6 +376,10 @@ controller can discover fixtures, read and set their addresses, and read status 
 and temperature. It is bidirectional DMX. It requires RDM capable splitters, which is why it
 often does not work in a venue that has RDM capable fixtures.
 
+---
+
+## Block C: The lighting family, from the desk to the rig
+
 ### Extension: Effects, which are not programmed one cue at a time
 
 A rig that appears to be doing something complicated is usually doing something very simple to
@@ -501,7 +506,7 @@ count, node port count and processing. Bandwidth is not the enemy here. Configur
 
 ---
 
-## Block C: The show control family
+## Block D: The show control family
 
 ### OSC
 
@@ -720,7 +725,7 @@ module in one example.
 
 ---
 
-## Block D: Lab, build a cross department trigger chain
+## Block E: Lab, build a cross department trigger chain
 
 **Assessed, 20 percent.** The largest formative piece before the exam.
 

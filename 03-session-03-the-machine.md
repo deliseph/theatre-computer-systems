@@ -33,7 +33,7 @@ assumed by everything below.
 2. **Find your own machine's numbers** before you arrive: how much RAM, what storage, what
    graphics. Five minutes in system information. You will measure the rest in the lab.
 3. **Look at one media file you already own** and try to find out what codec is inside it, not
-   just its file extension. You will probably fail, and that failure is the point of Block D.
+   just its file extension. You will probably fail, and that failure is the point of Block E.
    If you want to arrive ahead: open the same file in a hex viewer and write down the first eight
    bytes. We will read them together.
 
@@ -84,9 +84,11 @@ By the end of this session a student can:
 | B | The operating system as a traffic cop |
 | — | Break |
 | C | How sound, light and pictures become numbers |
-| D | What a file actually is, and how a codec works |
+| D | The picture you were handed |
 | — | Break |
-| E | Lab: measure your machine, then spec a show machine |
+| E | What a file actually is, and how a codec works |
+| — | Break |
+| F | Lab: measure your machine, then spec a show machine |
 | — | Wrap and homework |
 
 *If the class is split across two shorter meetings, split after Block B.*
@@ -674,6 +676,17 @@ one frame  =  width × height × channels × bit depth ÷ 8   bytes
 data rate  =  that × frame rate
 ```
 
+---
+
+## Block D: The picture you were handed
+
+The block above was one idea told three times: measure often enough, and finely enough, and
+what comes out the other end is a number. This block is about the picture that arrives in your
+hands afterwards, and the four things about it that decide whether it survives contact with a
+show: how it was stored, whether it can be made bigger, whether it has a transparent part, and
+what its colours actually mean.
+
+
 ### Raster and vector, and why one of them survives the wall
 
 Everything above describes a **raster**: measurements on a grid. There is a second way to store a
@@ -809,6 +822,12 @@ are, gamma asks where you put them. Two consequences follow.
 Two questions this raises are answered where they are actually decided: **which colours a fixture
 can render** is in Class 4 with the rest of lighting, and **which colours a display can reproduce**
 is in Class 5 with the pixel pipeline.
+## Block E: What a file actually is, and how a codec works
+
+Block C turned the world into numbers and Block D looked at the picture that
+came back. This block is about what happens to those numbers once they have to
+be stored, and it answers the question every MDT student eventually asks: *what
+is actually inside the file?*
 
 ### The formats you will actually meet, by domain
 
@@ -851,11 +870,6 @@ why a media server can play many layers at once. Worth one sentence, not more, a
 
 ---
 
-## Block D: What a file actually is, and how a codec works
-
-Block C turned the world into numbers. This block is about what happens to those numbers once
-they have to be stored, and it answers the question every MDT student eventually asks: *what is
-actually inside the file?*
 
 ### A file is a sequence of bytes. That is all it is.
 
@@ -1037,7 +1051,7 @@ the same average size; CBR is predictable, which matters when you are budgeting 
 
 ### And this is why we transcode for playback
 
-Now the rule from Block C has a mechanism behind it.
+Now the intra frame rule at the top of this block has a mechanism behind it.
 
 Inter frame compression is superb for delivery and hostile to a show, because reaching an
 arbitrary frame means finding the last I frame and decoding forward through every P and B frame
@@ -1049,7 +1063,7 @@ every frame is complete, files are much larger, and any frame is instantly avail
 
 ---
 
-## Block E: Lab
+## Block F: Lab
 
 Two parts. Part 1 is individual and diagnostic. Part 2 is the assessed exercise.
 
