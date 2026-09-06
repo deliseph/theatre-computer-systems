@@ -378,6 +378,15 @@ from Class 3 about wireless applies: a shared, contended medium with no delivery
 
 <!--anim:device-roles-->
 
+**Four boxes, and the hub that explains the other three.** A hub reads nothing and repeats every
+signal to every port; a switch reads the destination MAC and sends it only there; a router reads
+the destination IP and moves the packet between networks; an access point is a switch on the cable
+side and a hub on the radio side, which is exactly why wireless feels the way it does. Hubs
+disappeared around 2005 and are worth knowing anyway, because the behaviour did not disappear with
+them.
+
+<!--anim:box-roles-->
+
 ### Extension: What is actually inside the box you call a router
 
 This one clarification saves more confusion than anything else in the block.
@@ -577,6 +586,19 @@ Any scheme works. Having one, writing it down, and labelling the devices to matc
 ### Extension: Public and private addresses, and the other thing called "public network"
 
 <!--anim:address-space-->
+
+**Where a packet actually goes when it leaves the building.** Your laptop has a private address
+that means nothing outside your network, so the router swaps it for the one public address the ISP
+gave you and writes down which port it used for you. From there nobody is steering: each router
+looks at the destination, picks the neighbour it thinks is closer, takes one off the time to live
+and forgets the packet exists. The reply comes back addressed to the building, and the note the
+router wrote on the way out is the only reason it reaches the right machine.
+
+<!--anim:home-to-world-->
+
+That note is also the answer to two questions students always ask: why an incoming connection
+needs a rule set up in advance, and why restarting the router drops every connection through it at
+once.
 
 Two different things share the word, and mixing them up wastes an evening.
 

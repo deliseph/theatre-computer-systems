@@ -144,12 +144,39 @@ the same argument as an oversubscribed switch uplink in Class 3, inside the box.
 - Teaching point: audio work is often more sensitive to single core speed than to core count,
   because a plugin chain on one channel is a serial dependency. Video is the opposite.
 
+**What "executes an instruction" actually means.** Four steps, repeated a few billion times a
+second: fetch the next instruction from memory, work out what it is, do it, put the answer
+somewhere. Almost all of the clever engineering in a modern processor exists to avoid waiting
+during step one, because memory is much further away than the core is fast.
+
+<!--anim:cpu-ram-cycle-->
+
+**And "does it" means addition.** The arithmetic unit adds two binary numbers a column at a time,
+right to left, carrying, exactly as you were taught at seven but in a base with two digits.
+Subtraction, multiplication and comparison are all built out of that one block. A processor has no
+concept of a number; it has switches wired so that one pattern of ones and zeros produces another.
+
+<!--anim:alu-add-->
+
 ### RAM
 
 - Capacity and speed. Media servers hold large amounts of decoded frames and pre roll in memory.
 - **What it limits:** how much can be held ready rather than fetched.
 - **On a show:** a video cue that stutters on its first play and is fine on the second (it is now
   cached), which is one of the most confusing symptoms a year one will meet.
+
+**One bit of RAM is one capacitor and one transistor.** Charged is a one, empty is a zero, and the
+charge leaks, so the memory controller reads and rewrites every row inside 64 milliseconds of the
+last time, forever, whenever the machine is on. Cache is a different circuit entirely: six
+transistors that hold each other up, no refresh, about a nanosecond to answer, and roughly six
+times the area per bit. That is the whole reason you have 48 KB of L1 and 32 GB of RAM rather than
+the other way round.
+
+<!--anim:ram-cell-->
+
+It is also what volatile means, literally rather than as a figure of speech: cut the power and the
+charge is gone in a fraction of a second. Every unsaved cue and every frame in the buffer lives
+exactly like that.
 
 ### Storage
 
@@ -175,6 +202,14 @@ This is where the most useful teaching is, because it is where the numbers bite.
 ### GPU
 
 <!--anim:gpu-heads-->
+
+**Why a graphics card is not simply a faster processor.** A CPU has a handful of large cores built
+to finish one thing quickly; a GPU has thousands of narrow lanes all running the same instruction
+on different data; an NPU is a grid of multipliers and almost nothing else. Give each of them the
+same job and the difference is obvious, which is why a cue stack gains nothing from a graphics
+card and a pixel pipeline gains everything.
+
+<!--anim:cpu-gpu-npu-->
 
 - Three separate jobs, and they are easy to run together in your head: **render** (making pixels), **decode**
   (turning a compressed file into frames), **output** (getting frames to physical connectors).
@@ -646,6 +681,14 @@ This is exactly why "it is a `.mov`" tells you nothing useful. The container say
 are packed. What is inside is a separate question, and the bytes are where the answer lives.
 
 <!--anim:hex-file-->
+
+**And a character is not a byte.** A file holds bytes; a character is an agreement about which
+bytes mean which shape. ASCII settled 128 of them in 1963 and stopped. UTF-8 keeps those exact 128
+and encodes everything else in two, three or four bytes, which means 光 costs three bytes and an
+emoji costs four. This is not trivia on a bilingual course: a 繁中 filename is about three times
+the bytes of the same length in English, and a field that allows 32 bytes holds only ten of them.
+
+<!--anim:char-encode-->
 
 **On a show this matters twice.** A file that will not play is often a file whose extension was
 changed by hand rather than transcoded. And a media server that rejects a file usually rejects
