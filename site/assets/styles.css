@@ -671,8 +671,10 @@ body.teach-mode main { padding: 0; }
 }
 .anim-note-key:hover { border-style: solid; border-color: var(--cyan); color: var(--ink-2); }
 .anim-note.has-lead .anim-note-key { margin-left: 7px; }
-body.teach-mode .anim-note.is-held .anim-note-held { display: none; }
-body.teach-mode .anim-note.is-held .anim-note-key { display: inline-block; }
+body.teach-mode .anim-note.is-held .anim-note-held,
+body.guess-first .anim-note.is-held .anim-note-held { display: none; }
+body.teach-mode .anim-note.is-held .anim-note-key,
+body.guess-first .anim-note.is-held .anim-note-key { display: inline-block; }
 body.teach-mode.answers-shown .anim-note.is-held .anim-note-held { display: inline; }
 body.teach-mode.answers-shown .anim-note.is-held .anim-note-key { display: none; }
 @media print {
@@ -1093,3 +1095,16 @@ a.chip { text-decoration: none; display: inline-block; }
 }
 .flash-said-t { min-width: 0; overflow-wrap: anywhere; font: 400 15px/1.45 var(--sans); color: var(--ink-2); }
 .flash-a-k { display: block; text-align: left; margin: 14px 0 -8px; }
+
+
+/* --- Guess first --------------------------------------------------------- */
+/* A reading preference, not a mode: off by default, and the button says which
+   way it is set rather than what it would do. */
+.guess-btn { gap: 7px; padding: 0 11px; width: auto; font: 600 12.5px/1 var(--sans); white-space: nowrap; }
+.guess-btn[aria-pressed="true"] { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, transparent); }
+.guess-btn .guess-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--line); border: 1px solid var(--muted);
+}
+.guess-btn[aria-pressed="true"] .guess-dot { background: var(--amber); border-color: var(--amber); }
+@media (max-width: 720px) { .guess-btn .guess-t { display: none; } .guess-btn { padding: 0 9px; } }

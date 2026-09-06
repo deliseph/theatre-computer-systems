@@ -19,6 +19,26 @@ export const register = (id, fn) => REG.set(id, fn);
 // before any module evaluates, so this is safe to read at module scope.
 export const TEACH = document.body.classList.contains('teach-mode');
 
+// Guess first. A figure that prints its own conclusion turns a prediction into
+// a reading exercise, which is why the projector holds it. A student reading
+// alone gets the same option, and only if they ask for it: nothing on a class
+// page is ever withheld from somebody who did not choose that.
+export const GUESS_KEY = 'tcs-guess-first';
+let guessing = false;
+try { guessing = localStorage.getItem(GUESS_KEY) === 'on'; } catch { /* private window */ }
+if (guessing && !TEACH) document.body.classList.add('guess-first');
+export const folding = () => TEACH || guessing;
+
+// Every mounted note registers how to redraw itself, so the toggle takes
+// effect on the figures already on the page instead of needing a reload.
+const NOTE_SINKS = new Set();
+export function setGuessFirst(on) {
+  guessing = !!on;
+  try { localStorage.setItem(GUESS_KEY, guessing ? 'on' : 'off'); } catch { /* private window */ }
+  document.body.classList.toggle('guess-first', guessing && !TEACH);
+  for (const redraw of NOTE_SINKS) redraw();
+}
+
 // --- Small DOM helpers ------------------------------------------------------
 
 export const h = (html) => {
@@ -174,17 +194,25 @@ export function figure(host, { title, sub, note }) {
   // phone never has anything withheld.
   const noteEl = note ? h(`<p class="anim-note">${note}</p>`) : null;
   let leadEl = null, heldEl = null;
-  if (noteEl && TEACH) {
+  const buildFold = () => {
+    if (!noteEl) return;
     noteEl.innerHTML = '';
+    noteEl.classList.remove('has-lead', 'is-held');
+    noteEl.removeAttribute('data-fold');
+    if (!folding()) { leadEl = heldEl = null; return; }
     leadEl = el('span', 'anim-note-lead');
     heldEl = el('span', 'anim-note-held');
-    const key = h(`<button type="button" class="anim-note-key" aria-expanded="false" title="The figure&#39;s conclusion, held until the room has guessed. Press n, or click, to show it.">Say what you expect. Press <kbd>n</kbd> for the answer.</button>`);
+    const hint = TEACH
+      ? 'Say what you expect. Press <kbd>n</kbd> for the answer.'
+      : 'Say what you expect, then show the answer.';
+    const key = h(`<button type="button" class="anim-note-key" aria-expanded="false" title="The figure&#39;s conclusion, held until you have guessed. Click to show it.">${hint}</button>`);
     key.addEventListener('click', () => {
       noteEl.classList.remove('is-held');
       key.setAttribute('aria-expanded', 'true');
     });
     noteEl.append(leadEl, key, heldEl);
-  }
+  };
+  buildFold();
   if (noteEl) fig.append(noteEl);
   host.append(fig);
 
@@ -241,9 +269,11 @@ export function figure(host, { title, sub, note }) {
     return { check };
   }
 
+  let lastNote = note;
   const setNote = (t) => {
     if (!noteEl) return;
-    if (!TEACH) { noteEl.innerHTML = t; return; }
+    lastNote = t;
+    if (!folding()) { noteEl.innerHTML = t; return; }
     let s;
     try { s = splitNote(t); } catch { s = { lead: '', held: String(t), foldable: true }; }
     leadEl.innerHTML = s.lead;
@@ -258,6 +288,11 @@ export function figure(host, { title, sub, note }) {
       noteEl.classList.add('is-held');
     }
   };
+
+  // Toggling the preference rebuilds this note in place, from the text it is
+  // currently showing, so a figure the student has already driven keeps its
+  // state instead of snapping back to its first frame.
+  if (noteEl) NOTE_SINKS.add(() => { buildFold(); setNote(lastNote); });
 
   return { fig, controls, stage, repaint, challenge, setNote };
 }
