@@ -31,7 +31,10 @@ const write = (v) => {
 };
 
 /** A stable id for a card, so a deck rebuilt at build time keeps its history. */
-export const cardId = (c) => `${c.tag || 'x'}|${(c.q || c.text || '').slice(0, 80)}`;
+// A card is identified by its tag and its own front. Myth cards carry the
+// claim rather than a question, and without it all thirty collapsed onto five
+// ids, one per class.
+export const cardId = (c) => `${c.tag || 'x'}|${(c.q || c.text || c.claim || '').slice(0, 80)}`;
 
 /** Cards this student has never seen, plus cards whose due date has passed. */
 export function due(cards, now = Date.now()) {

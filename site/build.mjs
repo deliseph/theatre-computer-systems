@@ -35,31 +35,31 @@ const CLASSES = [
     n: 1, slug: 'why-this-class-exists', file: '01-session-01-intro.md',
     title: 'Why This Class Exists', studyKey: 'Session 1', numbersKey: 'Block 1',
     strap: 'The argument, the Four Flows, and the two calculations that run through everything.',
-    tools: ['units', 'datarate', 'latency', 'delaytime'], practice: ['flows', 'selftest'],
+    tools: ['units', 'datarate', 'latency', 'delaytime'], practice: ['myths', 'flows', 'selftest'],
   },
   {
     n: 2, slug: 'the-machine', file: '03-session-03-the-machine.md',
     title: 'The Machine', studyKey: 'Session 3', numbersKey: 'Block 2',
     strap: 'What a show computer is, why it is configured differently, and how sound and light become numbers.',
-    tools: ['units', 'datarate', 'storage', 'buffer', 'ledwall'], practice: ['drill', 'selftest'],
+    tools: ['units', 'datarate', 'storage', 'buffer', 'ledwall'], practice: ['myths', 'drill', 'selftest'],
   },
   {
     n: 3, slug: 'the-network', file: '04-session-04-the-network.md',
     title: 'The Network', studyKey: 'Session 4', numbersKey: 'Block 3',
     strap: 'The OSI model as a diagnostic ladder, subnet arithmetic, and separating departments with VLANs.',
-    tools: ['binhex', 'subnet', 'split', 'vlan', 'poe'], practice: ['subnetdrill', 'faults', 'selftest'],
+    tools: ['binhex', 'subnet', 'split', 'vlan', 'poe'], practice: ['myths', 'subnetdrill', 'faults', 'selftest'],
   },
   {
     n: 4, slug: 'control', file: '05-session-05-control.md',
     title: 'Control', studyKey: 'Session 5', numbersKey: 'Block 4',
     strap: 'State against event, DMX512, Art-Net against sACN, universe maths, OSC, MIDI and timecode.',
-    tools: ['universe', 'dmx', 'dip', 'timecode', 'beam', 'power'], practice: ['drill', 'selftest'],
+    tools: ['universe', 'dmx', 'dip', 'timecode', 'beam', 'power'], practice: ['myths', 'drill', 'selftest'],
   },
   {
     n: 5, slug: 'media-over-ip', file: '06-session-06-media-and-systems.md',
     title: 'Media Over IP and Systems', studyKey: 'Session 6', numbersKey: 'Block 5',
     strap: 'Audio and video over the network, the tyranny of clock, designing for failure, and the paperwork.',
-    tools: ['datarate', 'latency', 'storage', 'ledwall', 'timecode'], practice: ['drill', 'selftest'],
+    tools: ['datarate', 'latency', 'storage', 'ledwall', 'timecode'], practice: ['myths', 'drill', 'selftest'],
   },
 ];
 
@@ -107,6 +107,13 @@ function removeSection(md, key) {
 // of sync with the taught content.
 // ---------------------------------------------------------------------------
 
+// `code`, **bold** and *italic* inside a table cell or a bullet have to be
+// rendered or the card shows its own backticks and asterisks.
+const inlineMd = (t) => esc(t)
+  .replace(/`([^`]+)`/g, '<code>$1</code>')
+  .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+  .replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>');
+
 function twoColumnCards(md, tag) {
   const cards = [];
   const rows = md.match(/^\|[^\n]*\|$/gm) || [];
@@ -118,14 +125,10 @@ function twoColumnCards(md, tag) {
     if (!cells[0] || !cells[1]) continue;
     // The cells are markdown, so `code`, **bold** and *italic* have to be
     // rendered or the card shows its own backticks and asterisks.
-    const md2html = (t) => esc(t)
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-      .replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>');
     // The key the taughtAt map is authored against: the tag plus the raw
     // question text, with markdown punctuation stripped.
     const key = `${tag}::${cells[0].replace(/[`*]/g, '').trim()}`;
-    cards.push({ q: md2html(cells[0]), a: md2html(cells[1]), tag, key });
+    cards.push({ q: inlineMd(cells[0]), a: inlineMd(cells[1]), tag, key });
   }
   return cards;
 }
@@ -296,6 +299,7 @@ const nextMd = renumber(read('where-next.md'));
 const glossaryMd = read('glossary.md');
 
 const drillCards = [];
+const myths = [];
 for (const c of CLASSES) {
   const block = sliceSection(numbersMd, c.numbersKey);
   drillCards.push(...twoColumnCards(block, `Class ${c.n}`));
@@ -331,7 +335,33 @@ function toolsHtml(ids) {
   );
 }
 
+// The "Common misconceptions" bullets are uniform: `- **"claim"** correction`,
+// wrapped across lines at 2-space indent. Parsing them is the whole content
+// pipeline for Spot the myth, so a reworded bullet must fail the build loudly
+// rather than silently vanish from the deck.
+function parseMyths(md, n, file) {
+  const sec = sliceSection(md, 'Common misconceptions');
+  if (!sec) return [];
+  const chunks = [];
+  for (const line of sec.split('\n')) {
+    if (/^-\s+/.test(line)) chunks.push(line.replace(/^-\s+/, ''));
+    else if (chunks.length && line.trim()) chunks[chunks.length - 1] += ` ${line.trim()}`;
+  }
+  const out = [];
+  for (const ch of chunks) {
+    const m = /^\*\*[\u201c"]([\s\S]+?)[\u201d"]\*\*\s+([\s\S]+)$/.exec(ch.trim());
+    if (!m) {
+      console.error(`  ! ${file}: misconception bullet is not in the form - **"claim"** correction: ${ch.slice(0, 60)}`);
+      process.exitCode = 1;
+      continue;
+    }
+    out.push({ claim: inlineMd(m[1]), correction: inlineMd(m[2]), tag: `Myth \u00b7 Class ${n}`, cls: n });
+  }
+  return out;
+}
+
 const PRACTICE_TITLES = {
+  myths: 'Spot the myth',
   ready: 'Readiness check',
   flows: 'Sort the Four Flows',
   drill: 'Numbers drill',
@@ -346,7 +376,7 @@ function practiceHtml(ids, n) {
     .map(
       (id) =>
         `<div class="practice" data-practice="${id}" data-class="${n}">
-          <h3 class="tool-h">${PRACTICE_TITLES[id]}</h3></div>`
+          <h3 class="tool-h" id="${id}">${PRACTICE_TITLES[id]}</h3></div>`
     )
     .join('') || '<p>Practice for this class lives in the study tab.</p>';
 }
@@ -359,6 +389,7 @@ let animExpected = 0, animRendered = 0;
 
 const classData = CLASSES.map((c) => {
   const raw = renumber(read(c.file));
+  myths.push(...parseMyths(raw, c.n, c.file));
   const wanted = (raw.match(/<!--\s*anim:[a-z0-9-]+\s*-->/g) || []).length;
   const alone = (raw.match(/^[ \t]*<!--\s*anim:[a-z0-9-]+\s*-->[ \t]*$/gm) || []).length;
   if (wanted !== alone) {
@@ -388,9 +419,17 @@ for (const c of classData) {
   // The order is the learning loop: prepare, learn, do it, test yourself, look
   // it up. Reference used to sit in the middle of that, which put a lookup
   // between the learning and the doing.
+  // A wrong belief printed next to its correction is read, agreed with and
+  // forgotten. The door to the version that asks you to commit first belongs
+  // on the heading itself, where somebody is already reading them.
+  const learnHtml = c.doc.html.replace(
+    /(<h2 id="common-misconceptions-in-this-session"[\s\S]*?<\/h2>)/,
+    `$1<p class="note">Reading a wrong belief with its correction attached does very little. <a href="#myths">Spot the myth</a>, on the Practice tab, puts each of these claims in front of you bare and asks you to commit before the correction appears.</p>`
+  );
+
   const tabs = [
     ['prepare', 'Prepare', c.prep.html],
-    ['content', 'Learn', c.doc.html],
+    ['content', 'Learn', learnHtml],
     ['tools', 'Tools', toolsHtml(c.tools)],
     ['practice', 'Practice', practiceHtml(c.practice, c.n)],
     ['study', 'Test yourself', c.study.html + selfTestHtml(c.n)],
@@ -431,6 +470,8 @@ for (const c of classData) {
   }));
 
   addSearch(`/class/${c.n}`, `Class ${c.n}: ${c.title}`, 'Overview', c.strap);
+  addSearch(`/class/${c.n}#myths`, `Class ${c.n}: ${c.title}`, 'Spot the myth',
+    myths.filter((m) => m.cls === c.n).map((m) => m.claim).join(' '));
   for (const b of c.doc.blocks) addSearch(`/class/${c.n}#${b.id}`, `Class ${c.n}: ${c.title}`, b.title, b.html);
 }
 
@@ -655,6 +696,7 @@ write('/practice', shell({
     </header>
     <div class="practice" data-practice="subnetdrill" data-class="3"><h3 class="tool-h" id="subnetdrill">Subnetting trainer</h3></div>
     <div class="practice" data-practice="faults" data-class="3"><h3 class="tool-h" id="faults">Fault diagnosis simulator</h3></div>
+    <div class="practice" data-practice="myths" data-class="0"><h3 class="tool-h" id="myths">Spot the myth</h3></div>
     <div class="practice" data-practice="flows" data-class="1"><h3 class="tool-h" id="flows">Sort the Four Flows</h3></div>
     <div class="practice" data-practice="drill" data-class="0"><h3 class="tool-h" id="drill">Numbers drill</h3></div>
     </article>`,
@@ -896,7 +938,7 @@ for (const f of fs.readdirSync(path.join(HERE, 'assets'))) {
 }
 
 fs.writeFileSync(path.join(OUT, 'assets', 'data.json'), JSON.stringify({
-  flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness,
+  flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness, myths,
 }));
 fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex));
 
@@ -909,6 +951,7 @@ const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossa
 console.log(`Built ${routes.length} routes`);
 console.log(`  search entries : ${searchIndex.length}`);
 console.log(`  drill cards    : ${drillCards.length}`);
+console.log(`  myth cards     : ${myths.length}`);
 console.log(`  taught-at      : ${taughtHit} of ${drillCards.length} drill cards`);
 console.log(`  glossary cards : ${glossCards.length}`);
 console.log(`  flow cards     : ${flowCards.length}`);

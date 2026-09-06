@@ -1051,3 +1051,15 @@ a.chip { text-decoration: none; display: inline-block; }
 .tabs, .table-wrap, pre { -webkit-overflow-scrolling: touch; }
 /* A canvas paints itself; it never needs to be part of a neighbour's repaint. */
 .anim-canvas { contain: paint; }
+
+
+/* --- Spot the myth ------------------------------------------------------- */
+/* The claim is the whole card: big enough that you read it as a statement
+   somebody made, not as a quiz item. */
+.myth-claim { font: 650 clamp(19px, 2.8vw, 26px)/1.35 var(--sans); margin: 0 0 10px; }
+.myth-ask { margin: 0; font-size: 14px; color: var(--muted); }
+.opt.chose { border-color: var(--amber); }
+.myth-verdict { margin: 0 0 8px; }
+.myth-grade { margin: 14px 0 8px; font-size: 14px; color: var(--muted); }
+.myth-back { margin: 0; padding-left: 18px; font-size: 15px; }
+.myth-back li { margin-bottom: 4px; }

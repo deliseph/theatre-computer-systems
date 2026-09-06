@@ -494,6 +494,144 @@ async function mountDrill(root, classNum) {
 }
 
 // ============================================================================
+// Spot the myth
+// ============================================================================
+//
+// The misconceptions section of each class prints a wrong belief with its
+// correction attached. Read that way it is agreed with and forgotten: you
+// cannot disagree with a sentence that has already told you the answer. Here
+// each claim arrives bare and you commit before the correction appears.
+//
+// Nothing here is scored. What you say first is not graded at all, because a
+// student who happens to guess right has learned nothing. The grading question
+// is the second one, and only you can answer it: could you have said why.
+
+async function mountMyths(root, classNum) {
+  const { myths } = await loadData();
+  const box = h('<div></div>');
+  let filter = classNum > 0 ? `Myth · Class ${classNum}` : 'all';
+  let mode = 'due';
+  let deck = [], i = 0, said = null, finished = false;
+  const missed = new Map();
+  const requeued = new Set();
+
+  const pool = () => myths.filter((c) => filter === 'all' || c.tag === filter);
+  const tags = [...new Set(myths.map((c) => c.tag))];
+
+  root.append(h(`<p class="tool-sub">${pool().length} sentences that get said about this subject, and every
+    one of them is wrong. You are asked to commit before the correction appears, because agreeing with a
+    bullet that has already told you the answer does almost nothing. What you are graded on is the second
+    question: whether you could have said why. Nothing here is scored and nothing leaves your browser.</p>`), box);
+
+  const build = () => {
+    const p = pool();
+    if (mode === 'all') deck = shuffle(p);
+    else {
+      const { fresh, ready } = due(p);
+      deck = [...ready.slice(0, 20), ...shuffle(fresh).slice(0, 8)];
+    }
+    i = 0; said = null; finished = false;
+    missed.clear(); requeued.clear();
+  };
+
+  const header = () => {
+    const c = counts(pool());
+    // The badge is the length build() will actually produce, so the chip can
+    // never say eight while the closing card says nothing is due.
+    const n = Math.min(c.ready, 20) + Math.min(c.fresh, 8);
+    const classRow = classNum === 0
+      ? `<div class="chip-row">
+          <button class="chip${filter === 'all' ? ' on' : ''}" data-t="all">All ${myths.length}</button>
+          ${tags.map((t) => `<button class="chip${filter === t ? ' on' : ''}" data-t="${t}">${t.replace('Myth · ', '')}</button>`).join('')}
+        </div>`
+      : '';
+    return `${classRow}
+      <div class="chip-row rv-modes">
+        <button class="chip${mode === 'due' ? ' on' : ''}" data-m="due">Due now${n > 0 ? ` <b class="rv-n">${n}</b>` : ''}</button>
+        <button class="chip${mode === 'all' ? ' on' : ''}" data-m="all">The whole set</button>
+      </div>`;
+  };
+
+  const paint = () => {
+    const card = deck[i];
+    if (finished || !card) {
+      const when = describeWhen(nextDue(pool()));
+      const back = [...missed.values()];
+      box.innerHTML = header() + `<div class="q-card rv-done">
+        <h3>${i > 0 ? 'That is the set, for now.' : 'Nothing is due here.'}</h3>
+        ${back.length
+          ? `<p>These come back tomorrow. Each one links to where it is taught.</p>
+             <ul class="myth-back">${back.map((c) => `<li><a href="/class/${c.cls}#common-misconceptions-in-this-session">${c.claim}</a></li>`).join('')}</ul>`
+          : `<p class="rv-next">${when ? `These claims come back <b>${when}</b>.` : 'Every claim in this set is new. Start whenever you like.'}</p>`}
+        <div class="chip-row" style="justify-content:center;margin:14px 0 0"><button class="chip" data-m="all">Go through the whole set anyway</button></div>
+      </div>`;
+      return;
+    }
+    box.innerHTML = header() + `
+      <div class="scorebar"><span class="score">claim ${i + 1} of ${deck.length}</span></div>
+      <div class="q-card">
+        <div class="q-meta">${card.tag}</div>
+        <p class="myth-claim">${card.claim}</p>
+        <p class="myth-ask">Most people say this. Do you?</p>
+        <div class="opts">
+          <button class="opt" data-say="yes"><span class="opt-k">▸</span>Sounds right to me</button>
+          <button class="opt" data-say="no"><span class="opt-k">▸</span>I do not think so</button>
+        </div>
+      </div>`;
+  };
+
+  box.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-t]');
+    if (t) { filter = t.dataset.t; build(); return paint(); }
+    const m = e.target.closest('[data-m]');
+    if (m) { mode = m.dataset.m; build(); return paint(); }
+
+    const say = e.target.closest('.opt[data-say]');
+    if (say && !said) {
+      said = say.dataset.say;
+      const card = deck[i];
+      const qc = $('.q-card', box);
+      // Neither answer is right or wrong, so neither is marked so. The one you
+      // chose is simply the one you are now committed to.
+      qc.querySelectorAll('.opt').forEach((b) => { b.disabled = true; });
+      say.classList.add('chose');
+      qc.append(h(`<div class="q-answer">
+        <p class="myth-verdict"><b>${said === 'yes'
+          ? 'Most people say this, and here is why it is not so.'
+          : 'You are right that it is not so. This is the part that matters.'}</b></p>
+        <p>${card.correction}</p>
+        <p class="myth-grade">Before you read that, could you have given that reason?</p>
+        <div class="chip-row" style="margin:0">
+          <button class="chip" data-g="miss">Not yet</button>
+          <button class="chip on" data-g="got">Yes, that was my reason</button>
+        </div>
+      </div>`));
+      return;
+    }
+
+    const g = e.target.closest('[data-g]');
+    if (g && said) {
+      const right = g.dataset.g === 'got';
+      gradeCard(deck[i], right);
+      const id = cardId(deck[i]);
+      if (right) missed.delete(id);
+      else {
+        missed.set(id, deck[i]);
+        // Once, not every time. An unguarded requeue makes a sitting you
+        // cannot finish.
+        if (!requeued.has(id) && deck.length > 1) { requeued.add(id); deck.push(deck[i]); }
+      }
+      i++; said = null;
+      if (i >= deck.length) finished = true;
+      return paint();
+    }
+  });
+
+  build(); paint();
+}
+
+
+// ============================================================================
 // Glossary filter and flashcards
 // ============================================================================
 
@@ -639,5 +777,6 @@ for (const node of document.querySelectorAll('[data-practice]')) {
   else if (kind === 'flows') mountFlows(node);
   else if (kind === 'drill') mountDrill(node, cls);
   else if (kind === 'ready') mountReady(node, cls);
+  else if (kind === 'myths') mountMyths(node, cls);
 }
 mountGlossary();
