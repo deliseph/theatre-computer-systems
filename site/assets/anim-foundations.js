@@ -4,7 +4,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, h, el,
+  box, label, labelWrap, textWidth, line, alpha, clamp, h, el, fitter,
 } from './anim-core.js';
 
 // ============================================================================
@@ -377,7 +377,9 @@ register('edid', (host) => {
 
   let step = 0, timer = 0;
 
-  canvas(stage, {
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
     height: 260,
     controls,
     draw(g, w, hgt, t, dt) {
@@ -395,11 +397,17 @@ register('edid', (host) => {
           ? [['Media server', 0.04], ['EDID manager', 0.36], ['Switcher', 0.62], ['Projector', 0.86]]
           : [['Media server', 0.04], [split ? 'Splitter' : '40 m HDMI', 0.4], ['Projector', 0.78]];
 
-      boxes.forEach(([name, fx], i) => {
-        const x = 20 + (w - 160) * fx;
-        box(g, x, 74, 128, 48, { fill: p.surface, stroke: p.line, r: 8 });
-        label(g, name, x + 64, 98, { color: p.ink2, size: 11.5, weight: 600, align: 'center' });
-        if (i < boxes.length - 1) line(g, x + 128, 98, 20 + (w - 160) * boxes[i + 1][1], 98, { color: p.line, lw: 3 });
+      // The chain is drawn as an even row that fits the canvas it has. It used
+      // to place fixed 128px boxes at fractions of the width, so four of them
+      // on a phone sat on top of each other.
+      const gap = Math.max(6, w * 0.02);
+      const bw = Math.min(128, (w - 40 - gap * (boxes.length - 1)) / boxes.length);
+      const bxOf = (i) => 20 + i * (bw + gap);
+      boxes.forEach(([name], i) => {
+        const x = bxOf(i);
+        box(g, x, 74, bw, 48, { fill: p.surface, stroke: p.line, r: 8 });
+        label(g, name, x + bw / 2, 98, { color: p.ink2, size: 11.5, weight: 600, align: 'center', max: bw - 8 });
+        if (i < boxes.length - 1) line(g, x + bw, 98, bxOf(i + 1), 98, { color: p.line, lw: 3 });
       });
 
       // The handshake, animated
@@ -410,20 +418,31 @@ register('edid', (host) => {
         ['HDCP check', blocked ? 'REFUSED — untrusted device in path' : 'ok', blocked ? p.red : p.green],
       ];
       const [who, what, col] = msgs[step];
-      label(g, who, 20, 158, { color: p.muted, size: 11, weight: 600 });
-      label(g, what, 20, 184, { color: col, size: 17, weight: 650, mono: true });
-
       const outcome = blocked ? 'BLACK SCREEN, no error message'
         : edidOk ? '1920 × 1080 @ 60, correct' : 'wrong resolution, letterboxed and soft';
-      box(g, w - 236, 148, 216, 52, {
-        fill: alpha(blocked || !edidOk ? p.red : p.green, 0.14),
-        stroke: blocked || !edidOk ? p.red : p.green, r: 8,
-      });
-      label(g, 'On the screen', w - 128, 166, { color: p.muted, size: 10, align: 'center' });
-      label(g, outcome, w - 128, 186, { color: blocked || !edidOk ? p.red : p.green, size: 11.5, weight: 650, align: 'center' });
+      const bad = blocked || !edidOk;
 
-      label(g, 'EDID is the conversation. HDCP is the bouncer. Both fail silently.',
-        20, hgt - 14, { color: p.muted, size: 11.5 });
+      // The handshake and the outcome share a row only when both fit on it.
+      // They used to be pinned to opposite ends of a width that was not there,
+      // so on a phone the message printed straight through the outcome panel.
+      const msgW = textWidth(g, what, { size: 17, weight: 650, mono: true });
+      const outW = Math.min(216, w - 40);
+      const sideBySide = 20 + msgW + 16 + outW <= w - 20;
+
+      label(g, who, 20, 158, { color: p.muted, size: 11, weight: 600, max: sideBySide ? w - outW - 56 : w - 40 });
+      label(g, what, 20, 184, { color: col, size: 17, weight: 650, max: sideBySide ? w - outW - 56 : w - 40, mono: true });
+
+      const oy2 = sideBySide ? 148 : 204;
+      const oxx = sideBySide ? w - 20 - outW : 20;
+      box(g, oxx, oy2, outW, 52, { fill: alpha(bad ? p.red : p.green, 0.14), stroke: bad ? p.red : p.green, r: 8 });
+      label(g, 'On the screen', oxx + outW / 2, oy2 + 18, { color: p.muted, size: 10, align: 'center', max: outW - 12 });
+      label(g, outcome, oxx + outW / 2, oy2 + 38,
+        { color: bad ? p.red : p.green, size: 11.5, weight: 650, align: 'center', max: outW - 12 });
+
+      const fy = oy2 + 52 + 22;
+      const fh = labelWrap(g, 'EDID is the conversation. HDCP is the bouncer. Both fail silently.',
+        20, fy, { color: p.muted, size: 11.5, max: w - 40, maxLines: 2 });
+      fit(fy + fh + 8);
     },
   });
 

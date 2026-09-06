@@ -2,7 +2,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, h, el,
+  box, label, labelWrap, textWidth, drawnSize, line, alpha, clamp, h, el, fitter,
 } from './anim-core.js';
 
 // --- Shared IPv4 helpers ----------------------------------------------------
@@ -462,12 +462,23 @@ register('layer-stack', (host) => {
     note: '&nbsp;',
   });
 
-  canvas(stage, {
+  // One geometry, shared by the drawing and the click test, so a row is always
+  // clicked where it is drawn. Below the width where the name and the header
+  // fields fit side by side, the fields drop under the name and the row grows.
+  const geom = (w) => {
+    const x0 = 22, bw = Math.min(w - 44, 720);
+    const stacked = bw < 470;
+    return { x0, bw, stacked, rowH: stacked ? 96 : 66, qx: stacked ? 56 : 200 };
+  };
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
     height: 250,
     animated: false,
-    draw(g, w, hgt) {
+    draw(g, w) {
       const p = palette();
-      const rowH = 66, x0 = 22, bw = Math.min(w - 44, 720);
+      const { x0, bw, stacked, rowH, qx } = geom(w);
 
       LAYERS.forEach((L, i) => {
         const y = 16 + i * rowH;
@@ -481,25 +492,28 @@ register('layer-stack', (host) => {
         label(g, String(L.n), x0 + 27, y + 27, {
           color: on ? p.ground : col, size: 15, weight: 700, align: 'center', mono: true,
         });
-        label(g, L.name, x0 + 56, y + 20, { color: p.ink, size: 13.5, weight: 650 });
-        label(g, L.unit, x0 + 56, y + 38, { color: p.muted, size: 11, mono: true });
-        label(g, L.q, x0 + 200, y + 20, { color: on ? col : p.ink2, size: 12.5, weight: on ? 650 : 500 });
+        const nameW = stacked ? bw - 66 : qx - 66;
+        label(g, L.name, x0 + 56, y + 20, { color: p.ink, size: 13.5, weight: 650, max: nameW });
+        label(g, L.unit, x0 + 56, y + 38, { color: p.muted, size: 11, max: nameW, mono: true });
 
-        // Header fields, which is what the layer actually carries
-        const fx = x0 + 200;
-        label(g, L.fields.map(([k, v]) => `${k} ${v}`).join('   ·   '), fx, y + 38,
-          { color: on ? p.ink2 : p.muted, size: 10.5, mono: true });
+        const rest = bw - (qx - x0) - 14;
+        const qy = stacked ? y + 58 : y + 20;
+        label(g, L.q, x0 + qx, qy, { color: on ? col : p.ink2, size: 12.5, weight: on ? 650 : 500, max: rest });
+        label(g, L.fields.map(([k, v]) => `${k} ${v}`).join('   ·   '), x0 + qx, qy + 18,
+          { color: on ? p.ink2 : p.muted, size: 10.5, max: rest, mono: true });
       });
 
-      label(g, 'Read bottom to top: get it across this wire, get it to that machine, give it to the right program.',
-        x0, hgt - 14, { color: p.muted, size: 11.5 });
+      const fy = 16 + LAYERS.length * rowH + 10;
+      const fh = labelWrap(g, 'Read bottom to top: get it across this wire, get it to that machine, give it to the right program.',
+        x0, fy, { color: p.muted, size: 11.5, max: bw, maxLines: 3 });
+      fit(fy + fh + 8);
     },
   });
 
-  const cv = stage.querySelector('canvas');
-  cv.addEventListener('click', (e) => {
-    const r = cv.getBoundingClientRect();
-    const i = Math.floor((e.clientY - r.top - 16) / 66);
+  const cvEl = stage.querySelector('canvas');
+  cvEl.addEventListener('click', (e) => {
+    const r = cvEl.getBoundingClientRect();
+    const i = Math.floor((e.clientY - r.top - 16) / geom(r.width).rowH);
     if (i >= 0 && i < LAYERS.length) { sel = i; paint(); }
   });
 
@@ -510,6 +524,9 @@ register('layer-stack', (host) => {
   );
 
   function paint() {
+    // Clicking a row on the canvas is not a control, so nothing else would
+    // redraw the highlight it just moved.
+    cv.once();
     const L = LAYERS[sel];
     setNote(`<b>Layer ${L.n}, ${L.name}.</b> The unit is a ${L.unit}, and it answers: <i>${L.q}</i><br>
       <b>When it is wrong:</b> ${L.wrong}`);
@@ -540,7 +557,9 @@ register('hop-by-hop', (host) => {
     note: '&nbsp;',
   });
 
-  canvas(stage, {
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
     height: 300,
     controls,
     draw(g, w, hgt, t, dt) {
@@ -549,50 +568,64 @@ register('hop-by-hop', (host) => {
       const h = HOPS[hop];
 
       const boxes = [
-        { n: 'Console', ip: '10.101.10.20', x: 0.02 },
-        { n: 'Switch A', ip: '', x: 0.245 },
-        { n: 'Router', ip: '.10.1 / .20.1', x: 0.47 },
-        { n: 'Switch B', ip: '', x: 0.695 },
-        { n: 'Node', ip: '10.101.20.50', x: 0.92 },
+        { n: 'Console', ip: '10.101.10.20', short: '.10.20' },
+        { n: 'Switch A', ip: '', short: '' },
+        { n: 'Router', ip: '.10.1 / .20.1', short: '.10.1/.20.1' },
+        { n: 'Switch B', ip: '', short: '' },
+        { n: 'Node', ip: '10.101.20.50', short: '.20.50' },
       ];
-      const bw = Math.max(96, (w - 40) * 0.17);
+      // Five boxes share the width they have. The old floor of 96px each meant
+      // 480px of boxes in 318px of canvas on a phone, so they printed over each
+      // other; the addresses fall back to their last octets at that size.
+      const gap = Math.max(4, w * 0.014);
+      const bw = (w - 40 - gap * (boxes.length - 1)) / boxes.length;
+      const bx = (i) => 20 + i * (bw + gap);
+      const tight = bw < 88;
       boxes.forEach((b, i) => {
-        const x = 20 + (w - 40 - bw) * b.x;
+        const x = bx(i);
         const active = i === hop || i === hop + 1;
         box(g, x, 46, bw, 52, {
           fill: active ? alpha(p.cyan, 0.14) : p.surface,
           stroke: i === 2 ? p.amber : active ? p.cyan : p.line, r: 8, lw: i === 2 ? 2 : 1,
         });
-        label(g, b.n, x + bw / 2, 66, { color: p.ink, size: 11.5, weight: 650, align: 'center' });
-        if (b.ip) label(g, b.ip, x + bw / 2, 84, { color: p.muted, size: 9.5, align: 'center', mono: true });
-        if (i === 2) label(g, 'layer 3 boundary', x + bw / 2, 112, { color: p.amber, size: 9.5, align: 'center' });
+        label(g, b.n, x + bw / 2, 66, { color: p.ink, size: 11.5, weight: 650, align: 'center', max: bw - 6 });
+        const ip = tight ? b.short : b.ip;
+        if (ip) label(g, ip, x + bw / 2, 84, { color: p.muted, size: 9.5, align: 'center', max: bw - 4, mono: true });
+        if (i === 2) label(g, tight ? 'layer 3' : 'layer 3 boundary', x + bw / 2, 112,
+          { color: p.amber, size: 9.5, align: 'center', max: bw * 2 });
       });
 
       // The segment currently carrying the packet
-      const segX = 20 + (w - 40 - bw) * boxes[hop].x + bw;
-      const segW = (20 + (w - 40 - bw) * boxes[hop + 1].x) - segX;
-      box(g, segX, 68, Math.max(4, segW), 8, { fill: p.cyan, stroke: 'transparent', r: 4 });
+      const segX = bx(hop) + bw;
+      box(g, segX, 68, Math.max(4, gap), 8, { fill: p.cyan, stroke: 'transparent', r: 4 });
 
-      // The headers, layered
-      const hx = 24, hy = 140, hw = w - 48;
-      box(g, hx, hy, hw, 40, { fill: alpha(p.amber, 0.14), stroke: p.amber, r: 7 });
-      label(g, 'LAYER 2 FRAME — rewritten every hop', hx + 12, hy + 13,
-        { color: p.amber, size: 9.5, weight: 700 });
-      label(g, `src ${MACS[h.srcMac]}   →   dst ${MACS[h.dstMac]}`, hx + 12, hy + 29,
-        { color: p.ink, size: 12, weight: 600, mono: true });
+      // The headers, layered. Each row is one claim, and on a narrow canvas the
+      // source and the destination stack rather than being cut in half.
+      const hx = 24, hw = w - 48;
+      let hy = 140;
+      const row = (indent, tone, kicker, src, dst) => {
+        const x = hx + indent, iw = hw - indent * 2;
+        const one = `${src}   →   ${dst}`;
+        const fits = textWidth(g, one, { size: 12, weight: 600, mono: true }) <= iw - 24;
+        const bh = fits ? 40 : 56;
+        box(g, x, hy, iw, bh, { fill: alpha(tone, 0.14), stroke: tone, r: 7 });
+        label(g, kicker, x + 12, hy + 13, { color: tone, size: 9.5, weight: 700, max: iw - 24 });
+        if (fits) {
+          label(g, one, x + 12, hy + 29, { color: p.ink, size: 12, weight: 600, max: iw - 24, mono: true });
+        } else {
+          label(g, src, x + 12, hy + 29, { color: p.ink, size: 12, weight: 600, max: iw - 24, mono: true });
+          label(g, `→   ${dst}`, x + 12, hy + 45, { color: p.ink, size: 12, weight: 600, max: iw - 24, mono: true });
+        }
+        hy += bh + 6;
+      };
+      row(0, p.amber, 'LAYER 2 FRAME — rewritten every hop', `src ${MACS[h.srcMac]}`, `dst ${MACS[h.dstMac]}`);
+      row(16, p.cyan, 'LAYER 3 PACKET — never changes', 'src 10.101.10.20', 'dst 10.101.20.50');
+      row(32, p.green, 'LAYER 4 — never changes', 'src port 49152', 'dst port 5568');
 
-      box(g, hx + 16, hy + 46, hw - 32, 38, { fill: alpha(p.cyan, 0.14), stroke: p.cyan, r: 7 });
-      label(g, 'LAYER 3 PACKET — never changes', hx + 28, hy + 58, { color: p.cyan, size: 9.5, weight: 700 });
-      label(g, 'src 10.101.10.20   →   dst 10.101.20.50', hx + 28, hy + 74,
-        { color: p.ink, size: 12, weight: 600, mono: true });
-
-      box(g, hx + 32, hy + 90, hw - 64, 34, { fill: alpha(p.green, 0.14), stroke: p.green, r: 7 });
-      label(g, 'LAYER 4 — never changes', hx + 44, hy + 101, { color: p.green, size: 9.5, weight: 700 });
-      label(g, 'src port 49152   →   dst port 5568', hx + 44, hy + 116,
-        { color: p.ink, size: 12, weight: 600, mono: true });
-
-      label(g, `Hop ${hop + 1} of ${HOPS.length}: ${h.from} → ${h.to}   ·   on ${h.net}`,
-        hx, hgt - 12, { color: p.ink2, size: 12, weight: 600 });
+      hy += 6;
+      hy += labelWrap(g, `Hop ${hop + 1} of ${HOPS.length}: ${h.from} → ${h.to}   ·   on ${h.net}`,
+        hx, hy, { color: p.ink2, size: 12, weight: 600, max: hw, maxLines: 2 });
+      fit(hy + 10);
     },
   });
 

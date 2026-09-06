@@ -413,6 +413,25 @@ export function canvas(stage, { height = 260, draw, animated = true, controls })
   return api;
 }
 
+/**
+ * Grow or shrink a canvas to the height its drawing actually needed.
+ *
+ * A figure that lays itself out from the width it was given cannot know its own
+ * height until it has drawn, and a fixed height either clips the bottom of a
+ * narrow layout or leaves a band of empty canvas on a wide one. Call the
+ * returned function at the end of draw() with the height you used. The rAF and
+ * the 3px deadband are what stop a resize from feeding itself.
+ */
+export function fitter(getCanvas) {
+  let pend = false;
+  return (want) => {
+    const cv = getCanvas();
+    if (!cv || pend || Math.abs(cv.h - want) < 3) return;
+    pend = true;
+    requestAnimationFrame(() => { pend = false; cv.setHeight(Math.round(want)); });
+  };
+}
+
 // --- Drawing helpers --------------------------------------------------------
 
 export function roundRect(g, x, y, w, h, r) {

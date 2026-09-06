@@ -4,7 +4,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, lerp,
+  box, label, labelWrap, textWidth, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const hex2 = (v) => v.toString(16).toUpperCase().padStart(2, '0');
@@ -12,18 +12,6 @@ const bin8 = (v) => (v & 255).toString(2).padStart(8, '0');
 const asc = (v) => (v >= 32 && v < 127 ? String.fromCharCode(v) : '.');
 const mono = { mono: true };
 
-// Several of these figures change shape with the width of the column they land
-// in, so they measure what they drew and ask for exactly that much canvas.
-// Deferred to the next frame, otherwise a resize would reenter draw().
-function fitter(getCv) {
-  let pending = false;
-  return (want) => {
-    const cv = getCv();
-    if (!cv || pending || Math.abs(cv.h - want) < 3) return;
-    pending = true;
-    requestAnimationFrame(() => { pending = false; cv.setHeight(Math.round(want)); });
-  };
-}
 
 // ============================================================================
 // 1. A file is a sequence of bytes: real headers, read field by field
@@ -499,21 +487,27 @@ register('lossless-compress', (host) => {
 
       // Size comparison, in real bytes: 1 per raw byte, 2 per token.
       const raw = 64, enc = runsOf(data, 64).length * 2;
-      const bw = Math.min(420, W);
+      // The caption sits to the right of the bar, so the bar can only have the
+      // width that is left after it. It used to take the whole canvas and put
+      // its own caption 12px past the edge.
+      const capW = textWidth(g, '64 bytes encoded', { size: 12, weight: 650, mono: true }) + 14;
+      const bw = Math.min(420, W - capW);
       const by = oy + 138;
       const bar = (y, wid, col, txt) => {
         box(g, ox, y, bw, 20, { fill: alpha(p.line, 0.35), stroke: 'transparent', r: 4 });
         box(g, ox, y, Math.max(3, wid), 20, { fill: alpha(col, 0.55), stroke: col, r: 4, lw: 1 });
-        label(g, txt, ox + bw + 12, y + 10, { color: col, size: 12, weight: 650, ...mono });
+        label(g, txt, ox + bw + 12, y + 10, { color: col, size: 12, weight: 650, max: W - bw - 12, ...mono });
       };
       // Both bars share a scale, so a result that came out larger than the
       // original actually looks larger rather than running off the end.
       const sc = bw / Math.max(raw, enc);
       bar(by, raw * sc, p.muted, `${raw} bytes raw`);
       bar(by + 30, enc * sc, enc <= raw ? p.green : p.red, `${enc} bytes encoded`);
-      label(g, enc <= raw ? `${(raw / enc).toFixed(1)}:1, and perfectly reversible` : `${((enc / raw - 1) * 100).toFixed(0)} % LARGER than the original`,
-        ox, by + 76, { color: enc <= raw ? p.green : p.red, size: 12.5, weight: 650 });
-      fit(by + 94);
+      const verdict = enc <= raw ? `${(raw / enc).toFixed(1)}:1, and perfectly reversible`
+        : `${((enc / raw - 1) * 100).toFixed(0)} % LARGER than the original`;
+      const vh = labelWrap(g, verdict, ox, by + 76,
+        { color: enc <= raw ? p.green : p.red, size: 12.5, weight: 650, max: W, maxLines: 2 });
+      fit(by + 76 + vh + 12);
     },
   });
 

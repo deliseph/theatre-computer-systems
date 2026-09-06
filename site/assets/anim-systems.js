@@ -3,7 +3,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, lerp,
+  box, label, labelWrap, wrapText, textWidth, drawnSize, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const mono = { mono: true };
@@ -21,6 +21,7 @@ register('ptp-sync', (host) => {
   });
 
   let cv;
+  const fit = fitter(() => cv);
   cv = canvas(stage, {
     height: 300,
     animated: true,
@@ -73,16 +74,36 @@ register('ptp-sync', (host) => {
       const measured = (down + up) / 2;
       const err = (down - up) / 2;
       let ry = bot + 24;
-      label(g, 'path delay  =  ((t2 − t1) + (t4 − t3)) ÷ 2', ox, ry, { color: p.muted, size: 11.5, ...mono });
-      label(g, `assumes the two directions take the same time`, ox + 320, ry, { color: p.muted, size: 11 });
+      const formula = 'path delay  =  ((t2 − t1) + (t4 − t3)) ÷ 2';
+      const caveat = 'assumes the two directions take the same time';
+      // The caveat sat beside the formula at a hard 320px, which on a phone put
+      // it past the right edge of the picture entirely. It takes its own line
+      // whenever the two do not fit on one.
+      const fw = textWidth(g, formula, { size: 11.5, mono: true });
+      const together = fw + 16 + textWidth(g, caveat, { size: 11 }) <= W;
+      label(g, formula, ox, ry, { color: p.muted, size: 11.5, max: W, ...mono });
+      if (together) label(g, caveat, ox + fw + 16, ry, { color: p.muted, size: 11, max: W - fw - 16 });
+      else { ry += 17; label(g, caveat, ox, ry, { color: p.muted, size: 11, max: W }); }
       ry += 24;
-      label(g, `down ${(down * 100).toFixed(1)} µs   up ${(up * 100).toFixed(1)} µs   →  offset error ${Math.abs(err * 100).toFixed(1)} µs`,
-        ox, ry, { color: Math.abs(err) > 0.02 ? p.red : p.green, size: 12.5, weight: 650, ...mono });
-      ry += 22;
-      label(g, Math.abs(err) > 0.02
+      const off = Math.abs(err) > 0.02;
+      // Three readings on one line need a wide canvas. Narrow, they stack.
+      const nums = [`down ${(down * 100).toFixed(1)} µs`, `up ${(up * 100).toFixed(1)} µs`,
+        `→  offset error ${Math.abs(err * 100).toFixed(1)} µs`];
+      const oneLine = nums.join('   ');
+      if (textWidth(g, oneLine, { size: 12.5, weight: 650, mono: true }) <= W) {
+        label(g, oneLine, ox, ry, { color: off ? p.red : p.green, size: 12.5, weight: 650, max: W, ...mono });
+        ry += 22;
+      } else {
+        label(g, `${nums[0]}   ${nums[1]}`, ox, ry, { color: off ? p.red : p.green, size: 12.5, weight: 650, max: W, ...mono });
+        ry += 18;
+        label(g, nums[2], ox, ry, { color: off ? p.red : p.green, size: 12.5, weight: 650, max: W, ...mono });
+        ry += 22;
+      }
+      ry += labelWrap(g, off
         ? 'the follower is now wrong by exactly half the difference, and it does not know'
         : 'symmetric, so the subtraction is correct and the follower is locked',
-        ox, ry, { color: Math.abs(err) > 0.02 ? p.red : p.green, size: 11.5 });
+      ox, ry, { color: off ? p.red : p.green, size: 11.5, max: W, maxLines: 3 });
+      fit(ry + 12);
     },
   });
 
@@ -123,6 +144,7 @@ register('latency-budget', (host) => {
   });
 
   let cv;
+  const fit = fitter(() => cv);
   cv = canvas(stage, {
     height: 300,
     animated: false,
@@ -131,38 +153,74 @@ register('latency-budget', (host) => {
       const W = Math.min(560, w - 24), ox = (w - W) / 2;
       const total = STAGES_L.reduce((a, s) => a + st[s.k], 0);
       const elec = total - st.air;
-      const scale = W / Math.max(60, total * 1.06);
 
-      let y = 26;
+      // Every column is a share of the canvas, not a fixed pixel offset. The
+      // old layout put the bars at a hard 186px, which on a phone left them
+      // 148px to grow into and sent the rest off the side of the picture.
+      const valW = textWidth(g, '00.0 ms', { size: 11, mono: true }) + 10;
+      const labW = clamp(W * 0.4, 76, 176);
+      const barX = ox + labW + valW;
+      const barW = W - labW - valW;
+      const scale = barW / Math.max(60, total * 1.06);
+      const rowH = Math.max(26, drawnSize(11.5) * 2.1);
+      // Where the threshold captions go decides where the first stage starts:
+      // inline captions need the room, a key underneath does not.
+      const wide = W >= 430;
+
+      let y = wide ? 26 + drawnSize(10) * 2.6 : 26;
       let acc = 0;
       const cols = [p.muted, p.cyan, p.amber, p.red, p.green, p.cyan, p.muted];
       STAGES_L.forEach((s, i) => {
         const v = st[s.k];
-        label(g, s.label, ox, y, { color: p.ink2, size: 11.5 });
-        label(g, `${v.toFixed(1)} ms`, ox + 176, y, { color: p.muted, size: 11, align: 'right', ...mono });
-        box(g, ox + 186 + acc * scale, y - 8, Math.max(1.5, v * scale), 16,
+        label(g, s.label, ox, y, { color: p.ink2, size: 11.5, max: labW - 6 });
+        label(g, `${v.toFixed(1)} ms`, ox + labW + valW - 10, y,
+          { color: p.muted, size: 11, align: 'right', max: valW, ...mono });
+        box(g, barX + acc * scale, y - 8, Math.max(1.5, v * scale), 16,
           { fill: alpha(cols[i], 0.6), stroke: cols[i], r: 3, lw: 1 });
         acc += v;
-        y += 26;
+        y += rowH;
       });
 
       y += 6;
       line(g, ox, y - 8, ox + W, y - 8, { color: p.line, lw: 1 });
-      label(g, 'electrical path, console to loudspeaker', ox, y + 6, { color: p.muted, size: 11.5 });
-      label(g, `${elec.toFixed(1)} ms`, ox + 300, y + 6,
-        { color: elec > 12 ? p.red : elec > 7 ? p.amber : p.green, size: 14, weight: 700, ...mono });
+      // The totals sit against the right edge, so they cannot walk off it.
+      const sumW = textWidth(g, '000.0 ms', { size: 14, weight: 700, mono: true }) + 8;
+      label(g, 'electrical path, console to loudspeaker', ox, y + 6,
+        { color: p.muted, size: 11.5, max: W - sumW });
+      label(g, `${elec.toFixed(1)} ms`, ox + W, y + 6,
+        { color: elec > 12 ? p.red : elec > 7 ? p.amber : p.green, size: 14, weight: 700, align: 'right', ...mono });
       label(g, 'plus the air the audience was always going to hear through',
-        ox, y + 28, { color: p.muted, size: 11.5 });
-      label(g, `${total.toFixed(1)} ms`, ox + 300, y + 28, { color: p.ink, size: 14, weight: 700, ...mono });
+        ox, y + 28, { color: p.muted, size: 11.5, max: W - sumW });
+      label(g, `${total.toFixed(1)} ms`, ox + W, y + 28,
+        { color: p.ink, size: 14, weight: 700, align: 'right', ...mono });
 
-      // The two thresholds that actually matter.
-      const bar = (yy, ms, lbl, col) => {
-        const x = ox + 186 + ms * scale;
-        line(g, x, 18, x, y - 14, { color: alpha(col, 0.8), lw: 1.5, dash: [4, 4] });
-        label(g, lbl, x + 4, yy, { color: col, size: 10, ...mono });
-      };
-      bar(18, 10, '10 ms: a performer on in-ears starts to feel it', p.amber);
-      bar(32, 40, '40 ms: lip sync becomes visible', p.red);
+      // The two thresholds that actually matter. Wide enough and each caption
+      // sits beside its own dashed line. Narrow, and two captions on one row
+      // print over each other and over the first stage, so the lines take a
+      // short tag and the captions drop to a key underneath.
+      const THRESH = [
+        [10, '10 ms', 'a performer on in-ears starts to feel it', p.amber],
+        [40, '40 ms', 'lip sync becomes visible', p.red],
+      ];
+      let ky = y + 52;
+      THRESH.forEach(([ms, tag, why, col], n) => {
+        const x = barX + ms * scale;
+        const on = x <= ox + W;
+        if (on) {
+          line(g, x, 18, x, y - 14, { color: alpha(col, 0.8), lw: 1.5, dash: [4, 4] });
+          const lbl = wide ? `${tag}: ${why}` : tag;
+          const tw = textWidth(g, lbl, { size: 10, mono: true });
+          const flip = x + 4 + tw > ox + W;
+          label(g, lbl, flip ? x - 4 : x + 4, 18 + n * 14,
+            { color: col, size: 10, align: flip ? 'right' : 'left', max: flip ? x - ox - 4 : ox + W - x - 4, ...mono });
+        }
+        if (!wide) {
+          label(g, `${tag}  ${why}${on ? '' : ', off the scale'}`, ox, ky,
+            { color: col, size: 10.5, max: W, ...mono });
+          ky += 16;
+        }
+      });
+      fit((wide ? y + 44 : ky + 6));
     },
   });
 
@@ -261,19 +319,29 @@ register('spof-map', (host) => {
 
   // Nodes are laid out in a 320 x 215 space; this scales that to whatever
   // canvas we get, and both the drawing and the hit test use it.
-  const layout = (w, hgt) => {
-    const sc = Math.min(1.5, (Math.min(w, 660) - 175) / 320, (hgt - 34) / 215);
-    return { sc, ox: Math.max(8, (w - (320 * sc + 165)) / 2), oy: 16 };
+  // Width only. The height is a result of the layout, not an input to it: while
+  // the scale depended on the canvas height and the canvas height was fitted to
+  // the scale, the two chased each other down to nothing.
+  const layout = (w) => {
+    // The readout sits beside the map when there is room for both, and under it
+    // when there is not. On a phone the old fixed 175px reserve squeezed the
+    // map to 57 percent while the node boxes stayed 84px wide, so they printed
+    // over each other.
+    const side = w >= 560;
+    const reserve = side ? 175 : 16;
+    const sc = clamp((Math.min(w, 660) - reserve) / 320, 0.62, 1.5);
+    return { sc, side, ox: Math.max(8, (w - (320 * sc + (side ? 165 : 0))) / 2), oy: 16 };
   };
 
   let cv;
+  const fit = fitter(() => cv);
   cv = canvas(stage, {
     height: 300,
     animated: false,
     draw(g, w, hgt) {
       const p = palette();
       const d = DESIGNS[key];
-      const { sc, ox, oy } = layout(w, hgt);
+      const { sc, side, ox, oy } = layout(w);
       const P = (x, y) => [ox + x * sc, oy + y * sc];
       const { reach, good } = alive(d);
       const map = Object.fromEntries(d.nodes.map(([id, lbl, x, y]) => [id, [x, y, lbl]]));
@@ -291,24 +359,33 @@ register('spof-map', (host) => {
         const isDead = dead.has(id);
         const fed = reach.has(id) || id.startsWith('pw');
         const col = isDead ? p.red : (good.has(id) && fed ? p.green : p.muted);
-        box(g, cx - 42, cy - 13, 84, 26, {
+        // The box scales with the map, or two nodes end up sharing pixels.
+        const nw = clamp(84 * sc, 54, 96), nh = clamp(26 * sc, 20, 30);
+        box(g, cx - nw / 2, cy - nh / 2, nw, nh, {
           fill: isDead ? alpha(p.red, 0.18) : alpha(col, 0.13), stroke: col, r: 6, lw: isDead ? 2 : 1.2,
         });
-        label(g, isDead ? '✕ ' + lbl : lbl, cx, cy, { color: isDead ? p.red : p.ink2, size: 10.5, align: 'center' });
+        label(g, isDead ? `✕ ${lbl}` : lbl, cx, cy,
+          { color: isDead ? p.red : p.ink2, size: sc < 0.85 ? 9.5 : 10.5, align: 'center', max: nw - 6 });
       }
 
-      const rx = ox + 320 * sc + 14;
-      label(g, 'still working', rx, oy + 16, { color: p.muted, size: 11, weight: 600 });
-      let ry = oy + 38;
+      const mapBottom = oy + 215 * sc;
+      const rx = side ? ox + 320 * sc + 14 : 16;
+      let ry = side ? oy + 38 : mapBottom + 44;
+      label(g, 'still working', rx, (side ? oy : mapBottom) + 16, { color: p.muted, size: 11, weight: 600 });
       for (const o of d.outputs) {
         const ok = reach.has(o);
+        const cx = side ? rx + 5 : rx + 5 + d.outputs.indexOf(o) * Math.min(150, (w - 32) / d.outputs.length);
+        const tx = cx + 11;
         g.fillStyle = ok ? p.green : p.red;
-        g.beginPath(); g.arc(rx + 5, ry - 4, 5, 0, 7); g.fill();
-        label(g, map[o][2], rx + 16, ry - 4, { color: p.ink2, size: 11 });
-        label(g, ok ? 'live' : 'DARK', rx + 16, ry + 12, { color: ok ? p.green : p.red, size: 11, weight: 700, ...mono });
-        ry += 38;
+        g.beginPath(); g.arc(cx, ry - 4, 5, 0, 7); g.fill();
+        label(g, map[o][2], tx, ry - 4, { color: p.ink2, size: 11, max: side ? w - tx - 8 : 120 });
+        label(g, ok ? 'live' : 'DARK', tx, ry + 12, { color: ok ? p.green : p.red, size: 11, weight: 700, max: 120, ...mono });
+        if (side) ry += 38;
       }
-      label(g, `${dead.size} failed`, rx, ry + 4, { color: p.muted, size: 11, ...mono });
+      if (!side) ry += 34;
+      else ry += 4;
+      label(g, `${dead.size} failed`, rx, ry, { color: p.muted, size: 11, max: w - rx - 8, ...mono });
+      fit(Math.max(mapBottom + 20, ry + 18));
     },
   });
 
@@ -316,7 +393,7 @@ register('spof-map', (host) => {
   cv && stage.querySelector('canvas').addEventListener('click', (e) => {
     const d = DESIGNS[key];
     const c = e.currentTarget, r = c.getBoundingClientRect();
-    const { sc, ox, oy } = layout(r.width, r.height);
+    const { sc, ox, oy } = layout(r.width);
     const mx = e.clientX - r.left, my = e.clientY - r.top;
     for (const [id, , x, y] of d.nodes) {
       const cx = ox + x * sc, cy = oy + y * sc;

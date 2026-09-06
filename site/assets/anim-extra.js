@@ -4,19 +4,10 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, labelWrap, wrapText, drawnSize, line, alpha, clamp, lerp,
+  box, label, labelWrap, wrapText, drawnSize, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const mono = { mono: true };
-function fitter(get) {
-  let pend = false;
-  return (want) => {
-    const cv = get();
-    if (!cv || pend || Math.abs(cv.h - want) < 3) return;
-    pend = true;
-    requestAnimationFrame(() => { pend = false; cv.setHeight(Math.round(want)); });
-  };
-}
 
 // ============================================================================
 // 1. What is actually in an Ethernet frame
@@ -49,13 +40,29 @@ register('frame-anatomy', (host) => {
       F.push(['FCS', 4, 'red', 'a checksum. Fails and the frame is dropped silently, and the counter goes up.']);
 
       const total = F.reduce((a, f) => a + f[1], 0);
-      const minW = 32;
       const flexTotal = W - F.length * 6;
+      const minW = Math.min(32, flexTotal / F.length);
       // Log weights, then normalised so the row actually fits the canvas.
       // Un-normalised, a 1,500 byte payload alone was wider than the figure.
-      const raw = F.map(([, n]) => Math.max(minW, Math.log10(n + 1) * 60));
-      const scale = flexTotal / raw.reduce((a, b) => a + b, 0);
-      const widths = raw.map((r) => Math.max(minW, r * scale));
+      //
+      // Clamping to a minimum after normalising is what used to push the last
+      // field off the edge: whatever the small fields gained, nothing gave it
+      // back. So the clamped ones are settled first and the rest share what is
+      // left, repeatedly, until nothing new is clamped.
+      const raw = F.map(([, n]) => Math.log10(n + 1) * 60);
+      const widths = raw.slice();
+      const fixed = new Array(F.length).fill(false);
+      for (let pass = 0; pass < F.length; pass++) {
+        const room = flexTotal - widths.reduce((a, wv, i) => a + (fixed[i] ? wv : 0), 0);
+        const pool = raw.reduce((a, r, i) => a + (fixed[i] ? 0 : r), 0) || 1;
+        let clamped = false;
+        for (let i = 0; i < F.length; i++) {
+          if (fixed[i]) continue;
+          const wv = (raw[i] / pool) * room;
+          if (wv < minW) { widths[i] = minW; fixed[i] = true; clamped = true; } else widths[i] = wv;
+        }
+        if (!clamped) break;
+      }
       let x = ox, y = 34;
       F.forEach(([name, n, col, why], fi) => {
         const bw = widths[fi];
@@ -76,16 +83,18 @@ register('frame-anatomy', (host) => {
       });
 
       let ry = y + 96;
-      label(g, `frame on the wire: ${(total - 8).toLocaleString('en-US')} bytes, plus 8 of preamble`,
-        ox, ry, { color: p.ink, size: 12, weight: 650, ...mono });
-      ry += 22;
-      label(g, `overhead: ${(total - 8 - st.payload)} bytes of header and checksum for ${st.payload.toLocaleString('en-US')} bytes of content`,
-        ox, ry, { color: p.muted, size: 11.5, ...mono });
-      ry += 20;
       const eff = (st.payload / (total + 12)) * 100;   // + interframe gap
-      label(g, `efficiency: ${eff.toFixed(1)} % of the wire time is your data`,
-        ox, ry, { color: eff < 60 ? p.red : p.green, size: 11.5, weight: 650, ...mono });
-      fit(ry + 24);
+      // Wrapped, not cut: on a phone all three of these ended in an ellipsis,
+      // and the number that mattered was in the half that was gone.
+      const sums = [
+        [`frame on the wire: ${(total - 8).toLocaleString('en-US')} bytes, plus 8 of preamble`, p.ink, 12, 650],
+        [`overhead: ${(total - 8 - st.payload)} bytes of header and checksum for ${st.payload.toLocaleString('en-US')} bytes of content`, p.muted, 11.5, 500],
+        [`efficiency: ${eff.toFixed(1)} % of the wire time is your data`, eff < 60 ? p.red : p.green, 11.5, 650],
+      ];
+      for (const [txt, col, size, weight] of sums) {
+        ry += labelWrap(g, txt, ox, ry, { color: col, size, weight, max: W, maxLines: 2, ...mono }) + 6;
+      }
+      fit(ry + 14);
     },
   });
 

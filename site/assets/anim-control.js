@@ -2,7 +2,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, h, el,
+  box, label, labelWrap, textWidth, line, alpha, clamp, h, el, fitter,
 } from './anim-core.js';
 
 // ============================================================================
@@ -111,7 +111,9 @@ register('dmx-frame', (host) => {
   });
 
   let sweep = 0;
-  canvas(stage, {
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
     height: 210,
     controls,
     draw(g, w, hgt, t, dt) {
@@ -144,8 +146,12 @@ register('dmx-frame', (host) => {
       const sx = x0 + (x - x0) * sweep;
       line(g, sx, y - 12, sx, y + hh + 12, { color: p.ink, lw: 1.5 });
 
-      label(g, '0 ms', x0, y + hh + 24, { color: p.muted, size: 10, mono: true });
-      label(g, `${frameMs.toFixed(2)} ms`, x, y + hh + 24, { color: p.ink, size: 11, weight: 650, align: 'center', mono: true });
+      // The tick labels used to sit on the first line of the working, which
+      // printed the two over each other at 512 slots.
+      const tickY = y + hh + 18;
+      label(g, '0 ms', x0, tickY, { color: p.muted, size: 10, mono: true });
+      label(g, `${frameMs.toFixed(2)} ms`, x, tickY,
+        { color: p.ink, size: 11, weight: 650, align: x > x1 - 40 ? 'right' : 'center', mono: true });
 
       const lines = [
         `${state.slots} slots × 11 bits = ${bits.toLocaleString()} bits`,
@@ -153,9 +159,20 @@ register('dmx-frame', (host) => {
         `plus break and mark ≈ ${frameMs.toFixed(2)} ms per frame`,
         `1 ÷ ${(frameMs / 1000).toFixed(5)} s ≈ ${hz.toFixed(1)} frames per second`,
       ];
-      lines.forEach((l, i) => label(g, l, x0, 140 + i * 17, { color: i === 3 ? p.amber : p.muted, size: 11.5, mono: true }));
-
-      label(g, `${hz.toFixed(0)} Hz`, x1, 96, { color: p.amber, size: 30, weight: 700, align: 'right', mono: true });
+      // The refresh rate needs its own room. Beside the working when the canvas
+      // is wide enough for both, under it when it is not; it used to be drawn
+      // right-aligned inside the frame bar itself.
+      const hzTxt = `${hz.toFixed(0)} Hz`;
+      const hzW = textWidth(g, hzTxt, { size: 30, weight: 700, mono: true });
+      const workW = Math.max(...lines.map((l) => textWidth(g, l, { size: 11.5, mono: true })));
+      const beside = x0 + workW + 20 + hzW <= x1;
+      const ly = tickY + 22;
+      lines.forEach((l, i) => label(g, l, x0, ly + i * 17,
+        { color: i === 3 ? p.amber : p.muted, size: 11.5, max: beside ? x1 - x0 - hzW - 20 : x1 - x0, mono: true }));
+      const endY = ly + lines.length * 17;
+      if (beside) label(g, hzTxt, x1, ly + 24, { color: p.amber, size: 30, weight: 700, align: 'right', mono: true });
+      else label(g, hzTxt, x0, endY + 18, { color: p.amber, size: 30, weight: 700, mono: true });
+      fit(beside ? endY + 10 : endY + 40);
     },
   });
 
@@ -183,35 +200,50 @@ register('universe-pack', (host) => {
     note: '&nbsp;',
   });
 
-  canvas(stage, {
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
     height: 230,
     animated: false,
-    draw(g, w, hgt) {
+    draw(g, w) {
       const p = palette();
+      const W = w - 40;
       const total = state.fixtures * state.pixels * state.mode;
       const uni = Math.max(1, Math.ceil(total / 512));
-      const perRow = Math.max(6, Math.floor((w - 40) / 46));
-      const cw = Math.min(44, (w - 40) / perRow);
+      const perRow = Math.max(6, Math.floor(W / 46));
+      const cw = Math.min(44, W / perRow);
+      const shown = Math.min(uni, perRow * 3);
+      const rows = Math.ceil(shown / perRow);
 
-      for (let i = 0; i < Math.min(uni, perRow * 3); i++) {
+      for (let i = 0; i < shown; i++) {
         const r = Math.floor(i / perRow), c = i % perRow;
         const x = 20 + c * cw, y = 32 + r * 46;
         const used = clamp(total - i * 512, 0, 512) / 512;
         box(g, x, y, cw - 6, 38, { fill: p.raised, stroke: p.line, r: 4 });
         box(g, x + 2, y + 38 - 2 - 34 * used, cw - 10, 34 * used, { fill: alpha(p.amber, 0.75), stroke: 'transparent', r: 3 });
-        label(g, String(i + 1), x + (cw - 6) / 2, y + 19, { color: p.ink, size: 10, weight: 700, align: 'center', mono: true });
+        label(g, String(i + 1), x + (cw - 6) / 2, y + 19, { color: p.ink, size: 10, weight: 700, align: 'center', max: cw - 8, mono: true });
       }
-      if (uni > perRow * 3) label(g, `… and ${uni - perRow * 3} more`, 20, 32 + 3 * 46 + 14, { color: p.muted, size: 11 });
 
-      const y0 = hgt - 74;
-      label(g, `${state.fixtures} × ${state.pixels} pixels × ${state.mode} ch = ${total.toLocaleString()} channels`,
-        20, y0, { color: p.muted, size: 12, mono: true });
-      label(g, `${total.toLocaleString()} ÷ 512 = ${(total / 512).toFixed(2)}  →  round up  →  ${uni} universes`,
-        20, y0 + 19, { color: p.ink, size: 12.5, weight: 650, mono: true });
-      label(g, `data rate  ${uni} × 0.25 = ${(uni * 0.25).toFixed(2)} Mbit/s on a 1000 Mbit/s link`,
-        20, y0 + 40, { color: p.cyan, size: 12, mono: true });
-      label(g, `${state.mode === 3 ? '512 ÷ 3 = 170 RGB pixels' : '512 ÷ 4 = 128 RGBW pixels'} per universe`,
-        20, y0 + 59, { color: p.muted, size: 11, mono: true });
+      // The working starts below whatever the blocks actually needed. It used
+      // to sit at a fixed offset from the bottom, so a rig big enough to fill
+      // three rows printed its own arithmetic over the last row of universes.
+      let y0 = 32 + rows * 46 + 6;
+      if (uni > shown) {
+        label(g, `… and ${uni - shown} more`, 20, y0 + 8, { color: p.muted, size: 11, max: W });
+        y0 += 24;
+      }
+      y0 += 14;
+
+      const lines = [
+        [`${state.fixtures} × ${state.pixels} pixels × ${state.mode} ch = ${total.toLocaleString()} channels`, p.muted, 12, 500],
+        [`${total.toLocaleString()} ÷ 512 = ${(total / 512).toFixed(2)}  →  round up  →  ${uni} universes`, p.ink, 12.5, 650],
+        [`data rate  ${uni} × 0.25 = ${(uni * 0.25).toFixed(2)} Mbit/s on a 1000 Mbit/s link`, p.cyan, 12, 500],
+        [`${state.mode === 3 ? '512 ÷ 3 = 170 RGB pixels' : '512 ÷ 4 = 128 RGBW pixels'} per universe`, p.muted, 11, 500],
+      ];
+      for (const [txt, col, size, weight] of lines) {
+        y0 += labelWrap(g, txt, 20, y0, { color: col, size, weight, max: W, maxLines: 2, mono: true }) + 6;
+      }
+      fit(y0 + 8);
     },
   });
 

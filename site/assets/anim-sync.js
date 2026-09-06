@@ -12,22 +12,12 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, lerp,
+  box, label, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const mono = { mono: true };
 const MS_PER_M = 2.915;          // 343 m/s at 20 degrees, the usual show figure
 
-// Grow the canvas to the content instead of leaving a field of empty pixels.
-function fitter(get) {
-  let pend = false;
-  return (want) => {
-    const cv = get();
-    if (!cv || pend || Math.abs(cv.h - want) < 3) return;
-    pend = true;
-    requestAnimationFrame(() => { pend = false; cv.setHeight(Math.round(want)); });
-  };
-}          // 343 m/s at 20 degrees, the usual show figure
 
 // ============================================================================
 // 1. Where the picture and the sound actually meet

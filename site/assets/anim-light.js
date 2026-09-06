@@ -371,11 +371,17 @@ register('fixture-channels', (host) => {
 // ============================================================================
 
 register('dmx-patch', (host) => {
+  // The figure opens on the mistake it is about. It used to open on a clean
+  // patch that already satisfied its own goal, so the goal marked itself done
+  // the moment anything was touched and asked the student for nothing.
+  //
+  // As it stands: Spot 1 is in its 8 channel mode at 17, and the batten
+  // underneath it starts at 21, so four slots are already claimed twice.
   const fixtures = [
     { name: 'Wash 1', addr: 1, fp: 8, col: 'amber' },
     { name: 'Wash 2', addr: 9, fp: 8, col: 'cyan' },
-    { name: 'Spot 1', addr: 17, fp: 24, col: 'green' },
-    { name: 'Batten', addr: 41, fp: 60, col: 'red' },
+    { name: 'Spot 1', addr: 17, fp: 8, col: 'green' },
+    { name: 'Batten', addr: 21, fp: 60, col: 'red' },
   ];
   let sel = 2;
   const { controls, stage, setNote, challenge } = figure(host, {
@@ -384,11 +390,21 @@ register('dmx-patch', (host) => {
     note: '&nbsp;',
   });
 
-  challenge('Give Spot 1 a 24 channel mode and find an address where it does not clash with anything.',
-    () => { const f = fixtures[2]; if (f.fp !== 24) return false;
-      const own = new Array(600).fill(-1); let clash = 0;
-      fixtures.forEach((x, i) => { for (let s = x.addr; s < x.addr + x.fp; s++) { if (own[s] >= 0) clash++; else own[s] = i; } });
-      return clash === 0; });
+  challenge('Spot 1 needs its 24 channel mode. Give it one, then find it an address where nothing is claimed twice.',
+    () => {
+      const f = fixtures[2];
+      if (f.fp !== 24) return false;
+      // A fixture that runs past 512 is a patch error too, and the picture
+      // stops at 512, so the test has to as well or it would pass something
+      // the student cannot see.
+      if (fixtures.some((x) => x.addr + x.fp - 1 > 512)) return false;
+      const own = new Array(513).fill(-1);
+      let clash = 0;
+      fixtures.forEach((x, i) => {
+        for (let s = x.addr; s < x.addr + x.fp && s <= 512; s++) { if (own[s] >= 0) clash++; else own[s] = i; }
+      });
+      return clash === 0;
+    });
 
   let cv;
   cv = canvas(stage, {
@@ -458,7 +474,7 @@ register('dmx-patch', (host) => {
   controls.append(
     choice('Fixture', fixtures.map((f, i) => [String(i), f.name]), { value: '2', on: (v) => { sel = +v; upd(); } }).node,
     slider('Address', { min: 1, max: 460, step: 1, value: 17, fmt: (v) => v, on: (v) => { fixtures[sel].addr = v; upd(); } }).node,
-    choice('Mode (footprint)', [['8', '8 ch'], ['16', '16 ch'], ['24', '24 ch'], ['60', '60 ch']], { value: '24', on: (v) => { fixtures[sel].fp = +v; upd(); } }).node
+    choice('Mode (footprint)', [['8', '8 ch'], ['16', '16 ch'], ['24', '24 ch'], ['60', '60 ch']], { value: '8', on: (v) => { fixtures[sel].fp = +v; upd(); } }).node
   );
   upd();
 });
