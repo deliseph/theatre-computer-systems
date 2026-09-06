@@ -182,6 +182,7 @@ const STAMP = buildStamp();
 
 const NAV_RESOURCES = [
   ['/prepare', 'Prepare', 'What to do before each class'],
+  ['/map', 'The map', 'Every figure and card, and the ones you have opened'],
   ['/foundations', 'Foundations', 'The number skills the module assumes'],
   ['/tools', 'Tools', 'Calculators used in class and in the exam'],
   ['/practice', 'Practice', 'Drills, sorting, fault diagnosis'],
@@ -643,6 +644,24 @@ write('/next', shell({
 }));
 for (const b of nextDoc.blocks) addSearch('/next', 'Where to go next', b.title, b.html);
 
+write('/map', shell({
+  title: 'The map',
+  desc: 'Every figure and every card in the module, in the order they are taught.',
+  body: `<article class="doc"><header class="page-head">
+      <p class="eyebrow"><span class="pill">The whole module</span></p>
+      <h1>The map</h1>
+      <p class="strap">Sixty five figures and every card, in the order they are taught. It is here so
+      you can get back to the one you half remember. The ones you have driven are filled in, and the
+      cards you have met are marked; nothing is counted and there is nothing to finish.</p>
+      <p class="note">This is read from your own browser and never leaves it. On a different device,
+      or after clearing your site data, the map starts empty again.</p>
+    </header><div id="modulemap" class="mp"></div></article>`,
+  active: '/map',
+  scripts: ['/assets/map.js'],
+}));
+addSearch('/map', 'The map', 'The whole module',
+  'Every figure and every card in the module in the order they are taught, with the ones you have opened filled in');
+
 const glossDoc = render(glossaryMd.replace(/^#\s+[^\n]*\n/, '').replace(/^##\s+Computer Systems[^\n]*\n/m, ''));
 write('/glossary', shell({
   title: 'Glossary',
@@ -915,6 +934,37 @@ function resolve(route, id) {
   return { to: `${route}#${id}`, label: `${PAGE_NAME[route]} · ${label}` };
 }
 
+// The module map. Every figure on a class page, in the order it appears, with
+// the section that holds it. The map is navigation first: it is how a student
+// gets back to the figure they half remember. That the ones they have driven
+// fill in is the second thing it does, and it never counts them.
+// A figure's own title, read from the module that registers it. The section
+// heading is not enough: two figures under one heading would both be called
+// "Audio", which is no use to somebody looking for the one they remember.
+const FIG_TITLE = new Map();
+for (const f of fs.readdirSync(path.join(HERE, 'assets')).filter((n) => /^anim-.*\.js$/.test(n))) {
+  const src = fs.readFileSync(path.join(HERE, 'assets', f), 'utf8');
+  for (const m of src.matchAll(/register\('([a-z0-9-]+)'[\s\S]{0,2200}?title:\s*'((?:[^'\\]|\\.)*)'/g)) {
+    if (!FIG_TITLE.has(m[1])) FIG_TITLE.set(m[1], m[2].replace(/\\'/g, "'"));
+  }
+}
+
+const mapFigures = [];
+for (const c of CLASSES) {
+  const route = `/class/${c.n}`;
+  const html = PAGES.get(route);
+  for (const m of html.matchAll(/ id="fig-([a-z0-9-]+)"/g)) {
+    const id = `fig-${m[1]}`;
+    const { to, label } = resolve(route, id);
+    const title = FIG_TITLE.get(m[1]);
+    if (!title) {
+      console.error(`  ! no title found for figure ${m[1]}, the map would label it by its section`);
+      process.exitCode = 1;
+    }
+    mapFigures.push({ cls: c.n, name: m[1], to, label: title || label.replace(/^Class \d+ \u00b7 /, '') });
+  }
+}
+
 let taughtHit = 0;
 const staleKeys = new Set(Object.keys(taughtAt));
 for (const c of drillCards) {
@@ -940,20 +990,21 @@ for (const f of fs.readdirSync(path.join(HERE, 'assets'))) {
 }
 
 fs.writeFileSync(path.join(OUT, 'assets', 'data.json'), JSON.stringify({
-  flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness, myths,
+  flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness, myths, mapFigures,
 }));
 fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex));
 
 fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
 fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify(STAMP, null, 2));
 
-const routes = ['/', '/prepare', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field', '/lineage', '/next',
+const routes = ['/', '/prepare', '/map', '/foundations', '/tools', '/practice', '/glossary', '/numbers', '/field', '/lineage', '/next',
   ...CLASSES.map((c) => `/class/${c.n}`), ...CLASSES.map((c) => `/teach/${c.n}`)];
 
 console.log(`Built ${routes.length} routes`);
 console.log(`  search entries : ${searchIndex.length}`);
 console.log(`  drill cards    : ${drillCards.length}`);
 console.log(`  myth cards     : ${myths.length}`);
+console.log(`  map figures    : ${mapFigures.length}`);
 console.log(`  taught-at      : ${taughtHit} of ${drillCards.length} drill cards`);
 console.log(`  glossary cards : ${glossCards.length}`);
 console.log(`  flow cards     : ${flowCards.length}`);

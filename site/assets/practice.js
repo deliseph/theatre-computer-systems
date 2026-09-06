@@ -200,9 +200,29 @@ async function mountFaults(root) {
 
   let sc = null, taken = [], done = false;
 
+  // Optional, off by default, and elapsed rather than counting down. On a show
+  // the clock is real: the thing that costs is how long the rig is down. But a
+  // countdown is a threat, and a threshold would turn a diagnosis into a test,
+  // so this only ever reports how long you took. There is no target and no
+  // record of it beyond the scenario you just finished.
+  const CLOCK_KEY = 'tcs-time-faults';
+  let clockOn = false;
+  try { clockOn = localStorage.getItem(CLOCK_KEY) === 'on'; } catch { /* private window */ }
+  let t0 = null, elapsed = 0, tick = null;
+  const mmss = (ms) => {
+    const t = Math.round(ms / 1000);
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  };
+  const stopClock = () => { clearInterval(tick); tick = null; if (t0) { elapsed = Date.now() - t0; t0 = null; } };
+  const paintClock = () => {
+    const el = $('.flt-clock', box);
+    if (el) el.textContent = mmss(t0 ? Date.now() - t0 : elapsed);
+  };
+
   const start = (id) => {
     sc = faultScenarios.find((s) => s.id === id) || pick(faultScenarios);
     taken = []; done = false;
+    stopClock(); elapsed = 0;
     paint();
   };
 
@@ -218,6 +238,11 @@ async function mountFaults(root) {
 
     box.innerHTML = `
       <div class="chip-row">${faultScenarios.map((s) => `<button class="chip${s.id === sc.id ? ' on' : ''}" data-sc="${s.id}">${s.title}</button>`).join('')}</div>
+      <div class="chip-row flt-clockrow">
+        <button class="chip${clockOn ? ' on' : ''}" data-clock="1">${clockOn ? 'Timing this one' : 'Time it'}</button>
+        ${clockOn ? `<span class="flt-clock">${mmss(t0 ? Date.now() - t0 : elapsed)}</span>
+          <span class="flt-clock-n">Starts when you take your first step. Nothing is judged by it.</span>` : ''}
+      </div>
       <div class="q-card">
         <div class="q-meta">The symptom</div>
         <p style="margin:0 0 4px">${sc.brief}</p>
@@ -232,6 +257,7 @@ async function mountFaults(root) {
 
   const answer = (id) => {
     done = true;
+    stopClock();
     const right = id === sc.answer;
     const stat = getStat('faults');
     right ? stat.right++ : stat.wrong++;
@@ -244,7 +270,7 @@ async function mountFaults(root) {
       <div class="q-meta">${right ? '✓ Correct' : '✗ Not that one'}</div>
       <p>${right ? '' : `The fault was <b>${sc.options.find((o) => o.id === sc.answer).label}</b>. `}${sc.explain}</p>
       <div class="q-answer">
-        <p><b>How you worked.</b> ${taken.length} step${taken.length === 1 ? '' : 's'},
+        <p><b>How you worked.</b> ${clockOn && elapsed ? `${mmss(elapsed)}, ` : ''}${taken.length} step${taken.length === 1 ? '' : 's'},
         ${wasted.length === 0 ? 'none wasted. Clean.' : `${wasted.length} of them wasted (${wasted.map((w) => sc.steps.find((s) => s.id === w.id).label.toLowerCase()).join(', ')}).`}
         ${firstLayer === 1 ? ' You started at layer 1, which is right: link light before anything else.'
         : firstLayer >= 4 ? ' You started at layer ' + firstLayer + '. Start at the bottom. The link light is thirty seconds and rules out the most common fault family.'
@@ -258,8 +284,21 @@ async function mountFaults(root) {
   box.addEventListener('click', (e) => {
     const s = e.target.closest('[data-sc]');
     if (s) return start(s.dataset.sc);
+    const c = e.target.closest('[data-clock]');
+    if (c) {
+      clockOn = !clockOn;
+      try { localStorage.setItem(CLOCK_KEY, clockOn ? 'on' : 'off'); } catch { /* private window */ }
+      if (!clockOn) stopClock();
+      return paint();
+    }
     const step = e.target.closest('.step');
-    if (step && !done) { taken.push({ id: step.dataset.id }); return paint(); }
+    if (step && !done) {
+      // The clock starts on the first step, not on the brief: reading the
+      // symptom carefully is the part you want people to slow down for.
+      if (clockOn && !t0 && !taken.length) { t0 = Date.now(); tick = setInterval(paintClock, 1000); }
+      taken.push({ id: step.dataset.id });
+      return paint();
+    }
     const a = e.target.closest('[data-ans]');
     if (a && !done) return answer(a.dataset.ans);
   });

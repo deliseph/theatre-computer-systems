@@ -29,6 +29,23 @@ try { guessing = localStorage.getItem(GUESS_KEY) === 'on'; } catch { /* private 
 if (guessing && !TEACH) document.body.classList.add('guess-first');
 export const folding = () => TEACH || guessing;
 
+// Which figures this student has actually driven. One id per figure, written
+// once, on this device only. It is what fills the module map in, and it is
+// never counted, compared or sent anywhere.
+export const TOUCH_KEY = 'tcs-touched';
+export function touched() {
+  try { return new Set(JSON.parse(localStorage.getItem(TOUCH_KEY) || '[]')); } catch { return new Set(); }
+}
+function markTouched(id) {
+  if (!id) return;
+  try {
+    const set = touched();
+    if (set.has(id)) return;
+    set.add(id);
+    localStorage.setItem(TOUCH_KEY, JSON.stringify([...set]));
+  } catch { /* private window */ }
+}
+
 // Every mounted note registers how to redraw itself, so the toggle takes
 // effect on the figures already on the page instead of needing a reload.
 const NOTE_SINKS = new Set();
@@ -230,6 +247,16 @@ export function figure(host, { title, sub, note }) {
       }
     });
   };
+  // The first time a student moves anything in this figure, remember that they
+  // did. Pause and Play do not count: watching is not driving.
+  const mark = (e) => {
+    if (/^(❚❚ Pause|▶ Play)$/.test((e.target.textContent || '').trim())) return;
+    markTouched(host.dataset.anim);
+  };
+  controls.addEventListener('input', mark);
+  controls.addEventListener('change', mark);
+  controls.addEventListener('click', mark);
+
   controls.addEventListener('input', repaint);
   controls.addEventListener('change', repaint);
   controls.addEventListener('click', repaint);
