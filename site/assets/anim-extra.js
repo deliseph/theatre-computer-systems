@@ -315,16 +315,21 @@ register('gpu-heads', (host) => {
       const heads = perCard * st.cards;
       const screens = st.mode === 'processor' ? heads * 8 : heads;
 
-      // The cards.
+      // The cards. Where each output physically sits is recorded as it is
+      // drawn, because the fan below has to start on the heads themselves. A
+      // cable drawn next to its connector rather than on it is not a diagram.
+      const headX = [];
       let x = ox, y = 34;
       for (let c = 0; c < st.cards; c++) {
         const cw = Math.min(150, (W - 20) / st.cards - 10);
         box(g, x, y, cw, 54, { fill: alpha(p.cyan, 0.14), stroke: p.cyan, r: 6, lw: 1.4 });
-        label(g, st.card === 'nvidia' ? 'NVIDIA' : 'AMD', x + 10, y + 18, { color: p.cyan, size: 11.5, weight: 700 });
-        label(g, `${perCard} outputs`, x + 10, y + 36, { color: p.muted, size: 10.5, ...mono });
+        label(g, st.card === 'nvidia' ? 'NVIDIA' : 'AMD', x + 10, y + 18, { color: p.cyan, size: 11.5, weight: 700, max: cw - 20 });
+        label(g, `${perCard} outputs`, x + 10, y + 36, { color: p.muted, size: 10.5, max: cw - 20, ...mono });
+        const pitch = (cw - 20) / perCard;
         for (let i = 0; i < perCard; i++) {
-          const px = x + 10 + i * ((cw - 20) / perCard);
+          const px = x + 10 + i * pitch;
           box(g, px, y + 44, 8, 8, { fill: p.amber, stroke: 'transparent', r: 1 });
+          headX.push(px + 4);
         }
         x += cw + 10;
       }
@@ -332,11 +337,19 @@ register('gpu-heads', (host) => {
       // Where the outputs go.
       const dy = y + 96;
       if (st.mode === 'processor') {
-        const bw = Math.min(210, W * 0.4);
+        const bw = Math.max(150, Math.min(210, W * 0.45));
         box(g, ox, dy, bw, 34, { fill: alpha(p.green, 0.16), stroke: p.green, r: 6, lw: 1.4 });
-        label(g, 'LED processor', ox + 12, dy + 17, { color: p.green, size: 11.5, weight: 650 });
-        for (let i = 0; i < heads; i++) line(g, ox + 20 + i * 10, y + 54, ox + 20 + i * 10, dy, { color: alpha(p.amber, 0.6), lw: 1.4 });
-        label(g, 'then out to receiving cards behind the panels', ox + bw + 12, dy + 17, { color: p.muted, size: 11 });
+        label(g, 'LED processor', ox + 12, dy + 17, { color: p.green, size: 11.5, weight: 650, max: bw - 24 });
+        // Every head leaves its own connector and lands inside the processor,
+        // spread across the box rather than on a pitch of its own. Same order
+        // left to right, so the fan converges without any line crossing.
+        const inset = 16, span = bw - inset * 2, n = headX.length;
+        headX.forEach((hx, i) => {
+          const tx = ox + inset + (n < 2 ? span / 2 : (i * span) / (n - 1));
+          line(g, hx, y + 53, tx, dy, { color: alpha(p.amber, 0.6), lw: 1.4 });
+        });
+        labelWrap(g, 'then out to receiving cards behind the panels', ox + bw + 14, dy + 10,
+          { color: p.muted, size: 11, max: W - bw - 14, maxLines: 2 });
       }
 
       // The screens.
@@ -349,12 +362,12 @@ register('gpu-heads', (host) => {
         box(g, sx, yy, sw, sw * 0.62, { fill: alpha(p.amber, 0.2), stroke: p.amber, r: 2, lw: 1 });
       }
       const rows = Math.ceil(Math.min(screens, 48) / cols);
-      const fy = sy + rows * (sw * 0.62 + 6) + 14;
-      label(g, st.mode === 'processor'
+      const fy = sy + rows * (sw * 0.62 + 6) + 16;
+      const capH = labelWrap(g, st.mode === 'processor'
         ? `${heads} outputs into a processor, then out to as many panels as the processor supports`
         : `${heads} outputs, ${heads} displays. No software changes this.`,
-        ox, fy, { color: p.ink, size: 12, weight: 650 });
-      fit(fy + 22);
+        ox, fy, { color: p.ink, size: 12, weight: 650, max: W, maxLines: 2 });
+      fit(fy + capH + 8);
     },
   });
 
