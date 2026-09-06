@@ -315,8 +315,6 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
   <button class="search-open icon-btn" aria-label="Search">
     <span class="sr">Search</span>⌕<kbd>/</kbd>
   </button>
-  <button class="guess-btn icon-btn" id="guessbtn" aria-pressed="false" hidden
-    title="Hold each figure's conclusion until you have said what you expect. Your choice is remembered on this device."><span class="guess-dot" aria-hidden="true"></span><span class="guess-t">Guess first</span></button>
   <button class="theme-btn icon-btn" aria-label="Toggle theme">◐</button>
 </header>
 

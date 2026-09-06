@@ -19,15 +19,11 @@ export const register = (id, fn) => REG.set(id, fn);
 // before any module evaluates, so this is safe to read at module scope.
 export const TEACH = document.body.classList.contains('teach-mode');
 
-// Guess first. A figure that prints its own conclusion turns a prediction into
-// a reading exercise, which is why the projector holds it. A student reading
-// alone gets the same option, and only if they ask for it: nothing on a class
-// page is ever withheld from somebody who did not choose that.
-export const GUESS_KEY = 'tcs-guess-first';
-let guessing = false;
-try { guessing = localStorage.getItem(GUESS_KEY) === 'on'; } catch { /* private window */ }
-if (guessing && !TEACH) document.body.classList.add('guess-first');
-export const folding = () => TEACH || guessing;
+// A figure that prints its own conclusion turns a prediction into a reading
+// exercise, which is why the projector holds it until the room has committed.
+// On a class page nothing is ever held back: a student reading alone is
+// reading, not being examined, and gets the whole note the first time.
+export const folding = () => TEACH;
 
 // Which figures this student has actually driven. One id per figure, written
 // once, on this device only. It is what fills the module map in, and it is
@@ -44,16 +40,6 @@ function markTouched(id) {
     set.add(id);
     localStorage.setItem(TOUCH_KEY, JSON.stringify([...set]));
   } catch { /* private window */ }
-}
-
-// Every mounted note registers how to redraw itself, so the toggle takes
-// effect on the figures already on the page instead of needing a reload.
-const NOTE_SINKS = new Set();
-export function setGuessFirst(on) {
-  guessing = !!on;
-  try { localStorage.setItem(GUESS_KEY, guessing ? 'on' : 'off'); } catch { /* private window */ }
-  document.body.classList.toggle('guess-first', guessing && !TEACH);
-  for (const redraw of NOTE_SINKS) redraw();
 }
 
 // --- Small DOM helpers ------------------------------------------------------
@@ -307,10 +293,8 @@ export function figure(host, { title, sub, note }) {
     return { check };
   }
 
-  let lastNote = note;
   const setNote = (t) => {
     if (!noteEl) return;
-    lastNote = t;
     if (!folding()) { noteEl.innerHTML = t; return; }
     let s;
     try { s = splitNote(t); } catch { s = { lead: '', held: String(t), foldable: true }; }
@@ -326,11 +310,6 @@ export function figure(host, { title, sub, note }) {
       noteEl.classList.add('is-held');
     }
   };
-
-  // Toggling the preference rebuilds this note in place, from the text it is
-  // currently showing, so a figure the student has already driven keeps its
-  // state instead of snapping back to its first frame.
-  if (noteEl) NOTE_SINKS.add(() => { buildFold(); setNote(lastNote); });
 
   return { fig, controls, stage, repaint, challenge, setNote };
 }
