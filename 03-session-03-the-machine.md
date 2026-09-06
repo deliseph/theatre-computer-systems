@@ -470,6 +470,51 @@ everything that follows, and no fader, plugin or converter downstream can widen 
 
 <!--anim:gain-stage-->
 
+### The same chain, with nothing in front of it
+
+Everything above starts with air. A synthesiser is worth two minutes here because it starts
+with nothing at all, and the moment you see that, the rest of the chain stops looking like
+audio equipment and starts looking like what it is: a way of moving a voltage about.
+
+A microphone makes a voltage because something outside it moved. An oscillator makes a voltage
+because a circuit will not sit still: charge a capacitor through a resistor until a threshold
+trips, dump it, start again, and you have a sawtooth at whatever pitch the resistor sets. No
+diaphragm, no air, no sound anywhere in the room until the very last box. From the second stage
+onward the chain is identical to the one you have just drawn.
+
+The method has a name that gives the whole thing away. **Subtractive synthesis**: make a wave
+that is deliberately too bright, then take the top off it. That is why the oscillator shapes are
+the harsh ones. A sawtooth carries every harmonic, at one over its number. A square carries only
+the odd ones, which is exactly why it sounds hollow rather than bright. A triangle carries the
+odd ones at one over the number squared, so it falls away almost at once and is nearly a sine
+with an edge on it. Nothing gets added after the oscillator. Everything downstream removes.
+
+<!--anim:synth-voice-->
+
+The filter is the second knob, and the one people mean when they say a synth sounds like a
+synth. It is a low pass, usually 12 or 24 dB per octave, and **resonance** feeds a little of its
+output back to its input so a peak grows right at the cutoff. Turn that up and sweep the cutoff
+and you have the sound of about forty years of records. It is also a real hazard on a desk: at
+high resonance the partial sitting at the cutoff comes out **louder than it went in**, so a synth
+can overload the channel it is plugged into while its own meter looks calm.
+
+Then the third stage, which is the one that decides what instrument you think you are hearing.
+The oscillator runs continuously. Something has to decide how loud it is at each moment, and that
+something is an **envelope**: attack, decay, sustain, release. Fast up and straight down and it
+is a plucked string. Slow up and slow down and it is a pad. Straight up, hold, straight off and
+it is an organ, which is not a metaphor, because a pipe organ really is a valve.
+
+<!--anim:synth-envelope-->
+
+Two things to carry out of this. First, the boxes are the same boxes: source, shape, level,
+amplify, transducer. A synthesiser and a vocal mic differ only in where the first voltage comes
+from. Second, every synth built since about 1983 does this arithmetic in numbers rather than in
+capacitors, and the arithmetic is exactly what you have just watched: sum some sines, multiply
+each by a filter response, multiply the sum by an envelope. Same idea, then done in a machine.
+That sentence is most of what this module is about.
+
+---
+
 The converter you are about to meet sits at the end of that: it measures this voltage, at a fixed
 rate, to a fixed precision. Everything from here on is about those two decisions.
 

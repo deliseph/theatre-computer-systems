@@ -16,6 +16,7 @@ import './anim-lineage.js';
 import './anim-extra.js';
 import './anim-sync.js';
 import './anim-analogue.js';
+import './anim-synth.js';
 import './anim-deep.js';
 
 mountAll();
