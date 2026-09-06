@@ -319,6 +319,12 @@ register('spof-map', (host) => {
 
   // Nodes are laid out in a 320 x 215 space; this scales that to whatever
   // canvas we get, and both the drawing and the hit test use it.
+  // The drawn node box and the clickable node box are the same box. They were
+  // not: the drawing clamped its size and the hit test kept scaling, so at one
+  // end of the range the target was wider than the node and at the other it was
+  // narrower.
+  const nodeBox = (sc) => ({ nw: clamp(84 * sc, 54, 96), nh: clamp(26 * sc, 20, 30) });
+
   // Width only. The height is a result of the layout, not an input to it: while
   // the scale depended on the canvas height and the canvas height was fitted to
   // the scale, the two chased each other down to nothing.
@@ -360,7 +366,7 @@ register('spof-map', (host) => {
         const fed = reach.has(id) || id.startsWith('pw');
         const col = isDead ? p.red : (good.has(id) && fed ? p.green : p.muted);
         // The box scales with the map, or two nodes end up sharing pixels.
-        const nw = clamp(84 * sc, 54, 96), nh = clamp(26 * sc, 20, 30);
+        const { nw, nh } = nodeBox(sc);
         box(g, cx - nw / 2, cy - nh / 2, nw, nh, {
           fill: isDead ? alpha(p.red, 0.18) : alpha(col, 0.13), stroke: col, r: 6, lw: isDead ? 2 : 1.2,
         });
@@ -394,10 +400,11 @@ register('spof-map', (host) => {
     const d = DESIGNS[key];
     const c = e.currentTarget, r = c.getBoundingClientRect();
     const { sc, ox, oy } = layout(r.width);
+    const { nw, nh } = nodeBox(sc);
     const mx = e.clientX - r.left, my = e.clientY - r.top;
     for (const [id, , x, y] of d.nodes) {
       const cx = ox + x * sc, cy = oy + y * sc;
-      if (Math.abs(mx - cx) < 44 * sc && Math.abs(my - cy) < 15 * sc) {
+      if (Math.abs(mx - cx) <= nw / 2 && Math.abs(my - cy) <= nh / 2) {
         dead.has(id) ? dead.delete(id) : dead.add(id);
         upd();
         return;

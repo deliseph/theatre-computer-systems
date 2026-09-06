@@ -475,7 +475,13 @@ for (const c of classData) {
   addSearch(`/class/${c.n}`, `Class ${c.n}: ${c.title}`, 'Overview', c.strap);
   addSearch(`/class/${c.n}#myths`, `Class ${c.n}: ${c.title}`, 'Spot the myth',
     myths.filter((m) => m.cls === c.n).map((m) => m.claim).join(' '));
-  for (const b of c.doc.blocks) addSearch(`/class/${c.n}#${b.id}`, `Class ${c.n}: ${c.title}`, b.title, b.html);
+  // splitBlocks names the run of prose before the first heading "opening", for
+  // teach mode's first slide. There is no element with that id on the page, so
+  // a search hit in it points at the top of the page rather than at nothing.
+  for (const b of c.doc.blocks) {
+    addSearch(b.id === 'opening' ? `/class/${c.n}` : `/class/${c.n}#${b.id}`,
+      `Class ${c.n}: ${c.title}`, b.title, b.html);
+  }
 }
 
 // --- Teach mode -------------------------------------------------------------
@@ -527,7 +533,7 @@ for (const c of classData) {
 <div class="teach" data-class="${c.n}">
   <header class="teach-bar">
     <a class="teach-exit" href="/class/${c.n}" title="Exit teach mode">✕</a>
-    <span class="teach-title">Class ${c.n} · ${esc(c.title)}</span>
+    <h1 class="teach-title">Class ${c.n} · ${esc(c.title)}</h1>
     <span class="teach-block" id="tblock"></span>
     <span class="teach-sub" id="tsub"></span>
     <div class="teach-sp"></div>
@@ -949,6 +955,14 @@ for (const f of fs.readdirSync(path.join(HERE, 'assets')).filter((n) => /^anim-.
   }
 }
 
+// Where the map should send somebody for each class's cards. Only three of the
+// five classes carry the numbers drill on their own Practice tab; for the other
+// two the deck lives on /practice, filtered by the class chip.
+const classLinks = Object.fromEntries(CLASSES.map((c) => [c.n, {
+  drill: c.practice.includes('drill') ? `/class/${c.n}#drill` : '/practice#drill',
+  myths: c.practice.includes('myths') ? `/class/${c.n}#myths` : '/practice#myths',
+}]));
+
 const mapFigures = [];
 for (const c of CLASSES) {
   const route = `/class/${c.n}`;
@@ -990,7 +1004,7 @@ for (const f of fs.readdirSync(path.join(HERE, 'assets'))) {
 }
 
 fs.writeFileSync(path.join(OUT, 'assets', 'data.json'), JSON.stringify({
-  flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness, myths, mapFigures,
+  flowCards, flowMeta, faultScenarios, drillCards, glossCards, readiness, myths, mapFigures, classLinks,
 }));
 fs.writeFileSync(path.join(OUT, 'search-index.json'), JSON.stringify(searchIndex));
 

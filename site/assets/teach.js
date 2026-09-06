@@ -187,7 +187,10 @@ if (track) {
     clock.textContent = `${mm}:${ss}`;
     clock.className = 'teach-clock';
   }
-  setInterval(paintClock, 1000);
+  // Four times a second, not once. The stopwatch starts at an arbitrary point
+  // in the tick, so at one tick a second the display could sit on 00:00 for
+  // most of the first two seconds after the lecturer pressed it.
+  setInterval(paintClock, 250);
 
   startBtn.addEventListener('click', () => {
     if (started) { started = null; timedBlock = null; startBtn.textContent = '▶ Start stopwatch'; }

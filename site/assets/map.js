@@ -58,10 +58,10 @@ if (root) {
         <div class="mp-rows">
           <div class="mp-row"><span class="mp-k">Numbers</span>
             <span class="mp-dots">${cards.map((c) => dot(c, 'card')).join('')}</span>
-            <a class="mp-go" href="/class/${n}#drill">Practise</a></div>
+            <a class="mp-go" href="${d.classLinks[n].drill}">Practise</a></div>
           <div class="mp-row"><span class="mp-k">Claims</span>
             <span class="mp-dots">${myths.map((m) => dot(m, 'myth')).join('')}</span>
-            <a class="mp-go" href="/class/${n}#myths">Spot the myth</a></div>
+            <a class="mp-go" href="${d.classLinks[n].myths}">Spot the myth</a></div>
         </div>
       </section>`);
     }));

@@ -43,7 +43,13 @@ function blockMath(prefix) {
 
 // --- Shared field builders --------------------------------------------------
 
-const field = (label, inner) => `<div class="field"><label>${label}</label>${inner}</div>`;
+// The label a sighted user reads and the label a screen reader announces have
+// to be the same one. They were not: the label sat next to the control with
+// nothing joining them, so every field in every tool read as "edit, blank".
+const field = (label, inner) => {
+  const id = /\bid="([^"]+)"/.exec(inner)?.[1];
+  return `<div class="field"><label${id ? ` for="${id}"` : ''}>${label}</label>${inner}</div>`;
+};
 const inp = (id, val, attrs = '') => `<input id="${id}" value="${val}" ${attrs}>`;
 const sel = (id, opts, cur) =>
   `<select id="${id}">${opts.map(([v, l]) => `<option value="${v}"${String(v) === String(cur) ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
@@ -382,9 +388,9 @@ TOOLS.latency = (root) => {
   };
 
   const addRow = (label = '', ms = '') => rows.append(h(`<div class="row-item">
-    <input type="text" value="${label}" placeholder="Stage, for example console processing">
-    <input type="number" value="${ms}" step="0.1" min="0" placeholder="ms">
-    <button class="row-del" title="Remove">✕</button></div>`));
+    <input type="text" value="${label}" aria-label="Stage name" placeholder="Stage, for example console processing">
+    <input type="number" value="${ms}" step="0.1" min="0" aria-label="Milliseconds this stage adds" placeholder="ms">
+    <button class="row-del" aria-label="Remove this stage" title="Remove">✕</button></div>`));
 
   const load = (key) => { rows.innerHTML = ''; PRESETS[key].forEach(([l, m]) => addRow(l, m)); run(); };
 
@@ -451,10 +457,10 @@ TOOLS.universe = (root) => {
   };
 
   const addRow = (label = '', count = 1, ch = 1) => rows.append(h(`<div class="row-item" style="grid-template-columns:1fr 78px 78px 34px">
-    <input type="text" value="${label}" placeholder="Fixture type">
-    <input type="number" value="${count}" min="0" title="How many">
-    <input type="number" value="${ch}" min="1" title="Channels each">
-    <button class="row-del" title="Remove">✕</button></div>`));
+    <input type="text" value="${label}" aria-label="Fixture type" placeholder="Fixture type">
+    <input type="number" value="${count}" min="0" aria-label="How many of them" title="How many">
+    <input type="number" value="${ch}" min="1" aria-label="Channels each" title="Channels each">
+    <button class="row-del" aria-label="Remove this fixture" title="Remove">✕</button></div>`));
 
   const run = () => {
     const items = [...rows.querySelectorAll('.row-item')].map((r) => {
@@ -722,10 +728,10 @@ TOOLS.poe = (root) => {
   const KIT = { af: ['Art-Net node', 12.95], at: ['Wireless access point', 25.5], bt3: ['PTZ camera', 51], bt4: ['LED panel driver', 71] };
 
   const addRow = (label, w, n = 1) => rows.append(h(`<div class="row-item" style="grid-template-columns:1fr 78px 78px 34px">
-    <input type="text" value="${label}">
-    <input type="number" value="${n}" min="0" title="How many">
-    <input type="number" value="${w}" step="0.05" min="0" title="Watts each">
-    <button class="row-del" title="Remove">✕</button></div>`));
+    <input type="text" value="${label}" aria-label="Device type" placeholder="Device type">
+    <input type="number" value="${n}" min="0" aria-label="How many of them" title="How many">
+    <input type="number" value="${w}" step="0.05" min="0" aria-label="Watts each" title="Watts each">
+    <button class="row-del" aria-label="Remove this device" title="Remove">✕</button></div>`));
 
   const run = () => {
     const items = [...rows.querySelectorAll('.row-item')].map((r) => {

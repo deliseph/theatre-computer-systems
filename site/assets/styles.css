@@ -561,7 +561,7 @@ body.teach-mode main { padding: 0; }
 .teach-sp { flex: 1; }
 .teach-exit { text-decoration: none; color: var(--muted); font-size: 19px; padding: 4px 8px; border-radius: 7px; }
 .teach-exit:hover { background: var(--raised); color: var(--red); }
-.teach-title { font: 650 14px/1 var(--sans); }
+.teach-title { margin: 0; font: 650 14px/1 var(--sans); }
 .teach-block { font: 500 12.5px/1 var(--mono); color: var(--amber); padding: 5px 10px; border-radius: 999px; background: var(--amber-soft); }
 .teach-btn { padding: 7px 13px; border-radius: 8px; cursor: pointer; background: var(--raised); border: 1px solid var(--line); color: var(--ink-2); font: 600 13px/1 var(--sans); }
 .teach-btn:hover { border-color: var(--amber); color: var(--ink); }
