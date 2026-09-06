@@ -4,7 +4,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, labelWrap, wrapText, drawnSize, line, alpha, clamp, lerp, fitter,
+  box, label, labelWrap, wrapText, textWidth, drawnSize, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const mono = { mono: true };
@@ -229,15 +229,32 @@ register('wifi-channels', (host) => {
       const p = palette();
       const W = Math.min(560, w - 24), ox = (w - W) / 2;
       const is24 = st.band === '24';
+      const narrow = W < 430;
       const nCh = is24 ? 13 : 25;
-      const oy = 46, hgt = 74;
+      // 2.4 GHz needs two lines of heading and a row of channel numbers above
+      // the graph; 5 GHz needs neither, so the band starts higher. Both used to
+      // be drawn at fixed heights and the 2.4 heading was printed straight
+      // through the line explaining it.
+      const hgt = 74;
+      const oy = is24 ? 78 : 50;
 
-      label(g, is24 ? '2.4 GHz: 13 channels, 5 MHz apart, each 20 MHz wide' : '5 GHz: 25 channels, 20 MHz apart, no overlap',
-        ox, 18, { color: p.ink, size: 12, weight: 650 });
+      label(g, is24
+        ? (narrow ? '2.4 GHz: 13 channels, each 20 MHz wide' : '2.4 GHz: 13 channels, 5 MHz apart, each 20 MHz wide')
+        : '5 GHz: 25 channels, 20 MHz apart, no overlap',
+        ox, 18, { color: p.ink, size: narrow ? 11.5 : 12, weight: 650, max: W });
+      if (is24) label(g, narrow ? 'only 1, 6 and 11 are independent' : 'only 1, 6 and 11 do not overlap',
+        ox, 38, { color: p.cyan, size: 11, max: W });
       line(g, ox, oy + hgt, ox + W, oy + hgt, { color: p.line, lw: 1.5 });
 
-      // Overlapping humps for 2.4, tidy blocks for 5.
+      // Overlapping humps for 2.4, tidy blocks for 5. The tails of the end
+      // channels reach well past the edge of the band, which is true and which
+      // has to be cut off at the panel rather than drawn over whatever is next
+      // to it.
       const chW = W / nCh;
+      g.save();
+      g.beginPath();
+      g.rect(ox, oy - 6, W, hgt + 8);
+      g.clip();
       for (let i = 0; i < nCh; i++) {
         const cx = ox + (i + 0.5) * chW;
         const spread = is24 ? chW * 2 : chW * 0.46;
@@ -250,15 +267,24 @@ register('wifi-channels', (host) => {
         g.strokeStyle = alpha(active ? p.cyan : p.muted, active ? 0.75 : 0.28);
         g.lineWidth = active ? 1.6 : 1;
         g.stroke();
-        if (!is24 || i % 2 === 0) label(g, String(is24 ? i + 1 : 36 + i * 4), cx, oy + hgt + 13,
-          { color: p.muted, size: 8.5, align: 'center', ...mono });
+      }
+      g.restore();
+      // How many of the channel numbers fit is a measurement, not a guess. The
+      // 5 GHz labels are three digits in a twelve pixel slot on a phone, and
+      // every other one still ran them into each other.
+      const chName = (i) => String(is24 ? i + 1 : 36 + i * 4);
+      const widest = textWidth(g, chName(nCh - 1), { size: 8.5, mono: true });
+      let step = 1;
+      while (step * chW < widest + 10) step++;
+      for (let i = 0; i < nCh; i += step) {
+        label(g, chName(i), ox + (i + 0.5) * chW, oy + hgt + 13,
+          { color: p.muted, size: 8.5, align: 'center', max: step * chW - 4, ...mono });
       }
       if (is24) {
         [0, 5, 10].forEach((i) => {
           const cx = ox + (i + 0.5) * chW;
-          label(g, String(i + 1), cx, oy - 8, { color: p.cyan, size: 11, weight: 700, align: 'center', ...mono });
+          label(g, String(i + 1), cx, oy - 16, { color: p.cyan, size: 11, weight: 700, align: 'center', max: chW * 2, ...mono });
         });
-        label(g, 'only 1, 6 and 11 do not overlap', ox, oy - 26, { color: p.cyan, size: 11 });
       }
 
       // What is already in the band.
@@ -266,15 +292,16 @@ register('wifi-channels', (host) => {
         ? ['audience phones', 'venue Wi-Fi', 'Bluetooth', 'wireless intercom', 'microwave oven', 'radio remotes']
         : ['venue Wi-Fi', 'your access point', 'some radar (DFS channels)'];
       let uy = oy + hgt + 34;
-      label(g, 'already in this band, in a full house:', ox, uy, { color: p.ink2, size: 11.5, weight: 600 });
+      label(g, 'already in this band, in a full house:', ox, uy, { color: p.ink2, size: 11.5, weight: 600, max: W });
       uy += 18;
+      const cols = narrow ? 2 : 3;
       users.slice(0, st.users).forEach((u, i) => {
-        const kx = ox + (i % 3) * (W / 3);
-        const yy = uy + ((i / 3) | 0) * 17;
+        const kx = ox + (i % cols) * (W / cols);
+        const yy = uy + ((i / cols) | 0) * 17;
         g.fillStyle = alpha(is24 ? p.red : p.green, 0.7); g.fillRect(kx, yy - 5, 9, 9);
-        label(g, u, kx + 14, yy, { color: p.muted, size: 10.5 });
+        label(g, u, kx + 14, yy, { color: p.muted, size: 10.5, max: W / cols - 18 });
       });
-      fit(uy + Math.ceil(Math.min(users.length, st.users) / 3) * 17 + 18);
+      fit(uy + Math.ceil(Math.min(users.length, st.users) / cols) * 17 + 18);
     },
   });
 
