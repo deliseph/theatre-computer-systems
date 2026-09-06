@@ -4,6 +4,11 @@ An interactive teaching platform for a module taught to year one BFA students in
 **Media Design and Technology (MDT)**, specialising in audio, lighting and video: five taught
 classes, a production visit and a practical exam.
 
+**Live at [theatre-computer-systems.vercel.app](https://theatre-computer-systems.vercel.app/)**
+— the classes, the [preparation path](https://theatre-computer-systems.vercel.app/prepare),
+the [field tools](https://theatre-computer-systems.vercel.app/tools) and the
+[practice drills](https://theatre-computer-systems.vercel.app/practice).
+
 ## When it meets
 
 Seven Saturdays. The module's own course map calls for 2 hours of intro, 2 on a visit, 16 of

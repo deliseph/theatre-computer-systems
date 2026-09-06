@@ -1,6 +1,7 @@
 # Teaching platform
 
 The interactive site for the five taught classes. Static, zero dependencies.
+Deployed at <https://theatre-computer-systems.vercel.app/>.
 
 ## Local
 
