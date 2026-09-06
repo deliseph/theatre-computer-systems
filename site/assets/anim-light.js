@@ -4,7 +4,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, lerp,
+  box, label, labelWrap, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const mono = { mono: true };
@@ -718,6 +718,225 @@ register('effect-engine', (host) => {
     slider('Spread', { min: 0, max: 360, step: 10, value: 360, fmt: (v) => `${v}°`, on: (v) => { st.spread = v; upd(); } }).node,
     slider('Size', { min: 5, max: 100, step: 5, value: 100, fmt: (v) => `${v} %`, on: (v) => { st.size = v; upd(); } }).node,
     slider('Fixtures', { min: 3, max: 24, step: 1, value: 12, fmt: (v) => v, on: (v) => { st.n = v; upd(); } }).node
+  );
+  upd();
+});
+
+// ============================================================================
+// 9. Two slots, one number: what a fine channel is actually for
+// ============================================================================
+
+register('dmx-16bit', (host) => {
+  const PARAM = {
+    pan: { label: 'Pan', range: 540, unit: '°' },
+    tilt: { label: 'Tilt', range: 270, unit: '°' },
+  };
+  const st = { which: 'pan', throw: 20, coarse: 128, fine: 96 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'Two DMX slots, one number, and what the second one buys',
+    sub: 'There is no 16 bit DMX. The wire has carried single bytes since 1986. 16 bit is an agreement between the desk and the fixture about what two of those bytes mean together.',
+    note: '&nbsp;',
+  });
+
+  const P = () => PARAM[st.which];
+  const v16 = () => st.coarse * 256 + st.fine;
+  // Everything is measured in the fixture's own 16 bit space, including the
+  // coarse-only case, which is simply fine sitting at zero. Mixing the two
+  // spaces (coarse out of 255, the pair out of 65,535) puts the coarse-only
+  // angle slightly *ahead* of the 16 bit one, which is nonsense on screen, and
+  // it makes one coarse step 257 fine steps instead of the 256 it is by
+  // construction.
+  const deg8 = () => (P().range * st.coarse * 256) / 65535;
+  const deg16 = () => (P().range * v16()) / 65535;
+  // One step, as an arc on a surface at the throw distance. A pan is a rotation,
+  // so the honest figure is arc length, not the tangent of a triangle.
+  const arc = (degrees) => st.throw * degrees * (Math.PI / 180);
+  const step16 = () => P().range / 65535;
+  const step8 = () => step16() * 256;
+  const metric = (m) => (m >= 1 ? `${m.toFixed(2)} m` : m >= 0.01 ? `${(m * 100).toFixed(1)} cm` : `${(m * 1000).toFixed(1)} mm`);
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 400,
+    animated: false,
+    controls,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(600, w - 24), ox = (w - W) / 2;
+      const narrow = W < 470;
+
+      // --- the two slots on the wire -----------------------------------------
+      let y = 30;
+      const sw = Math.min(150, (W - 16) / 2);
+      const slot = (x, name, addr, val, tone) => {
+        box(g, x, y, sw, 58, { fill: alpha(tone, 0.14), stroke: tone, r: 6, lw: 1.4 });
+        label(g, name, x + 10, y + 15, { color: tone, size: 11, weight: 700, max: sw - 20 });
+        label(g, `slot ${addr}`, x + 10, y + 31, { color: p.muted, size: 10, max: sw - 20, ...mono });
+        label(g, String(val), x + sw - 10, y + 40, { color: p.ink, size: 20, weight: 700, align: 'right', max: sw - 20, ...mono });
+      };
+      label(g, 'ON THE WIRE, TWO ORDINARY BYTES', ox, y - 13, { color: p.muted, size: 10, weight: 700, max: W });
+      slot(ox, `${P().label} coarse`, 1, st.coarse, p.cyan);
+      slot(ox + sw + 16, `${P().label} fine`, 2, st.fine, p.green);
+
+      // --- the arithmetic the fixture does -----------------------------------
+      y += 78;
+      label(g, `${st.coarse} × 256  +  ${st.fine}  =  ${v16().toLocaleString()}   of 65,535`,
+        ox, y, { color: p.ink, size: narrow ? 12 : 13.5, weight: 650, max: W, ...mono });
+      label(g, `${deg16().toFixed(3)}${P().unit} of ${P().range}${P().unit}. With fine at zero the fixture would sit at ${deg8().toFixed(3)}${P().unit}.`,
+        ox, y + 20, { color: p.muted, size: 11, max: W });
+
+      // --- the whole sweep, for context --------------------------------------
+      y += 56;
+      const bh = 22;
+      label(g, `THE WHOLE ${P().label.toUpperCase()}`, ox, y - 10, { color: p.muted, size: 10, weight: 700, max: W * 0.6 });
+      box(g, ox, y, W, bh, { fill: alpha(p.line, 0.5), stroke: p.line, r: 4, lw: 1 });
+      const fx = ox + (v16() / 65535) * W;
+      line(g, fx, y - 3, fx, y + bh + 3, { color: p.amber, lw: 2 });
+      label(g, `0${P().unit}`, ox, y + bh + 12, { color: p.muted, size: 9.5, max: 40, ...mono });
+      label(g, `${P().range}${P().unit}`, ox + W, y + bh + 12, { color: p.muted, size: 9.5, align: 'right', max: 46, ...mono });
+
+      // --- one coarse step, magnified ----------------------------------------
+      // The whole sweep at this throw is hundreds of metres of arc, so the gap
+      // the fine byte fills cannot be drawn to the same scale as the sweep. It
+      // gets its own panel, and the panel says what it is worth in metres.
+      y += bh + 40;
+      const zh = 62;
+      label(g, 'ONE COARSE STEP, MAGNIFIED', ox, y - 10, { color: p.amber, size: 10, weight: 700, max: W * 0.7 });
+      box(g, ox, y, W, zh, { fill: alpha(p.amber, 0.06), stroke: alpha(p.line, 1), r: 6, lw: 1 });
+      const lo = st.coarse - 1, hi = st.coarse + 2;      // three coarse steps across the panel
+      const zx = (c256) => ox + ((c256 - lo * 256) / ((hi - lo) * 256)) * W;
+      for (let c = lo; c <= hi; c++) {
+        if (c < 0 || c > 255) continue;
+        const x = zx(c * 256);
+        line(g, x, y + 8, x, y + zh - 18, { color: p.cyan, lw: 1.6 });
+        label(g, `${c}`, x, y + zh - 7, { color: p.cyan, size: 9.5, align: 'center', max: 44, ...mono });
+      }
+      // Every fine position inside the gap the student is standing in.
+      for (let f = 0; f <= 256; f += 8) {
+        const x = zx(st.coarse * 256 + f);
+        if (x < ox + 2 || x > ox + W - 2) continue;
+        line(g, x, y + zh - 26, x, y + zh - 18, { color: alpha(p.green, 0.55), lw: 1 });
+      }
+      const px = clamp(zx(v16()), ox + 2, ox + W - 2);
+      line(g, px, y + 4, px, y + zh - 14, { color: p.amber, lw: 2.2 });
+      label(g, 'here', clamp(px, ox + 22, ox + W - 22), y + 14, { color: p.amber, size: 10, align: 'center', max: 50 });
+
+      // --- what it is worth, in metres on the thing you are lighting ----------
+      y += zh + 30;
+      const rowH = 22;
+      const row = (i, k, v, tone) => {
+        label(g, k, ox, y + i * rowH, { color: p.muted, size: 11.5, max: W * 0.56 });
+        label(g, v, ox + W, y + i * rowH, { color: tone, size: 11.5, weight: 650, align: 'right', max: W * 0.42, ...mono });
+      };
+      row(0, `one coarse step at ${st.throw} m`, metric(arc(step8())), p.red);
+      row(1, `one fine step at ${st.throw} m`, metric(arc(step16())), p.green);
+      const capY = y + 2 * rowH + 8;
+      const capH = labelWrap(g, narrow
+        ? `${step8().toFixed(2)}${P().unit} against ${step16().toFixed(4)}${P().unit} per step.`
+        : `${step8().toFixed(2)}${P().unit} per step against ${step16().toFixed(4)}${P().unit}: the fine byte divides every coarse step into 256.`,
+        ox, capY, { color: p.ink, size: 11.5, weight: 600, max: W, maxLines: 2 });
+      fit(capY + capH + 10);
+    },
+  });
+
+  const upd = () => {
+    cv.once();
+    const big = arc(step8()), small = arc(step16());
+    setNote(`<b>The fine byte is not a smaller version of the coarse byte. It is the gap the coarse byte leaves behind.</b> Turning fine from 0 to 255 walks you from one coarse position exactly to the next, and no further. At ${st.throw} metres one coarse step moves the beam ${metric(big)}, which on a slow ${P().label.toLowerCase()} is a jump the audience sees as a stutter. One fine step moves it ${metric(small)}. That is the whole argument, and it costs you one extra DMX slot per parameter.`);
+  };
+
+  controls.append(
+    choice('Parameter', [['pan', 'Pan, 540°'], ['tilt', 'Tilt, 270°']], { value: 'pan', on: (v) => { st.which = v; upd(); } }).node,
+    slider('Throw', { min: 3, max: 45, step: 1, value: 20, fmt: (v) => `${v} m`, on: (v) => { st.throw = v; upd(); } }).node,
+    slider('Coarse byte', { min: 0, max: 255, step: 1, value: 128, fmt: (v) => v, on: (v) => { st.coarse = v; upd(); } }).node,
+    slider('Fine byte', { min: 0, max: 255, step: 1, value: 96, fmt: (v) => v, on: (v) => { st.fine = v; upd(); } }).node
+  );
+  upd();
+});
+
+// ============================================================================
+// 10. What 16 bit costs, counted in slots
+// ============================================================================
+
+register('bit-footprint', (host) => {
+  const st = { fine: { pan: true, tilt: true, dim: true, cmy: false }, base: 5 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'What 16 bit costs, counted in slots',
+    sub: 'Every fine channel is a whole extra DMX slot, forever, on every fixture in the rig. That is the trade, and it is worth doing the arithmetic before the plot goes out.',
+    note: '&nbsp;',
+  });
+
+  const EXTRA = { pan: 1, tilt: 1, dim: 1, cmy: 3 };
+  const NAMES = { pan: 'Pan fine', tilt: 'Tilt fine', dim: 'Dimmer fine', cmy: 'C, M and Y fine' };
+  const footprint = () => st.base + Object.keys(EXTRA).reduce((n, k) => n + (st.fine[k] ? EXTRA[k] : 0), 0);
+  const perUniverse = () => Math.floor(512 / footprint());
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 300,
+    animated: false,
+    controls,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(600, w - 24), ox = (w - W) / 2;
+      const fp = footprint(), per = perUniverse();
+
+      // The fixture's own footprint, slot by slot.
+      let y = 32;
+      label(g, 'ONE FIXTURE, SLOT BY SLOT', ox, y - 12, { color: p.muted, size: 10, weight: 700, max: W });
+      const cw = Math.min(26, (W - (fp - 1) * 3) / fp);
+      let x = ox;
+      for (let i = 0; i < fp; i++) {
+        const isFine = i >= st.base;
+        box(g, x, y, cw, 26, {
+          fill: alpha(isFine ? p.green : p.cyan, 0.2), stroke: isFine ? p.green : p.cyan, r: 3, lw: 1.2,
+        });
+        x += cw + 3;
+      }
+      label(g, `${st.base} coarse`, ox, y + 42, { color: p.cyan, size: 11, max: W * 0.4 });
+      label(g, `+ ${fp - st.base} fine  =  ${fp} slots`, ox + W, y + 42,
+        { color: p.green, size: 11, align: 'right', max: W * 0.55, ...mono });
+
+      // What that does to a universe.
+      y += 76;
+      label(g, 'ONE UNIVERSE, 512 SLOTS', ox, y - 12, { color: p.muted, size: 10, weight: 700, max: W });
+      const uh = 30;
+      box(g, ox, y, W, uh, { fill: alpha(p.line, 0.4), stroke: p.line, r: 4, lw: 1 });
+      const used = (per * fp) / 512;
+      box(g, ox, y, W * used, uh, { fill: alpha(p.amber, 0.32), stroke: 'transparent', r: 4 });
+      for (let i = 1; i < per; i++) {
+        const gx = ox + ((i * fp) / 512) * W;
+        if (per <= 64) line(g, gx, y + 2, gx, y + uh - 2, { color: alpha(p.ground, 0.5), lw: 1 });
+      }
+      label(g, `${per} fixtures`, ox + 8, y + uh / 2, { color: p.ink, size: 12, weight: 700, max: W * 0.5 });
+      label(g, `${512 - per * fp} slots spare`, ox + W - 8, y + uh / 2,
+        { color: p.muted, size: 11, align: 'right', max: W * 0.45, ...mono });
+
+      // The comparison that makes the trade legible.
+      y += uh + 34;
+      const all8 = Math.floor(512 / st.base);
+      const capH = labelWrap(g,
+        `All coarse: ${all8} fixtures per universe. As patched: ${per}. ${all8 === per ? 'No difference yet.' : `The fine channels cost you ${all8 - per} fixtures, so the same rig needs ${Math.round((all8 / per - 1) * 100)} percent more universes.`}`,
+        ox, y, { color: p.ink, size: 12, weight: 600, max: W, maxLines: 3 });
+      fit(y + capH + 12);
+    },
+  });
+
+  const fmtList = (a) => (a.length === 1 ? a[0] : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
+  const upd = () => {
+    cv.once();
+    const on = Object.keys(EXTRA).filter((k) => st.fine[k]);
+    const per = perUniverse(), all8 = Math.floor(512 / st.base);
+    if (!on.length) setNote(`<b>Nothing on fine, and ${per} fixtures fit.</b> This is the cheapest the rig will ever be in slots, and the worst it will ever look on a slow move. Turn on the parameters that actually move slowly in this show, and leave the rest coarse: a gobo wheel has no use for a fine channel, and neither does a strobe.`);
+    else if (per === all8) setNote(`<b>${on.length} fine channel${on.length > 1 ? 's' : ''}, and the fixture count has not moved.</b> 512 does not divide evenly, so some footprints cost you nothing at all. Worth checking before you argue about it: the answer is arithmetic, not opinion.`);
+    else setNote(`<b>${fmtList(on.map((k) => NAMES[k].toLowerCase()))} at 16 bit takes the fixture to ${footprint()} slots, and the universe from ${all8} fixtures down to ${per}.</b> That is the honest trade. Smooth movement is bought with universes, and universes are bought with node ports, so this decision reaches the equipment list, not just the patch.`);
+  };
+
+  controls.append(
+    slider('Coarse channels', { min: 3, max: 24, step: 1, value: 5, fmt: (v) => v, on: (v) => { st.base = v; upd(); } }).node,
+    ...Object.keys(EXTRA).map((k) => toggle(NAMES[k], { value: st.fine[k], on: (v) => { st.fine[k] = v; upd(); } }).node)
   );
   upd();
 });

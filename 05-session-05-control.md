@@ -261,13 +261,61 @@ A modest moving head might use eight:
 
 Two things follow, and both cause real faults.
 
-**16 bit position.** Coarse times 256 plus fine gives 65,536 positions instead of 256. One step of
-coarse on a long throw is a visible jump, so a slow pan on 8 bit stutters. Two slots buy movement
-that arrives smoothly, which is the same argument as 16 bit dimming, one department along.
-
 **Ranges inside a byte.** Strobe, colour and gobo pack a whole behaviour into one value using
 bands. The same DMX value means different things on two fixtures, so the manual's channel chart is
 not optional reading.
+
+### 16 bit, which is two bytes and an agreement
+
+Start with the thing that surprises people: **there is no 16 bit DMX.** The wire has carried
+single bytes, one after another, since 1986, and it still does. 16 bit is an agreement between
+the desk and the fixture that two particular slots are to be read as one number:
+
+```
+value = coarse × 256 + fine
+```
+
+Coarse is the top eight bits, fine is the bottom eight. So the fine byte is not a smaller version
+of the coarse byte, and this is the sentence to hold on to: **fine is the gap that coarse leaves
+behind.** Run fine from 0 to 255 and you travel from one coarse position exactly to the next, and
+no further. 256 coarse positions, each divided into 256, is 65,536.
+
+<!--anim:dmx-16bit-->
+
+**Now the reason anyone bothers.** A moving head with 540 degrees of pan, on 8 bit, has 255 steps
+across that sweep:
+
+```
+540° ÷ 256 coarse positions   = 2.11° per coarse step
+at a 20 m throw               = 20 × 2.11 × π/180  ≈ 0.74 m of arc
+```
+
+Three quarters of a metre. On a snap that is invisible, because the beam was going somewhere
+anyway. On a fifteen second creep across a cyc it is a stutter, and it is the kind of fault a
+designer describes as "the movement looks cheap" without being able to say why. At 16 bit the same
+sum gives 540 ÷ 65,535 = 0.0082°, which at 20 m is **under 3 mm**. Tilt is the same argument with
+270 degrees in the numerator.
+
+Dimming is the same idea in a different department, and you have already met it: an 8 bit dimmer
+has 256 levels, and at the bottom of a fade one step is a large share of what is left, made worse
+by the square law squaring an already small number. That figure is in the dimming section above.
+The mechanism is identical; only the consequence differs.
+
+**What it costs.** Every fine channel is a whole extra slot, on every fixture, forever. Pan, tilt
+and dimmer at 16 bit is three extra slots each fixture, and 512 does not get any bigger.
+
+<!--anim:bit-footprint-->
+
+So the judgement is per parameter, not per fixture. Pan and tilt on a slow-moving rig, yes. The
+dimmer on anything that fades from black in front of an audience, yes. A gobo wheel, a colour
+wheel, a strobe: no, because they were never going to move smoothly and a fine channel there buys
+you nothing but a smaller universe.
+
+**And the fault it causes.** Coarse and fine are read as a pair. Patch a fixture one slot out and
+the fixture reads coarse where fine should be, so the head jumps in huge arcs and jitters, which
+looks exactly like broken hardware. Before anyone opens a case: check the patch, check the mode,
+check that the fixture is in the 16 bit personality the desk thinks it is in. A fixture in an
+8 bit mode being sent a 16 bit profile fails in the same way and for the same reason.
 
 ### Extension: Colour, and why two fixtures at the same temperature do not match
 
