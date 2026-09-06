@@ -414,6 +414,32 @@ Ask: which of these did you see obeyed or broken at the venue last week? Good li
 
 The conceptual heart of the module. Everything is sampling and quantising, in every domain.
 
+### Before it is a number, it is a voltage
+
+Everything in this block is about turning sound into numbers. It is worth two minutes on what is
+being turned, because the thing arriving at the converter is already a signal, and it was made by
+a piece of physics that has not changed since 1831.
+
+A microphone is a diaphragm and a way of noticing that the diaphragm moved. Air pressure pushes
+it; behind it either a coil sits in a magnetic field, so moving it makes a voltage, or the
+diaphragm is one plate of a charged capacitor, so moving it changes the voltage across the gap.
+That is the whole device. A loud voice at a foot is about one pascal, and one pascal gets you
+about two millivolts out of a dynamic capsule.
+
+<!--anim:mic-transduce-->
+
+Two millivolts is not enough to do anything with, and this is where the most important knob in
+audio lives. Noise added **before** amplification gets amplified along with the signal; noise
+added after it does not. So the first amplifier in the chain decides the signal to noise ratio of
+everything that follows, and no fader, plugin or converter downstream can widen that gap again.
+
+<!--anim:gain-stage-->
+
+The converter you are about to meet sits at the end of that: it measures this voltage, at a fixed
+rate, to a fixed precision. Everything from here on is about those two decisions.
+
+---
+
 ### Audio
 
 - **Sampling rate.** How often we measure. 48 kHz is the professional default for anything that

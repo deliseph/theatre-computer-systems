@@ -16,6 +16,58 @@ One pattern runs through all of it:
 
 ---
 
+## Block 0: The chain with no numbers in it
+
+Before any of the rest of this, there was a complete working signal path that counted nothing. It
+is worth walking once, because everything that came after is a replacement for one link in it, and
+because most of the words on a modern desk were named here.
+
+### From the air to the wire, and back to the air
+
+A microphone turns pressure into voltage. A preamplifier makes that voltage bigger. A fader takes
+a fraction of it, a bus adds the fractions together, and a power amplifier makes the sum big
+enough to move a coil in a magnet, which moves a cone, which pushes air. Five stages, and the
+voltage at every one of them is a scale model of the pressure in the room.
+
+<!--anim:mixer-sum-->
+
+The loudspeaker at the end is the microphone at the start, running backwards. Same three parts,
+same physics, arrows reversed. Connect a loudspeaker to a microphone input and shout into it and
+you get a signal out, which is exactly what a talkback speaker is doing.
+
+<!--anim:speaker-move-->
+
+### A record, which is the only chain you will meet with no converter in it
+
+Students ask whether vinyl is really analogue all the way, and whether it works without a computer
+anywhere. Yes, and yes.
+
+A shape cut into plastic shakes a diamond, which shakes a magnet next to a coil, which makes about
+five millivolts, which is equalised, amplified and used to move a cone. No clock, no sample rate,
+no number at any point. It is the same transducer as the microphone at both ends of the chain.
+
+<!--anim:vinyl-path-->
+
+One honest footnote, because it is the thing people get wrong in both directions: the playback
+path being analogue tells you nothing about the recording. Most records pressed since the 1980s
+passed through a digital master on the way to the lathe. The chain in your living room is
+genuinely analogue; the chain that made the disc usually was not.
+
+### Both eras, side by side
+
+Lighting, video and sound each made the same move at different times, and in each case the change
+was not to the job but to what the wire was carrying. An analogue wire carries a quantity, so it
+degrades a little at a time and nothing reports it. A digital wire carries a count, so it is exact
+until it is not.
+
+<!--anim:era-paths-->
+
+This is the single most useful thing to take from the whole page: **the two eras fail differently,
+and knowing which failure you are looking at is most of fixing it.** Softness, hum and drift are
+analogue symptoms. Sparkles, dropouts and a device that ignores you are digital ones.
+
+---
+
 ## Block 1: Audio, from a voltage to a network
 
 Audio started as the thing it is: a voltage that looks like the sound. Everything since has been an
@@ -184,6 +236,19 @@ interface left on any machine you will use.
 ## Block 5: Storage, and how the same space kept holding more
 
 <!--anim:storage-lineage-->
+
+### What is physically on the thing
+
+Every medium in that list solves the same problem: make a room full of sound survive being put
+down and picked up again. Two of them keep a shape, and three of them keep a count, and that
+single difference decides what damage does to each one.
+
+<!--anim:medium-store-->
+
+A scratch on a record is not a lost bit; it is a click that is now part of the music, permanently.
+A scratch on a CD is a wrong number, and error correction can often work the right one out again,
+which is why a damaged disc plays perfectly and then stops dead rather than getting gradually
+worse. That is the same distinction as the two eras in Block 0, arriving in a different place.
 
 **The optical line is one rule applied three times.** Capacity is set by how small a mark you can
 reliably read, and that is set by your wavelength. 780 nm infrared for CD, 650 nm red for DVD,
