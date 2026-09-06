@@ -447,6 +447,51 @@ That is the whole of the binary requirement. Nine numbers to recognise on sight:
 
 Learn this column. It is nine numbers and it unlocks everything that follows.
 
+### The five classes, and the addresses that are already spoken for
+
+You will meet "class C" in manuals, in vendor documentation and from people who learned this in
+1998. Classful addressing was replaced by CIDR in 1993, so nothing on your rig actually works this
+way, and the vocabulary survives anyway. It is worth ten minutes because the reserved ranges it
+defined are still reserved, and you will use several of them every day.
+
+The rule is one thing: **the leading bits of the first octet**, which is why the boundaries fall on
+128, 192, 224 and 240 rather than anywhere that looks sensible.
+
+<!--anim:address-classes-->
+
+| Class | First octet | Starts with | Default mask | What it is now |
+|---|---|---|---|---|
+| A | 0–127 | `0` | /8 | ordinary space, and 10.x is the private part of it |
+| B | 128–191 | `10` | /16 | ordinary space, 172.16–172.31 is the private part |
+| C | 192–223 | `110` | /24 | ordinary space, 192.168 is the private part |
+| D | 224–239 | `1110` | none | **multicast**, and you use this constantly |
+| E | 240–255 | `1111` | none | reserved in 1981, never released |
+
+The ones to actually know:
+
+- **`127.0.0.0/8`, loopback.** Sixteen million addresses spent so that a packet to any of them
+  never reaches a wire. `127.0.0.1` is localhost. A service listening only on 127.0.0.1 is
+  invisible to every other machine no matter how right your addressing is, and that costs an
+  afternoon at least once.
+- **`0.0.0.0`.** As a source it means "I have no address yet", which is what a DHCP Discover uses.
+  As a route it means the default route.
+- **`255.255.255.255`, limited broadcast.** Everything on this wire, and no router ever forwards
+  it. All host bits set to one is also the broadcast address for a given network: `.255` on a /24,
+  `x.255.255.255` on a /8.
+- **`169.254.0.0/16`, link-local.** What a device gives itself when nobody answers DHCP.
+- **`10/8`, `172.16/12`, `192.168/16`, private.** Never routed on the public internet, which is why
+  every show network on earth can use the same numbers at once.
+- **`224.0.0.0/24`, local multicast control.** Never forwarded by a router whatever the TTL says.
+  `224.0.0.1` is every host on this wire; `224.0.0.251` is mDNS, which is how Dante Controller
+  finds anything at all.
+- **`239.0.0.0/8`, organisation-local multicast.** Scoped to your site by design. sACN lives at
+  `239.255.0.0/16`, one group per universe, which is exactly why it does not leak to the internet.
+
+And the one that is not reserved and catches everybody: **`2.x.x.x` is ordinary public address
+space that somebody actually owns.** Art-Net gear has shipped on it for decades anyway.
+
+---
+
 ### The mask is a run of ones
 
 An IPv4 address is 32 bits, written as four octets. The **subnet mask** is also 32 bits, and it is
@@ -724,6 +769,34 @@ The two words you will meet in every switch menu, and the two that get confused.
 tag. It exists for backward compatibility and it is a classic source of confusion. Set it
 deliberately, set it the same at both ends, and write it down.
 
+### Two switches, one spare cable, and the whole network stops
+
+The single most destructive thing anybody can do to a show network takes four seconds and looks
+helpful: patch a second cable between two switches that are already connected.
+
+<!--anim:broadcast-storm-->
+
+Nothing is faulty when this happens. Every device does exactly its job. A switch floods a
+broadcast out of every port except the one it arrived on, so switch A sends it down the second
+link to switch B, which floods it back. **An IP packet carries a time to live and every router
+decrements it; an Ethernet frame carries nothing of the kind.** No copy is ever discarded, so they
+double on every pass. In a few seconds the link is saturated, both switches are spending all their
+processing on flooding, and their MAC tables are relearning the same source address on alternating
+ports many times a second.
+
+The symptom is that the entire network dies, including the parts nowhere near the loop, and every
+link light is on solid. Unplug either end of either cable and it clears instantly, which is how it
+is usually found and why it is so often blamed on the wrong thing.
+
+The fix is **spanning tree**: the switches talk to each other, agree which path to keep, and put
+the other into a blocking state. The cable stays in and stops being used, and if the working path
+fails the blocked one takes over. RSTP does that in about a second; the original 1990 spanning
+tree took thirty to fifty, which on a show is the difference between a glitch and a cue that does
+not happen. If your switches support RSTP, this is what redundancy is meant to look like. If they
+do not, the rule is simply that there is one path between any two points and you check it.
+
+---
+
 ### The failure that looks like broken hardware
 
 Worth its own moment, because it is on the exam and it wastes hours in real life.
@@ -844,6 +917,53 @@ Four options. Argue for one before you read on.
 combined with Option 3, because you need the flexibility and you have the staff. Option 4 where a
 failure is a safety issue.
 
+### VPNs, and why the node stopped answering
+
+A VPN does not encrypt your show network and it does not sit between your laptop and the rig. It
+adds a **second network interface** and it **rewrites the routing table**, and the routing table is
+what decides where each packet goes. Everything that follows is a consequence of that one fact.
+
+<!--anim:vpn-routes-->
+
+The routing table always picks the most specific match, so the results are not uniform and that is
+what makes this confusing to diagnose:
+
+- **A node on your own subnet usually still works.** A directly connected route is more specific
+  than a default route, so unicast to something on your own wire survives even a full tunnel. This
+  is why the fault looks intermittent: half your tests pass.
+- **Anything through the show router does not.** Its route was the default route, and the default
+  route now points at the tunnel.
+- **Multicast and broadcast are the ones that hurt.** sACN on 239.255.x.x, Art-Net polling, and
+  the mDNS that Dante Controller uses to find anything at all. Most VPN clients do not carry them.
+  The console reports no nodes and Dante Controller shows an empty list, which reads exactly like
+  a dead switch and is not one.
+- **DNS moves too.** A full tunnel usually pushes its own resolvers, so local names and `.local`
+  addresses stop resolving even when the addresses behind them are fine.
+- **Some clients refuse local traffic outright** while connected, as a deliberate policy. The link
+  light is on, the address is right, and nothing answers.
+- **An overlapping range is the worst version.** If the company tunnel claims `10.0.0.0/8` and your
+  show is on `10.101.x`, every show address is matched by the tunnel and sent to a concentrator in
+  another country. Every obvious check passes.
+
+**What can and cannot be read.** Two directions, and they are different questions.
+
+From the show network's side: the tunnel is encrypted, so a switch, a monitor port or anybody
+else on the show LAN sees only encrypted packets going to one remote address. They cannot read
+what is inside. That is the whole point of it.
+
+From the far end's side: the company network sees whatever is routed into the tunnel, and nothing
+else. It cannot see your show traffic unless a route sends it there, which is exactly what the
+overlapping range above does by accident. The real risk is not eavesdropping, it is that a laptop
+holding both a show network and a corporate tunnel is a **path between two networks that were
+meant to be separate**, and it is a path nobody drew on the schedule.
+
+**The working rule.** No VPN on a machine that is doing show control. If a licence check or a
+support session genuinely needs one, ask for split tunnel, ask which prefixes it claims, write
+that answer on the IP schedule, and turn it off before the doors open. A VPN that reconnects by
+itself when it sees a network is the reason "it worked yesterday" is true and useless.
+
+---
+
 ### Wireless
 
 <!--anim:wifi-channels-->
@@ -961,6 +1081,15 @@ Small moment, long memory. The protocol stops being an acronym and becomes visib
 - **"IP addresses just work."** They work when someone designed a scheme and wrote it down.
 - **"A managed switch is better."** More capable and more dangerous. Half configured is worse.
 - **"Multicast reduces network traffic."** Only when the switches cooperate.
+- **"The VPN is encrypted, so it cannot affect the show network."** A VPN does not sit between your
+  laptop and the rig. It adds an interface and rewrites the routing table, and the routing table
+  decides where every packet goes. Same-subnet unicast usually survives, so half your tests pass;
+  multicast, broadcast, mDNS discovery and anything through the show router do not. The encryption
+  is real and it is not the part that breaks your show.
+- **"A loop is fine, the switches will work it out."** Only if spanning tree is running. Without it
+  a single broadcast is copied forever, because a frame at layer 2 has no time to live to count
+  down, and the copies double on every pass until the network stops. Nothing is faulty and every
+  link light is on.
 - **"We can use the venue Wi-Fi."** No.
 
 ---

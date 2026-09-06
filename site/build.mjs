@@ -994,11 +994,6 @@ write('/', shell({
     繁體中文, grouped by domain, with a live filter and a flashcard mode.</p></a>
   </div>
 
-  <h2 class="hd hd-2" id="scope">A note on scope</h2>
-  <p>The full module is these five classes, plus a production visit and a practical exam. The visit
-  and the exam are not published here. Neither works as a web page,
-  and publishing the exam's fault library and mark scheme would defeat the assessment. They live in
-  the lecturer's own pack, along with the teaching guide.</p>
 </article>`,
   active: '/',
   scripts: ['/assets/practice.js'],
@@ -1083,7 +1078,7 @@ function resolve(route, id) {
 const FIG_TITLE = new Map();
 for (const f of fs.readdirSync(path.join(HERE, 'assets')).filter((n) => /^anim-.*\.js$/.test(n))) {
   const src = fs.readFileSync(path.join(HERE, 'assets', f), 'utf8');
-  for (const m of src.matchAll(/register\('([a-z0-9-]+)'[\s\S]{0,2200}?title:\s*'((?:[^'\\]|\\.)*)'/g)) {
+  for (const m of src.matchAll(/register\('([a-z0-9-]+)'[\s\S]{0,8000}?title:\s*'((?:[^'\\]|\\.)*)'/g)) {
     if (!FIG_TITLE.has(m[1])) FIG_TITLE.set(m[1], m[2].replace(/\\'/g, "'"));
   }
 }

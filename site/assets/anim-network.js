@@ -888,3 +888,392 @@ register('dhcp-lease', (host) => {
   );
   upd();
 });
+
+// ============================================================================
+// A VPN on a show laptop: which destinations still leave by the show NIC
+// ============================================================================
+
+register('vpn-routes', (host) => {
+  // What a laptop on a show network actually tries to reach, and how each one
+  // is matched. The routing table picks the most specific match, which is the
+  // whole reason some of this survives a tunnel and some of it does not.
+  const DESTS = [
+    { k: 'local', label: 'A node on this subnet', addr: '10.101.10.40', why: 'sACN unicast, a web page on a node, ping',
+      match: 'on-link 10.101.10.0/24' },
+    { k: 'other', label: 'A node on another subnet', addr: '10.101.20.40', why: 'the audio VLAN, through the show router',
+      match: 'default route' },
+    { k: 'mcast', label: 'sACN multicast', addr: '239.255.0.1', why: 'the normal way lighting data moves',
+      match: 'multicast, per interface' },
+    { k: 'mdns', label: 'Dante discovery', addr: '224.0.0.251', why: 'mDNS, how Dante Controller finds anything',
+      match: 'multicast, per interface' },
+    { k: 'bcast', label: 'Art-Net broadcast', addr: '10.255.255.255', why: 'older nodes, and Art-Net polling',
+      match: 'broadcast, per interface' },
+    { k: 'net', label: 'A licence server', addr: '198.51.100.9', why: 'the thing the VPN was turned on for',
+      match: 'default route' },
+  ];
+  const MODES = {
+    off: { label: 'VPN off', note: 'One interface, one default route.' },
+    split: { label: 'Split tunnel', note: 'Only the company prefixes go into the tunnel.' },
+    full: { label: 'Full tunnel', note: 'The default route points at the tunnel.' },
+    blocked: { label: 'Full tunnel, LAN access blocked', note: 'The client also refuses local traffic.' },
+  };
+  const st = { mode: 'off', overlap: false };
+  const { controls, stage, setNote, challenge } = figure(host, {
+    title: 'What a VPN does to a show laptop',
+    sub: 'A VPN does not encrypt your show network. It adds a second interface and rewrites the routing table, and the routing table is what decides which of these still reaches anything.',
+    note: '&nbsp;',
+  });
+
+  challenge('Find the setting where the licence server works and every show destination still does, then break it with a company range that overlaps the show.',
+    () => st.mode === 'split' && st.overlap);
+
+  // Where each destination goes. Directly connected routes beat a default
+  // route, which is why same-subnet traffic normally survives a full tunnel.
+  const routeOf = (d) => {
+    if (st.mode === 'off') return d.k === 'net' ? 'wan' : 'show';
+    if (st.mode === 'blocked') return d.k === 'net' ? 'tunnel' : 'dropped';
+    const localish = d.k === 'local' || d.k === 'mcast' || d.k === 'mdns' || d.k === 'bcast';
+    if (st.mode === 'split') {
+      if (d.k === 'net') return 'tunnel';
+      if (st.overlap) return 'tunnel';                  // the company claims 10/8
+      return 'show';
+    }
+    // Full tunnel: on-link survives, everything routed does not. Multicast and
+    // broadcast depend on the client, and most of them do not carry it.
+    if (d.k === 'local') return 'show';
+    if (localish) return 'maybe';
+    return 'tunnel';
+  };
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 340,
+    animated: false,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(680, w - 24), ox = (w - W) / 2;
+      const stacked = W < 520;
+
+      // The two interfaces the laptop now has.
+      const ifH = 40;
+      const half = (W - 12) / 2;
+      const on = st.mode !== 'off';
+      box(g, ox, 18, half, ifH, { fill: alpha(p.cyan, 0.14), stroke: p.cyan, r: 7 });
+      label(g, 'show NIC  10.101.10.20/24', ox + 10, 38, { color: p.cyan, size: 11, max: half - 20, ...mono });
+      box(g, ox + half + 12, 18, half, ifH, {
+        fill: on ? alpha(p.amber, 0.14) : alpha(p.line, 0.25),
+        stroke: on ? p.amber : p.line, r: 7, lw: on ? 2 : 1,
+      });
+      label(g, on ? 'VPN adapter  10.8.0.6' : 'VPN adapter  (down)', ox + half + 22, 38,
+        { color: on ? p.amber : p.muted, size: 11, max: half - 20, ...mono });
+
+      let y = 72;
+      label(g, MODES[st.mode].note + (st.overlap && st.mode !== 'off' ? '  The company claims 10.0.0.0/8.' : ''),
+        ox, y, { color: p.muted, size: 11, max: W });
+      y += 16;
+
+      // One row per destination: what it is, and where it actually goes.
+      const rowH = stacked ? 46 : 34;
+      const nameW = stacked ? W : clamp(W * 0.34, 150, 240);
+      const addrW = stacked ? 0 : clamp(W * 0.2, 110, 150);
+      const OUT = {
+        show: ['out the show NIC', p.green],
+        wan: ['out to the internet', p.green],
+        tunnel: ['into the tunnel', p.amber],
+        maybe: ['most clients drop it', p.red],
+        dropped: ['refused by the client', p.red],
+      };
+      DESTS.forEach((d, i) => {
+        const ry = y + i * rowH;
+        const r = routeOf(d);
+        const [txt, col] = OUT[r];
+        const bad = r === 'maybe' || r === 'dropped' || (r === 'tunnel' && d.k !== 'net');
+        label(g, d.label, ox, ry + 12, { color: p.ink2, size: 11.5, weight: 600, max: nameW - 8 });
+        label(g, d.why, ox, ry + 26, { color: p.muted, size: 9.5, max: stacked ? W : nameW - 8 });
+        if (!stacked) label(g, d.addr, ox + nameW, ry + 12, { color: p.muted, size: 10.5, max: addrW - 8, ...mono });
+        const tx = stacked ? ox : ox + nameW + addrW;
+        const tw = stacked ? W : W - nameW - addrW;
+        const ty = stacked ? ry + 38 : ry + 12;
+        box(g, tx, ty - 10, Math.min(tw, textWidth(g, txt, { size: 10.5 }) + 18), 20,
+          { fill: alpha(col, bad ? 0.16 : 0.14), stroke: col, r: 4, lw: 1 });
+        label(g, txt, tx + 9, ty, { color: col, size: 10.5, weight: 600, max: tw - 18 });
+      });
+      y += DESTS.length * rowH + 8;
+
+      const broken = DESTS.filter((d) => d.k !== 'net' && routeOf(d) !== 'show').length;
+      const summary = broken > 0
+        ? `${broken} of the five show destinations no longer reach anything. Nothing is broken on the network and nothing is broken on the node; the laptop simply decided to send them somewhere else.`
+        : st.mode === 'off'
+          ? 'Everything leaves by the interface it should. This is the state you are trying to get back to.'
+          : 'Every show destination still leaves by the show NIC, and the licence server goes down the tunnel. This is the only arrangement that is both useful and safe, and it depends entirely on the company range not overlapping the show range.';
+      y += labelWrap(g, summary, ox, y, { color: broken === 0 ? p.green : p.red, size: 11.5, max: W, maxLines: 3 });
+      fit(y + 18);
+    },
+  });
+
+  const upd = () => {
+    if (st.mode === 'off') setNote('<b>One interface, one default route, and everything behaves.</b> Worth looking at before the others, because this is the state you are trying to get back to. Note that the licence server and the node leave by different routes for different reasons: the node because it is on this wire, the server because it is not.');
+    else if (st.mode === 'blocked') setNote('<b>This is the one that makes people think the node is dead.</b> Many corporate clients have a setting that refuses local network access while connected, on the grounds that a laptop bridging a hostile LAN and the company network is a risk. It is a reasonable position and it makes the machine useless for show control. The link light is on, the address is right, and nothing answers.');
+    else if (st.mode === 'full') setNote('<b>Same subnet still works, and almost nothing else does.</b> A directly connected route is more specific than a default route, so unicast to a node on your own wire survives. Anything through the show router is now going to the tunnel instead. Multicast and broadcast are worse: sACN, Art-Net polling and Dante’s mDNS discovery are not carried by most clients, so the console sees no nodes and Dante Controller sees an empty list, which reads as a hardware fault and is not one.');
+    else if (st.overlap) setNote('<b>Split tunnel, and the company range swallowed the show.</b> The tunnel claims 10.0.0.0/8 because somebody at head office picked it years ago, and your show is on 10.101.x. That is more specific than nothing and it is applied first, so every show address now goes to a concentrator in another country. This is the failure that survives every obvious check: the addresses are right, the mask is right, the cable is right.');
+    else setNote('<b>Split tunnel is the arrangement to ask for.</b> Only the company prefixes go into the tunnel and everything else keeps its normal route, so the licence check works and the rig still answers. Ask which prefixes it claims before you trust it, and put the answer on the IP schedule next to everything else.');
+  };
+
+  controls.append(
+    choice('VPN', Object.entries(MODES).map(([k, v]) => [k, v.label]), { value: 'off', on: (v) => { st.mode = v; upd(); } }).node,
+    toggle('Company range overlaps the show', { on: (v) => { st.overlap = v; upd(); } }).node
+  );
+  upd();
+});
+
+
+// ============================================================================
+// The five classes, and every address that is spoken for
+// ============================================================================
+
+register('address-classes', (host) => {
+  // The class is decided by the leading bits of the first octet, which is why
+  // the boundaries fall on 128, 192, 224 and 240 rather than on round numbers.
+  const CLASSES = [
+    { k: 'A', lo: 0, hi: 127, bits: '0', pfx: '/8', col: 'cyan', hosts: '16,777,214 hosts each', n: '128 networks' },
+    { k: 'B', lo: 128, hi: 191, bits: '10', pfx: '/16', col: 'green', hosts: '65,534 hosts each', n: '16,384 networks' },
+    { k: 'C', lo: 192, hi: 223, bits: '110', pfx: '/24', col: 'amber', hosts: '254 hosts each', n: '2,097,152 networks' },
+    { k: 'D', lo: 224, hi: 239, bits: '1110', pfx: 'n/a', col: 'red', hosts: 'multicast groups', n: 'no hosts, no subnets' },
+    { k: 'E', lo: 240, hi: 255, bits: '1111', pfx: 'n/a', col: 'muted', hosts: 'reserved, never used', n: 'experimental' },
+  ];
+  // Reserved blocks, in the order a match should be reported: most specific first.
+  const SPECIAL = [
+    { lo: '127.0.0.0', hi: '127.255.255.255', name: 'Loopback', why: 'Never leaves the machine. 127.0.0.1 is localhost, and the whole /8 is set aside for it, so 127.9.9.9 is your own machine too.' },
+    { lo: '0.0.0.0', hi: '0.255.255.255', name: 'This network', why: 'As a source it means "I do not have an address yet", which is what a DHCP Discover uses. As a route it means the default route.' },
+    { lo: '169.254.0.0', hi: '169.254.255.255', name: 'Link-local', why: 'What a device gives itself when DHCP does not answer. It can reach others that did the same and nothing else.' },
+    { lo: '10.0.0.0', hi: '10.255.255.255', name: 'Private', why: 'RFC 1918. Never routed on the public internet, which is why every show network in the world can use it at once.' },
+    { lo: '172.16.0.0', hi: '172.31.255.255', name: 'Private', why: 'RFC 1918, the awkward one: 172.16 to 172.31, not the whole of 172.' },
+    { lo: '192.168.0.0', hi: '192.168.255.255', name: 'Private', why: 'RFC 1918, and the range every domestic router ships on.' },
+    { lo: '224.0.0.0', hi: '224.0.0.255', name: 'Local multicast control', why: 'Never forwarded by a router, whatever the TTL says. 224.0.0.1 is every host on this wire, 224.0.0.251 is mDNS, which is how Dante finds anything.' },
+    { lo: '239.0.0.0', hi: '239.255.255.255', name: 'Organisation-local multicast', why: 'Scoped to your site by design. sACN lives at 239.255.0.0/16, one group per universe, which is exactly why it does not leak onto the internet.' },
+    { lo: '255.255.255.255', hi: '255.255.255.255', name: 'Limited broadcast', why: 'Everything on this wire, and no router ever forwards it. This is what a DHCP Discover is addressed to.' },
+    { lo: '2.0.0.0', hi: '2.255.255.255', name: 'Ordinary public space, and the Art-Net trap', why: 'Perfectly normal public addresses that Art-Net gear has shipped on for decades. Nothing reserved about it, which is the problem.' },
+  ];
+  const toInt = (ip) => ip.split('.').reduce((a, o) => a * 256 + (+o), 0) >>> 0;
+
+  const st = { oct: 239, rest: '255.0.1' };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'The five classes, and every address that is already spoken for',
+    sub: 'Classful addressing has been obsolete since 1993 and the vocabulary is still in every manual. The rule is one thing: the leading bits of the first octet.',
+    note: '&nbsp;',
+  });
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 320,
+    animated: false,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(680, w - 24), ox = (w - W) / 2;
+      const cls = CLASSES.find((c) => st.oct >= c.lo && st.oct <= c.hi);
+      const col = p[cls.col] || p.muted;
+      const addr = `${st.oct}.${st.rest}`;
+      const ai = toInt(addr);
+
+      // The whole first-octet space, to scale, so the halving is visible.
+      const barY = 22, barH = 30;
+      CLASSES.forEach((c) => {
+        const x = ox + (c.lo / 256) * W;
+        const bw = ((c.hi - c.lo + 1) / 256) * W;
+        const on = c === cls;
+        box(g, x, barY, bw - 1, barH, {
+          fill: alpha(p[c.col] || p.muted, on ? 0.5 : 0.16),
+          stroke: on ? (p[c.col] || p.muted) : 'transparent', r: 3, lw: on ? 2 : 0,
+        });
+        if (bw > 22) label(g, c.k, x + bw / 2, barY + barH / 2,
+          { color: on ? p.ink : p.muted, size: 12, weight: 700, align: 'center', max: bw - 4, ...mono });
+      });
+      label(g, '0', ox, barY + barH + 12, { color: p.muted, size: 9.5, max: 30, ...mono });
+      label(g, '255', ox + W, barY + barH + 12, { color: p.muted, size: 9.5, align: 'right', max: 30, ...mono });
+      for (const b of [128, 192, 224, 240]) {
+        const x = ox + (b / 256) * W;
+        line(g, x, barY, x, barY + barH + 4, { color: alpha(p.line, 1), lw: 1 });
+        label(g, String(b), x, barY + barH + 12, { color: p.muted, size: 9.5, align: 'center', max: 40, ...mono });
+      }
+
+      // The first octet in binary, with the bits that decided it lit.
+      let y = barY + barH + 30;
+      const b8 = (st.oct >>> 0).toString(2).padStart(8, '0');
+      const cw = Math.min(30, (W - 130) / 8);
+      label(g, `${st.oct} =`, ox, y + 12, { color: p.muted, size: 12, max: 60, ...mono });
+      b8.split('').forEach((bit, i) => {
+        const x = ox + 60 + i * cw;
+        const decided = i < cls.bits.length;
+        box(g, x, y, cw - 3, 26, {
+          fill: decided ? alpha(col, 0.35) : alpha(p.line, 0.3), stroke: decided ? col : 'transparent', r: 3, lw: 1,
+        });
+        label(g, bit, x + (cw - 3) / 2, y + 13, { color: decided ? p.ink : p.muted, size: 13, weight: 700, align: 'center', max: cw, ...mono });
+      });
+      label(g, `starts ${cls.bits} → class ${cls.k}`, ox + 60 + 8 * cw + 12, y + 13,
+        { color: col, size: 11.5, weight: 650, max: Math.max(20, ox + W - (ox + 60 + 8 * cw + 12)) });
+      y += 38;
+
+      label(g, `Class ${cls.k}: ${cls.n}, ${cls.hosts}${cls.pfx !== 'n/a' ? `, default mask ${cls.pfx}` : ''}`,
+        ox, y, { color: p.ink2, size: 11.5, max: W });
+      y += 20;
+
+      // Is this address already spoken for?
+      const hit = SPECIAL.find((sp) => ai >= toInt(sp.lo) && ai <= toInt(sp.hi));
+      const bcast = st.rest === '255.255.255' || addr === '255.255.255.255';
+      if (hit) {
+        box(g, ox, y, W, 28, { fill: alpha(p.amber, 0.14), stroke: p.amber, r: 6 });
+        label(g, `${addr} is in ${hit.lo}–${hit.hi}: ${hit.name}`, ox + 10, y + 14,
+          { color: p.amber, size: 11.5, weight: 650, max: W - 20 });
+        y += 36;
+        y += labelWrap(g, hit.why, ox, y, { color: p.ink2, size: 11.5, max: W, maxLines: 3 }) + 8;
+      } else {
+        box(g, ox, y, W, 28, { fill: alpha(p.green, 0.12), stroke: p.green, r: 6 });
+        label(g, `${addr} is ordinary public address space, assigned to somebody`, ox + 10, y + 14,
+          { color: p.green, size: 11.5, weight: 650, max: W - 20 });
+        y += 36;
+      }
+      if (bcast) {
+        y += labelWrap(g, 'All host bits set to one is the broadcast address for that network, and it is never a usable host address. On a /24 that is .255; on a /8 it is x.255.255.255.',
+          ox, y, { color: p.muted, size: 11, max: W, maxLines: 2 }) + 6;
+      }
+      fit(y + 14);
+    },
+  });
+
+  const upd = () => {
+    const cls = CLASSES.find((c) => st.oct >= c.lo && c.hi >= st.oct);
+    const addr = `${st.oct}.${st.rest}`;
+    const ai = toInt(addr);
+    const hit = SPECIAL.find((sp) => ai >= toInt(sp.lo) && ai <= toInt(sp.hi));
+    if (cls.k === 'D') setNote('<b>Class D is multicast, and it is the one class you still use every day.</b> A class D address is not a machine, it is a group: anything that wants that stream joins the group and the switches work out where to deliver it. sACN puts one universe on one group inside 239.255.0.0/16, which is organisation-local scope, meaning it is scoped to your site on purpose. 224.0.0.x is the local control range and no router ever forwards it, which is where mDNS lives and therefore how Dante Controller finds anything.');
+    else if (cls.k === 'E') setNote('<b>Class E was reserved in 1981 for future use and the future never arrived.</b> 240.0.0.0 upwards is still set aside, most stacks refuse to route it, and proposals to release it appear every few years and go nowhere. It is worth a sentence only so that you recognise it as unusable rather than as a mistake.');
+    else if (hit && hit.name === 'Loopback') setNote('<b>127 is your own machine, and the whole /8 is spent on it.</b> Sixteen million addresses reserved so that a packet to any of them never reaches a wire. That is why localhost still works with the cable out, and why a service listening on 127.0.0.1 is invisible to everything else on the network no matter how correct your addressing is. That last one costs students an afternoon at least once.');
+    else if (hit && hit.name === 'Private') setNote('<b>Private ranges are the reason every show network can use the same numbers.</b> 10.0.0.0/8, 172.16 to 172.31, and 192.168 are guaranteed never to be routed on the public internet, so they are yours to design with. That is also why they collide with company VPN ranges, and why the Art-Net trap on 2.x.x.x is such a shock: 2 is ordinary public space that somebody actually owns.');
+    else setNote(`<b>The class is decided by the leading bits, and nothing else.</b> A leading 0 is class A, 10 is class B, 110 is class C, 1110 is multicast and 1111 is reserved. That is why the boundaries fall on 128, 192, 224 and 240 rather than anywhere sensible looking. CIDR replaced the whole idea in 1993, because a class B was too big for almost everybody and a class C was too small, and now the mask is written down instead of guessed from the address. The words survive in manuals, and this is what they meant.`);
+  };
+
+  controls.append(
+    slider('First octet', { min: 0, max: 255, step: 1, value: 239, fmt: (v) => `${v}`, on: (v) => { st.oct = v; upd(); } }).node,
+    choice('The rest', [['255.0.1', '.255.0.1'], ['0.0.1', '.0.0.1'], ['101.1.20', '.101.1.20'], ['255.255.255', '.255.255.255']],
+      { value: '255.0.1', on: (v) => { st.rest = v; upd(); } }).node
+  );
+  upd();
+});
+
+// ============================================================================
+// Two switches, one loop, and no time to live
+// ============================================================================
+
+register('broadcast-storm', (host) => {
+  const st = { loop: false, stp: false, t: 0 };
+  const { controls, stage, setNote, challenge } = figure(host, {
+    title: 'Two switches, one spare cable, and the network is gone',
+    sub: 'One broadcast frame into a loop. An IP packet has a time to live that counts down; an Ethernet frame has nothing of the kind, so nothing ever stops it.',
+    note: '&nbsp;',
+  });
+
+  challenge('Make the storm, then stop it without unplugging anything.',
+    () => st.loop && st.stp);
+
+  let elapsed = 0;
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 320,
+    controls,
+    draw(g, w, hgt, t, dt) {
+      const p = palette();
+      const W = Math.min(660, w - 24), ox = (w - W) / 2;
+      const storming = st.loop && !st.stp;
+      if (storming) elapsed = Math.min(6, elapsed + dt);
+      else elapsed = 0;
+
+      // Copies double on every pass round the loop. A pass is quick, so this
+      // is deliberately slowed; the shape is the honest part, not the clock.
+      const passes = Math.floor(elapsed * 6);
+      const copies = storming ? Math.min(2 ** passes, 2 ** 20) : 1;
+      const load = storming ? Math.min(1, copies / 4096) : 0.02;
+
+      const ax = ox + W * 0.28, bx = ox + W * 0.72, sy = 76;
+      const bw = Math.min(150, W * 0.3);
+
+      // The two links between the switches. The second one is the whole story.
+      const linkCol = storming ? p.red : p.cyan;
+      line(g, ax + bw / 2, sy + 6, bx - bw / 2, sy + 6, { color: alpha(linkCol, 0.9), lw: storming ? 4 : 2 });
+      if (st.loop) {
+        const blocked = st.stp;
+        line(g, ax + bw / 2, sy + 30, bx - bw / 2, sy + 30, {
+          color: blocked ? alpha(p.muted, 0.7) : alpha(linkCol, 0.9),
+          lw: storming ? 4 : 2, dash: blocked ? [5, 4] : undefined,
+        });
+        if (blocked) {
+          const mx = (ax + bx) / 2;
+          box(g, mx - 34, sy + 20, 68, 20, { fill: alpha(p.amber, 0.18), stroke: p.amber, r: 4 });
+          label(g, 'blocked', mx, sy + 30, { color: p.amber, size: 10, align: 'center', max: 62 });
+        }
+      }
+
+      for (const [x, name] of [[ax, 'Switch A'], [bx, 'Switch B']]) {
+        box(g, x - bw / 2, sy - 24, bw, 44, {
+          fill: storming ? alpha(p.red, 0.16) : alpha(p.cyan, 0.12),
+          stroke: storming ? p.red : p.cyan, r: 7, lw: 2,
+        });
+        label(g, name, x, sy - 2, { color: storming ? p.red : p.cyan, size: 12, weight: 650, align: 'center', max: bw - 10 });
+      }
+
+      // Frames on the wire.
+      if (st.loop || true) {
+        const n = storming ? Math.min(14, 2 + passes * 2) : 1;
+        for (let i = 0; i < n; i++) {
+          const u = ((t * (storming ? 1.6 : 0.5)) + i / n) % 1;
+          const onLower = st.loop && !st.stp && i % 2 === 1;
+          const yy = sy + (onLower ? 30 : 6);
+          const x = onLower ? lerp(bx - bw / 2, ax + bw / 2, u) : lerp(ax + bw / 2, bx - bw / 2, u);
+          g.fillStyle = storming ? p.red : p.amber;
+          g.beginPath(); g.arc(x, yy, 4, 0, Math.PI * 2); g.fill();
+        }
+      }
+
+      let y = sy + 64;
+      // What the wire is carrying.
+      label(g, 'link utilisation', ox, y + 9, { color: p.muted, size: 10.5, max: 110, ...mono });
+      const barX = ox + 118, barW = W - 178;
+      box(g, barX, y, barW, 16, { fill: alpha(p.line, 0.4), stroke: 'transparent', r: 3 });
+      box(g, barX, y, Math.max(2, barW * load), 16,
+        { fill: alpha(load > 0.7 ? p.red : load > 0.3 ? p.amber : p.green, 0.6), stroke: load > 0.7 ? p.red : p.green, r: 3, lw: 1 });
+      label(g, `${(load * 100).toFixed(0)} %`, ox + W, y + 9, { color: p.ink2, size: 11, align: 'right', max: 54, ...mono });
+      y += 28;
+
+      const rows = storming
+        ? [[`copies of one frame: ${copies.toLocaleString('en-US')}`, p.red],
+          ['the MAC table is relearning the same address on both ports, many times a second', p.red],
+          ['no frame has ever been discarded, because nothing counts them down', p.red]]
+        : st.loop
+          ? [['one path forwarding, one path blocked, and the loop is still physically there', p.green],
+            ['if the forwarding path fails, the blocked one takes over in about a second', p.muted],
+            ['nothing was unplugged; the switches agreed which link to stop using', p.muted]]
+          : [['one path, no loop, and a broadcast is delivered once to every port', p.green],
+            ['this is the state you think you are in when somebody adds a spare cable', p.muted],
+            ['add the second link below and watch what a frame with no time to live does', p.muted]];
+      for (const [txt, col] of rows) {
+        y += labelWrap(g, txt, ox, y, { color: col, size: 11.5, max: W, maxLines: 2 }) + 5;
+      }
+      fit(y + 12);
+    },
+  });
+
+  const upd = () => {
+    if (st.loop && !st.stp) setNote('<b>Nothing here is faulty. Every device is doing exactly its job.</b> Switch A floods a broadcast out of every port except the one it arrived on, which includes the second link. Switch B does the same and sends it back. An IP packet carries a time to live that every router decrements, and a frame at layer 2 carries nothing of the kind, so the copies never die: they double on every pass. In a few seconds the link is full, both switches are spending everything on flooding, and their MAC tables are relearning the same source address on alternating ports many times a second. The whole network stops, including the parts nowhere near the loop. Unplug either cable and it clears instantly, which is how it is usually found.');
+    else if (st.loop && st.stp) setNote('<b>Spanning tree leaves the cable in and stops using it.</b> The switches talk to each other, agree which path to keep and put the other into a blocking state, so there is one active path and no loop. Take the working path away and the blocked one comes up: RSTP does that in about a second, the original 1990 spanning tree took thirty to fifty, which on a show is the difference between a glitch and a cue that does not happen. If your switches support it, this is what redundancy is supposed to look like.');
+    else setNote('<b>One path between two switches, and a broadcast reaches every port once.</b> This is the state everybody assumes they are in. It stops being true the moment somebody patches a spare cable between two panels to be helpful, or plugs both ends of a ring into a rack that was never configured for one, or cross-patches a Dante secondary network into the primary switch.');
+  };
+
+  controls.append(
+    toggle('A second cable between them', { on: (v) => { st.loop = v; elapsed = 0; upd(); } }).node,
+    toggle('Spanning tree running', { on: (v) => { st.stp = v; elapsed = 0; upd(); } }).node
+  );
+  upd();
+});
