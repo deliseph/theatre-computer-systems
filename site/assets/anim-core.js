@@ -275,6 +275,10 @@ export function canvas(stage, { height = 260, draw, animated = true, controls })
   const size = () => {
     const dpr = Math.min(2, devicePixelRatio || 1);
     w = cv.clientWidth || stage.clientWidth || 600;
+    // label() clamps text to this. clientWidth reads 0 while a tab panel is
+    // hidden, and a figure that paints in that moment would otherwise draw
+    // unclamped, so keep the width the drawing was actually laid out for.
+    cv.__cssw = w;
     hgt = height;
     cv.style.height = `${hgt}px`;
     cv.width = Math.round(w * dpr);
@@ -361,15 +365,102 @@ export function box(g, x, y, w, h, { fill, stroke, r = 8, lw = 1.5 }) {
 export const TEXT_SCALE = TEACH ? 1.34 : 1;
 const MIN_PROJECTED = 13;
 
-export function label(g, text, x, y, { color, size = 12, weight = 500, align = 'left', baseline = 'middle', mono = false }) {
-  if (TEXT_SCALE !== 1) size = Math.max(MIN_PROJECTED, size * TEXT_SCALE);
+const FACE = (mono) => (mono
+  ? 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+  : 'ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif');
+
+/** The size a label will actually be drawn at, projector scaling included. */
+export const drawnSize = (size = 12) => (TEXT_SCALE === 1 ? size : Math.max(MIN_PROJECTED, size * TEXT_SCALE));
+
+/** Set the font a label would use, so a caller can measure before it draws. */
+export function useFont(g, { size = 12, weight = 500, mono = false } = {}) {
+  g.font = `${weight} ${drawnSize(size)}px ${FACE(mono)}`;
+  return g;
+}
+
+/** Width of a string as label() would draw it. */
+export function textWidth(g, text, opts = {}) {
+  g.save(); useFont(g, opts);
+  const w = g.measureText(String(text)).width;
+  g.restore();
+  return w;
+}
+
+const ELL = '…';
+
+/** Cut a string to fit a width, with an ellipsis. Returns the string unchanged if it already fits. */
+function clip(g, text, maxw) {
+  const t = String(text);
+  if (maxw <= 0 || g.measureText(t).width <= maxw) return t;
+  let lo = 0, hi = t.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (g.measureText(t.slice(0, mid) + ELL).width <= maxw) lo = mid; else hi = mid - 1;
+  }
+  return lo > 0 ? t.slice(0, lo).trimEnd() + ELL : ELL;
+}
+
+/**
+ * Break a string into lines that each fit `maxw`. Long words are left whole
+ * rather than hyphenated: a broken address or a broken number reads as a
+ * different value, which is worse than a line that runs a little long.
+ */
+export function wrapText(g, text, maxw, opts = {}) {
+  g.save(); useFont(g, opts);
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && g.measureText(next).width > maxw) { lines.push(cur); cur = w; } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  g.restore();
+  return lines.length ? lines : [''];
+}
+
+/**
+ * Draw one line of text.
+ *
+ * `max` is the width it is allowed to occupy; anything longer is cut with an
+ * ellipsis rather than being allowed to run over whatever is next to it. With
+ * no `max`, the canvas edge is the limit: a figure that has not been given a
+ * width still cannot spill its text off the picture, which on a phone was the
+ * difference between a diagram and a mess.
+ */
+export function label(g, text, x, y, { color, size = 12, weight = 500, align = 'left', baseline = 'middle', mono = false, max } = {}) {
+  size = drawnSize(size);
   g.fillStyle = color;
-  g.font = `${weight} ${size}px ${mono
-    ? 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
-    : 'ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif'}`;
+  g.font = `${weight} ${size}px ${FACE(mono)}`;
   g.textAlign = align;
   g.textBaseline = baseline;
-  g.fillText(text, x, y);
+  const cw = g.canvas.clientWidth || g.canvas.__cssw || 0;
+  let room = max;
+  if (room == null && cw > 0) {
+    const PAD = 4;
+    room = align === 'center' ? 2 * Math.min(x - PAD, cw - PAD - x)
+      : (align === 'right' || align === 'end') ? x - PAD
+        : cw - PAD - x;
+  }
+  g.fillText(room > 0 ? clip(g, text, room) : String(text), x, y);
+}
+
+/**
+ * Draw text over as many lines as it needs, and report how tall it came out,
+ * so a caller can size the box around it from what was actually drawn.
+ */
+export function labelWrap(g, text, x, y, { color, size = 12, weight = 500, align = 'left', mono = false, max, lh, maxLines = 4 }) {
+  const px = drawnSize(size);
+  const step = lh || Math.round(px * 1.28);
+  let lines = wrapText(g, text, max, { size, weight, mono });
+  if (lines.length > maxLines) {
+    const keep = lines.slice(0, maxLines);
+    keep[maxLines - 1] = `${keep[maxLines - 1]} ${lines.slice(maxLines).join(' ')}`;
+    lines = keep;
+  }
+  lines.forEach((ln, i) => label(g, ln, x, y + i * step,
+    { color, size, weight, align, mono, max, baseline: 'middle' }));
+  return lines.length * step;
 }
 
 export function line(g, x1, y1, x2, y2, { color, lw = 2, dash }) {

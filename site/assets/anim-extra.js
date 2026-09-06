@@ -4,7 +4,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, lerp,
+  box, label, labelWrap, wrapText, drawnSize, line, alpha, clamp, lerp,
 } from './anim-core.js';
 
 const mono = { mono: true };
@@ -395,17 +395,36 @@ register('led-pipeline', (host) => {
       const W = Math.min(580, w - 24), ox = (w - W) / 2;
       const bad = { none: -1, mapping: 3, card: 4, pitch: 1, refresh: 5 }[st.fault];
 
+      // Six across only reads while each box is wide enough for its caption.
+      // Below that the chain folds to two rows of three rather than printing
+      // six captions over each other, which is what it used to do.
+      const perRow = W / 6 >= 92 ? 6 : 3;
+      const gap = 8;
+      const bw = (W - (perRow - 1) * gap) / perRow;
+      const cap = 8.2;
+      const capLines = Math.max(...CHAIN.map(([, why]) => wrapText(g, why, bw - 10, { size: cap }).length));
+      const capStep = Math.round(drawnSize(cap) * 1.25);
+      const bh = 26 + drawnSize(9.8) + capLines * capStep + 8;
+      const rowStep = bh + 12;
+
       CHAIN.forEach(([name, why], i) => {
-        const bw = (W - 5 * 8) / 6, x = ox + i * (bw + 8), y = 26;
+        const col = i % perRow, row = Math.floor(i / perRow);
+        const x = ox + col * (bw + gap), y = 26 + row * rowStep;
         const on = i === bad;
-        box(g, x, y, bw, 62, { fill: on ? alpha(p.red, 0.16) : alpha(p.raised, 0.6), stroke: on ? p.red : p.line, r: 6, lw: on ? 2 : 1 });
-        label(g, name, x + bw / 2, y + 20, { color: on ? p.red : p.ink2, size: 9.8, align: 'center', weight: on ? 700 : 600 });
-        label(g, why, x + bw / 2, y + 40, { color: p.muted, size: 8.2, align: 'center' });
-        if (i < 5) line(g, x + bw, y + 31, x + bw + 8, y + 31, { color: alpha(p.cyan, 0.7), lw: 1.6 });
+        box(g, x, y, bw, bh, { fill: on ? alpha(p.red, 0.16) : alpha(p.raised, 0.6), stroke: on ? p.red : p.line, r: 6, lw: on ? 2 : 1 });
+        label(g, name, x + bw / 2, y + 14 + drawnSize(9.8) / 2,
+          { color: on ? p.red : p.ink2, size: 9.8, align: 'center', weight: on ? 700 : 600, max: bw - 8 });
+        labelWrap(g, why, x + bw / 2, y + 24 + drawnSize(9.8) + capStep / 2,
+          { color: p.muted, size: cap, align: 'center', max: bw - 10, lh: capStep, maxLines: 3 });
+        // The arrow only belongs between two boxes that sit side by side.
+        if (col < perRow - 1 && i < CHAIN.length - 1) {
+          line(g, x + bw, y + bh / 2, x + bw + gap, y + bh / 2, { color: alpha(p.cyan, 0.7), lw: 1.6 });
+        }
       });
 
       // The wall, showing the symptom.
-      const wy = 110, ww = Math.min(360, W - 40), wh = ww * 0.42, wx = ox + (W - ww) / 2;
+      const chainH = 26 + Math.ceil(CHAIN.length / perRow) * rowStep;
+      const wy = chainH + 22, ww = Math.min(360, W - 40), wh = ww * 0.42, wx = ox + (W - ww) / 2;
       const cols = 8, rows = 4, pw = ww / cols, phh = wh / rows;
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
         let hue = ((c / cols) * 0.6 + 0.15) * 255;
@@ -811,24 +830,52 @@ register('micro-vs-computer', (host) => {
     animated: false,
     draw(g, w) {
       const p = palette();
-      const W = Math.min(560, w - 24), ox = (w - W) / 2;
       const cols = Object.entries(K);
-      const cw = (W - 16) / 2;
-      cols.forEach(([k, v], i) => {
-        const x = ox + i * (cw + 16), on = k === sel;
+      // Two columns is a comparison; on a narrow canvas it is two illegible
+      // slivers, so below the width where a row still reads the cards stack.
+      const side = w >= 520;
+      const W = Math.min(560, w - 24), ox = (w - W) / 2;
+      const cw = side ? (W - 16) / 2 : W;
+      const pad = 13;
+      const inner = cw - pad * 2;
+
+      // Lay the rows out first, so each card is as tall as its own text.
+      const laid = cols.map(([k, v]) => {
+        let y = 0;
+        const rows = v.rows.map(([kk, vv]) => {
+          const bold = vv.includes('**');
+          const text = vv.replace(/\*\*/g, '');
+          const lines = wrapText(g, text, inner, { size: 10.5, weight: bold ? 700 : 500 });
+          const r = { kk, text, bold, lines, y };
+          y += drawnSize(10) + 3 + lines.length * Math.round(drawnSize(10.5) * 1.3) + 8;
+          return r;
+        });
+        return { k, v, rows, h: 30 + drawnSize(13) + y };
+      });
+
+      let top = 20;
+      laid.forEach(({ k, v, rows, h }, i) => {
+        const x = side ? ox + i * (cw + 16) : ox;
+        const y0 = side ? top : top;
+        const on = k === sel;
         const c = p[v.col];
-        box(g, x, 24, cw, 34 + v.rows.length * 22, {
+        const H = side ? Math.max(...laid.map((l) => l.h)) : h;
+        box(g, x, y0, cw, H, {
           fill: on ? alpha(c, 0.12) : alpha(p.raised, 0.5), stroke: on ? c : p.line, r: 8, lw: on ? 2 : 1,
         });
-        label(g, v.label, x + 14, 44, { color: on ? c : p.ink2, size: 13, weight: 700 });
-        v.rows.forEach(([kk, vv], r) => {
-          const y = 68 + r * 22;
-          label(g, kk, x + 14, y, { color: p.muted, size: 10, ...mono });
-          label(g, vv.replace(/\*\*/g, ''), x + 14, y + 11,
-            { color: vv.includes('**') ? c : p.ink2, size: 10.5, weight: vv.includes('**') ? 700 : 500 });
-        });
+        label(g, v.label, x + pad, y0 + 10 + drawnSize(13) / 2,
+          { color: on ? c : p.ink2, size: 13, weight: 700, max: inner });
+        const base = y0 + 22 + drawnSize(13);
+        for (const r of rows) {
+          label(g, r.kk, x + pad, base + r.y + drawnSize(10) / 2,
+            { color: p.muted, size: 10, max: inner, ...mono });
+          labelWrap(g, r.text, x + pad, base + r.y + drawnSize(10) + 3 + drawnSize(10.5) / 2,
+            { color: r.bold ? c : p.ink2, size: 10.5, weight: r.bold ? 700 : 500, max: inner, maxLines: 3 });
+        }
+        if (!side) top += h + 12;
       });
-      fit(24 + 34 + K.mcu.rows.length * 22 + 24);
+      const total = side ? top + Math.max(...laid.map((l) => l.h)) + 20 : top + 8;
+      fit(total);
     },
   });
 

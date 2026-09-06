@@ -141,16 +141,6 @@ Concrete examples, one per specialism, phrased as artistic decisions:
 
 None of those are IT decisions. All of them are made by the artist, and all require the numbers.
 
-### The industry reality, said plainly
-
-Two minutes, no motivational tone.
-
-Show networks fail more often than show power does. When they fail, the people who fix them are
-the people who understand them, and those people are increasingly the ALV heads of department,
-not an external IT contractor who does not know what a cue is. Being that person is the single
-most reliable way for a year one ALV student to become employable fast. That is the honest
-reason this module exists.
-
 ---
 
 ## Block 3: The Four Flows
@@ -379,7 +369,7 @@ The shape of the module, quickly:
 
 - **"So it is all just IT."** No. IT optimises for throughput, security and uptime averaged over
   a day. Show networks optimise for a guaranteed deadline at 19:32 tonight. The priorities are
-  genuinely different, and that difference is why show networks are configured by ALV people.
+  genuinely different, and that difference is why show networks are configured by MDT people.
 - **"Wireless would be easier."** Wireless is a shared, contended medium with no delivery
   guarantee and a variable delay. It is acceptable for an operator's tablet. It is not
   acceptable for anything that must happen.

@@ -226,7 +226,7 @@ export const selfTest = {
 export const readiness = {
   1: [
     { q: 'A show network fails during a performance. Whose problem is it, most often, in a modern venue?',
-      a: ['The ALV department that built it', 'The venue IT contractor', 'The manufacturer', 'Nobody, it is unavoidable'],
+      a: ['The MDT department that built it', 'The venue IT contractor', 'The manufacturer', 'Nobody, it is unavoidable'],
       c: 0, fix: 'Nothing to revise. This class exists to make that answer true for you.' },
     { q: 'Sound travels roughly how far in one millisecond?',
       a: ['About 34 cm', 'About 3.4 m', 'About 3.4 cm', 'About 34 m'],

@@ -1,7 +1,8 @@
 # Computer Systems & Networking for Theatre and Entertainment Arts
 
-An interactive teaching platform for a module taught to year one BFA students specialising in
-**audio, lighting and video**: five taught classes, a production visit and a practical exam.
+An interactive teaching platform for a module taught to year one BFA students in
+**Media Design and Technology (MDT)**, specialising in audio, lighting and video: five taught
+classes, a production visit and a practical exam.
 
 It answers one question, repeatedly, from different angles:
 
@@ -29,7 +30,7 @@ manners, and putting it on a show VLAN is the most common self-inflicted wound i
 
 | # | Class | Core question |
 |---|-------|---------------|
-| 1 | Why this class exists | Why is an ALV artist in a computing class? |
+| 1 | Why this class exists | Why is an MDT artist in a computing class? |
 | — | Production visit | Where do these systems physically live? |
 | 2 | The machine | What is a show computer, and why is it configured differently? |
 | 3 | The network | How does a packet get from a console to a fixture? |

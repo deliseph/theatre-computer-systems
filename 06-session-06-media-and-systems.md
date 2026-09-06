@@ -804,7 +804,7 @@ place to learn it.
 - **"The network is fast enough, so video over IP is fine."** Uncompressed HD is 2.5 Gbit/s.
   Fast enough for audio is nowhere near fast enough for uncompressed video.
 - **"It works, so the documentation can wait."** It works today, with you in the room. Criterion 3.
-- **"Security is IT's problem."** The show network is the ALV department's problem, including
+- **"Security is IT's problem."** The show network is the MDT department's problem, including
   its security posture.
 
 ---

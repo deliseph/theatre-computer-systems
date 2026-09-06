@@ -584,7 +584,7 @@ why a media server can play many layers at once. Worth one sentence, not more, a
 ## Block D: What a file actually is, and how a codec works
 
 Block C turned the world into numbers. This block is about what happens to those numbers once
-they have to be stored, and it answers the question every ALV student eventually asks: *what is
+they have to be stored, and it answers the question every MDT student eventually asks: *what is
 actually inside the file?*
 
 ### A file is a sequence of bytes. That is all it is.

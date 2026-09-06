@@ -740,11 +740,11 @@ const classCards = CLASSES.map(
 
 write('/', shell({
   title: 'Computer Systems & Networking for Theatre and Entertainment Arts',
-  desc: 'An interactive teaching platform: five classes, calculators, drills and a bilingual glossary for year one audio, lighting and video students.',
+  desc: 'An interactive teaching platform: five classes, calculators, drills and a bilingual glossary for year one Media Design and Technology students.',
   body: `
 <article class="doc home">
   <header class="hero">
-    <p class="eyebrow"><span class="pill">Year one BFA</span><span class="pill pill-q">Audio · Lighting · Video</span></p>
+    <p class="eyebrow"><span class="pill">Year one BFA · MDT</span><span class="pill pill-q">Audio · Lighting · Video</span></p>
     <h1>Computer Systems &amp; Networking<br><span class="hero-sub">for Theatre and Entertainment Arts</span></h1>
     <blockquote class="spine"><p>${spine}</p></blockquote>
     <p class="strap">Five classes. Everything here exists to unpack that one sentence and to make it
