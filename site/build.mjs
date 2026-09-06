@@ -237,9 +237,20 @@ const STAMP = buildStamp();
 // and the block simply omits the line until then.
 const AUTHOR = {
   name: 'Migu Mianizt Leung',
-  // His own site goes first: it is the one that is his rather than a platform's.
+  // His own site goes first: it is the one that is his rather than a
+  // platform's, and links[0] is also the "Built by" href in the sidebar and
+  // the byline.
+  //
+  // This used to be https://www.mi2.dev, which has no DNS record at all —
+  // the apex mi2.dev resolves, `www` does not. Because .dev is HSTS
+  // preloaded, a browser cannot fall back to plain HTTP and cannot offer a
+  // proceed-anyway link, so that href produced a hard security interstitial
+  // rather than an ordinary "not found". Point it at the portfolio, which
+  // resolves and serves a valid certificate. Swap it back to
+  // https://mi2.dev (no www) once the apex is attached to the project and
+  // its certificate is issued.
   links: [
-    ['mi2.dev', 'https://www.mi2.dev'],
+    ['Portfolio', 'https://migu-leung-portfolio.vercel.app/'],
     ['LinkedIn', 'https://www.linkedin.com/in/mi2dev/'],
     ['Medium', 'https://medium.com/@mi2dev'],
     ['Instagram', 'https://instagram.com/mi2.dev'],
