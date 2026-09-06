@@ -530,6 +530,13 @@ Worked examples, call the answers out as a class:
 
 <!--anim:can-they-talk-->
 
+**The two masks do not have to agree, and that is where the strange faults live.** Each device
+applies its own mask to the other one's address and reaches its own conclusion; nobody consults
+anybody. Give A a /8 and B a /24 on the same wire and A decides B is local while B decides A is
+remote. A's frames really do arrive. B's replies go to a gateway that has no route back, so
+nothing returns, and you can sit watching the traffic land on B while the ping times out. Press
+**The mismatched mask** in the figure and read the two verdicts side by side.
+
 Row 4 is the one that surprises them, and it is exactly the fault a half remembered mask
 produces. Row 5 is the number one reason a first year declares a node broken.
 
@@ -648,6 +655,17 @@ address you cannot write on a piece of paper.**
 - Art-Net gear has historically shipped on `2.x.x.x`.
 
 ---
+
+**The four messages, in order.** Discover, Offer, Request, Acknowledge. The first and third are
+broadcasts because a device with no address cannot send to anybody in particular, and because any
+other server that offered needs to hear which offer was taken so it can put its address back.
+
+<!--anim:dhcp-lease-->
+
+Two things worth having in your hands before a get-in: a broadcast stops at a router, so DHCP does
+not cross one without a relay configured to carry it; and two DHCP servers on one broadcast domain
+is a race the device wins differently every time it boots, which is the intermittent fault that
+eats an afternoon.
 
 ## Block D: Switching, VLANs and segmentation
 
@@ -934,6 +952,12 @@ Small moment, long memory. The protocol stops being an acronym and becomes visib
   not a firewall.
 - **"I will just widen the mask until it works."** That joins networks you meant to keep apart,
   and it enlarges the broadcast domain. Fix the address, not the mask.
+- **"A device on a /8 can see everything, so it can reach the ones on a /24."** A mask is a
+  private opinion, not a shared setting. The /8 device decides the /24 device is on this wire and
+  speaks to it directly, and those frames arrive. The /24 device decides the other one is somewhere
+  else and posts every reply to its gateway, which either does not exist or has no route back. You
+  can watch the packets land in Wireshark and still fail to ping. Two masks on one wire is a fault
+  even when one direction appears to work.
 - **"IP addresses just work."** They work when someone designed a scheme and wrote it down.
 - **"A managed switch is better."** More capable and more dangerous. Half configured is worse.
 - **"Multicast reduces network traffic."** Only when the switches cooperate.

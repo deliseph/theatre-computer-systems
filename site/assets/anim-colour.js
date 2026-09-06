@@ -8,7 +8,7 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, line, alpha, clamp, lerp,
+  box, label, labelWrap, textWidth, line, alpha, clamp, lerp, fitter,
 } from './anim-core.js';
 
 const mono = { mono: true };
@@ -544,5 +544,130 @@ register('colour-temperature', (host) => {
     slider('Colour temperature', { min: 1800, max: 10000, step: 50, value: 3200, fmt: (v) => `${v.toLocaleString('en-US')} K`, on: (v) => { st.k = v; upd(); } }).node,
     slider('Green / magenta', { min: -1, max: 1, step: 0.05, value: 0, fmt: (v) => (v === 0 ? 'on curve' : v > 0 ? `+${v.toFixed(2)} green` : `${v.toFixed(2)} magenta`), on: (v) => { st.duv = v; upd(); } }).node
   );
+  upd();
+});
+
+
+// ============================================================================
+// Subtractive mixing: the other half of the sentence
+// ============================================================================
+
+register('subtractive-mix', (host) => {
+  const st = { c: 0, m: 0, y: 0, mode: 'sub' };
+  const { controls, stage, setNote, challenge } = figure(host, {
+    title: 'Subtractive mixing, and why a CMY fixture gets dimmer as you colour it',
+    sub: 'Additive starts with nothing and adds light. Subtractive starts with all of it and takes light away. Same colours, opposite arithmetic, and one of them costs you output.',
+    note: '&nbsp;',
+  });
+
+  challenge('Make the deepest red you can with the flags, then read what it cost you in output.',
+    () => st.mode === 'sub' && st.m > 80 && st.y > 80 && st.c < 20);
+
+  // Subtractive: each flag removes its complementary primary from white.
+  // Cyan takes red away, magenta takes green, yellow takes blue.
+  const outRGB = () => {
+    if (st.mode === 'add') return [st.c, st.m, st.y];       // treated as R, G, B
+    return [255 * (1 - st.c / 100), 255 * (1 - st.m / 100), 255 * (1 - st.y / 100)];
+  };
+  const lumen = () => {
+    const [r, g, b] = outRGB();
+    // Rough luminous weighting, enough to make the point about output honestly.
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  };
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 300,
+    animated: false,
+    draw(g, w) {
+      const p = palette();
+      const W = Math.min(620, w - 24), ox = (w - W) / 2;
+      const sub = st.mode === 'sub';
+      const [r, gg, b] = outRGB();
+
+      // The source, the three flags, the beam.
+      const y0 = 26, bh = 96;
+      // Every width is a share of the canvas. Fixed ones added up to more than
+      // a phone has, which left the output panel 46px wide and its caption
+      // hanging off the side of the picture.
+      const srcW = clamp(W * 0.17, 48, 74);
+      box(g, ox, y0, srcW, bh, { fill: sub ? '#f6f4ef' : alpha(p.raised, 0.7), stroke: p.line, r: 6 });
+      labelWrap(g, sub ? 'white source' : 'three emitters', ox + srcW / 2, y0 + bh / 2 - 6,
+        { color: sub ? '#3a3a3a' : p.ink2, size: 10, align: 'center', max: srcW - 8, maxLines: 2 });
+
+      const FL = sub
+        ? [['Cyan', st.c, [0, 190, 210], 'takes red out'], ['Magenta', st.m, [210, 0, 150], 'takes green out'], ['Yellow', st.y, [225, 200, 0], 'takes blue out']]
+        : [['Red', st.c, [230, 60, 50], 'adds red'], ['Green', st.m, [60, 200, 90], 'adds green'], ['Blue', st.y, [70, 120, 235], 'adds blue']];
+      const fgap = Math.max(5, W * 0.022);
+      const fw = clamp((W - srcW - 16 - 16 - 96 - fgap * 2) / 3, 30, 54);
+      FL.forEach(([name, v, col], i) => {
+        const x = ox + srcW + 16 + i * (fw + fgap);
+        const a = v / 100;
+        box(g, x, y0, fw, bh, {
+          fill: `rgba(${col[0]},${col[1]},${col[2]},${sub ? a * 0.85 : a * 0.7})`,
+          stroke: a > 0.02 ? `rgb(${col[0]},${col[1]},${col[2]})` : p.line, r: 5, lw: a > 0.02 ? 1.6 : 1,
+        });
+        label(g, name, x + fw / 2, y0 + bh + 14, { color: p.muted, size: 9.5, align: 'center', max: fw + 8 });
+        label(g, `${v}`, x + fw / 2, y0 + bh + 27, { color: p.ink2, size: 10, align: 'center', max: fw + 8, ...mono });
+      });
+
+      // What comes out.
+      const outX = ox + srcW + 16 + 3 * (fw + fgap) + 12;
+      const outW = Math.max(60, ox + W - outX);
+      box(g, outX, y0, outW, bh, {
+        fill: `rgb(${Math.round(r)},${Math.round(gg)},${Math.round(b)})`, stroke: p.line, r: 6,
+      });
+      label(g, 'on the wall', outX + outW / 2, y0 + bh + 14, { color: p.muted, size: 9.5, align: 'center', max: outW + 20 });
+
+      let y = y0 + bh + 44;
+      label(g, sub ? 'white, minus what each flag removed' : 'nothing, plus what each emitter added',
+        ox, y, { color: sub ? p.amber : p.cyan, size: 11.5, weight: 650, max: W });
+      y += 20;
+
+      // The output cost, which is the thing the figure exists to show.
+      const lm = lumen();
+      const barW = W - 130;
+      label(g, 'light out', ox, y + 8, { color: p.muted, size: 10.5, max: 84, ...mono });
+      box(g, ox + 88, y, barW, 16, { fill: alpha(p.line, 0.4), stroke: 'transparent', r: 3 });
+      box(g, ox + 88, y, Math.max(2, barW * lm), 16,
+        { fill: alpha(lm > 0.5 ? p.green : lm > 0.2 ? p.amber : p.red, 0.6), stroke: lm > 0.5 ? p.green : lm > 0.2 ? p.amber : p.red, r: 3, lw: 1 });
+      label(g, `${(lm * 100).toFixed(0)} %`, ox + W, y + 8, { color: p.ink2, size: 11, align: 'right', max: 60, ...mono });
+      y += 30;
+
+      y += labelWrap(g, sub
+        ? 'Every flag you push in removes light and none of them puts any back. A saturated colour out of a subtractive fixture is a dim colour, always, and the deeper it is the dimmer it gets.'
+        : 'Every emitter you turn up adds light. A saturated colour is dim here too, but only because two of the three emitters are off, and turning them on gets you back to white rather than to a paler version of the colour.',
+      ox, y, { color: p.ink2, size: 11.5, max: W, maxLines: 3 });
+      fit(y + 14);
+    },
+  });
+
+  const upd = () => {
+    const lm = lumen();
+    if (st.mode === 'add') setNote('<b>Additive: you start with darkness and add.</b> Three emitters, and the eye sums whatever arrives in the same place. Nothing in the beam is yellow when red and green make yellow; there are simply two lights and one report. This is an LED fixture, a video pixel and every screen you have ever looked at.');
+    else if (lm < 0.18) setNote(`<b>${(lm * 100).toFixed(0)} percent of the light is left.</b> That is not a fault, it is the mechanism: subtractive colour is made by throwing light away, so the deeper the colour the less of it survives. It is why a CMY wash in a deep congo looks feeble next to the same fixture in open white, why gel burns out, and why a designer asking for saturated colour at high intensity is asking for more fixtures.`);
+    else setNote('<b>Subtractive: you start with all of it and take light away.</b> Cyan removes red, magenta removes green, yellow removes blue, and what is left is the colour. A gel, a CMY colour mixing head and a printer all do this. It is the opposite arithmetic to an LED fixture, which is why the two do not match on camera even when they look the same to the eye.');
+  };
+
+  // The three sliders are the same three sliders in both modes, but they are
+  // not the same three things, so the labels are rewritten when the fixture
+  // changes rather than left as First, Second and Third.
+  const S1 = slider('Cyan', { min: 0, max: 100, step: 1, value: 0, fmt: (v) => `${v}`, on: (v) => { st.c = v; upd(); } });
+  const S2 = slider('Magenta', { min: 0, max: 100, step: 1, value: 0, fmt: (v) => `${v}`, on: (v) => { st.m = v; upd(); } });
+  const S3 = slider('Yellow', { min: 0, max: 100, step: 1, value: 0, fmt: (v) => `${v}`, on: (v) => { st.y = v; upd(); } });
+  const rename = () => {
+    const names = st.mode === 'sub' ? ['Cyan', 'Magenta', 'Yellow'] : ['Red', 'Green', 'Blue'];
+    [S1, S2, S3].forEach((sl, i) => {
+      const lab = sl.node.querySelector('.ac-l');
+      lab.firstChild.nodeValue = names[i];
+    });
+  };
+  controls.append(
+    choice('Fixture', [['sub', 'CMY flags, subtractive'], ['add', 'RGB emitters, additive']],
+      { value: 'sub', on: (v) => { st.mode = v; rename(); upd(); } }).node,
+    S1.node, S2.node, S3.node
+  );
+  rename();
   upd();
 });

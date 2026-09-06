@@ -2,11 +2,12 @@
 
 import {
   register, figure, canvas, palette, slider, toggle, choice, button,
-  box, label, labelWrap, textWidth, drawnSize, line, alpha, clamp, h, el, fitter,
+  box, label, labelWrap, textWidth, drawnSize, line, alpha, clamp, lerp, h, el, fitter,
 } from './anim-core.js';
 
 // --- Shared IPv4 helpers ----------------------------------------------------
 
+const mono = { mono: true };
 const ipToInt = (ip) => ip.trim().split('.').reduce((a, o) => a * 256 + (+o), 0) >>> 0;
 const intToIp = (n) => [24, 16, 8, 0].map((s) => (n >>> s) & 255).join('.');
 const maskOf = (p) => (p === 0 ? 0 : (0xFFFFFFFF << (32 - p)) >>> 0);
@@ -166,10 +167,10 @@ register('subnet-bits', (host) => {
 // ============================================================================
 
 register('can-they-talk', (host) => {
-  const state = { a: '192.168.1.10', b: '192.168.2.10', p: 24 };
+  const state = { a: '10.101.1.10', b: '10.101.2.10', pa: 24, pb: 24 };
   const { controls, stage, setNote } = figure(host, {
     title: 'Can these two talk directly?',
-    sub: 'Apply the mask to both. If the network portions match, yes. If they do not, no cable will change it.',
+    sub: 'Apply each device\u2019s own mask to the other one\u2019s address. They do not have to agree, and when they disagree the fault is one of the strangest on a show floor.',
     note: '&nbsp;',
   });
 
@@ -178,54 +179,88 @@ register('can-they-talk', (host) => {
 
   function paint() {
     if (!validIp(state.a) || !validIp(state.b)) { wrap.innerHTML = '<p class="sb-bad">Check both addresses.</p>'; return; }
-    const p = state.p;
-    const na = (ipToInt(state.a) & maskOf(p)) >>> 0;
-    const nb = (ipToInt(state.b) & maskOf(p)) >>> 0;
-    const ok = na === nb;
+    const ia = ipToInt(state.a), ib = ipToInt(state.b);
+    // Each device decides for itself, using its own mask. That is the whole
+    // point: nobody consults anybody.
+    const aSaysLocal = ((ia & maskOf(state.pa)) >>> 0) === ((ib & maskOf(state.pa)) >>> 0);
+    const bSaysLocal = ((ib & maskOf(state.pb)) >>> 0) === ((ia & maskOf(state.pb)) >>> 0);
+    const netA = (ia & maskOf(state.pa)) >>> 0;
+    const netB = (ib & maskOf(state.pb)) >>> 0;
 
-    const row = (name, ip, netInt) => `<div class="sb-row">
-      <span class="sb-lbl">${name}</span>
+    const row = (name, ip, p, netInt, thinks) => `<div class="sb-row">
+      <span class="sb-lbl">${name} /${p}</span>
       <span class="sb-bits">${bits32(ipToInt(ip)).map((b, i) =>
-        `<i class="sb-b ${i < p ? 'net' : 'host'}">${b}</i>${(i + 1) % 8 === 0 && i < 31 ? '<u class="sb-dot">.</u>' : ''}`).join('')}</span>
-      <span class="sb-net">${intToIp(netInt)}</span></div>`;
+    `<i class="sb-b ${i < p ? 'net' : 'host'}">${b}</i>${(i + 1) % 8 === 0 && i < 31 ? '<u class="sb-dot">.</u>' : ''}`).join('')}</span>
+      <span class="sb-net">${intToIp(netInt)}/${p}</span>
+      <span class="sb-think ${thinks ? 'yes' : 'no'}">${thinks ? 'thinks: local' : 'thinks: remote'}</span></div>`;
 
-    wrap.innerHTML = row('A', state.a, na) + row('B', state.b, nb) +
-      `<div class="sb-verdict ${ok ? 'ok' : 'no'}">
+    let cls, head, detail;
+    if (aSaysLocal && bSaysLocal) {
+      cls = 'ok'; head = 'YES, both ways';
+      detail = `both see ${intToIp(netA)}/${state.pa === state.pb ? state.pa : `${state.pa} and /${state.pb}`} as their own network`;
+    } else if (!aSaysLocal && !bSaysLocal) {
+      cls = 'no'; head = 'NO, and both of them know it';
+      detail = `${intToIp(netA)}/${state.pa} and ${intToIp(netB)}/${state.pb}, so both send to a gateway`;
+    } else {
+      cls = 'half'; head = 'THEY DISAGREE, and this is the nasty one';
+      const who = aSaysLocal ? ['A', 'B'] : ['B', 'A'];
+      detail = `${who[0]} thinks ${who[1]} is on this wire and speaks to it directly. ${who[1]} thinks ${who[0]} is somewhere else and posts every reply to its gateway.`;
+    }
+
+    wrap.innerHTML = row('A', state.a, state.pa, netA, aSaysLocal)
+      + row('B', state.b, state.pb, netB, bSaysLocal)
+      + `<div class="sb-verdict ${cls}">
         <span class="sb-wire"></span>
-        <b>${ok ? 'YES, they can talk' : 'NO, different networks'}</b>
-        <span>${ok ? `both on ${intToIp(na)}/${p}` : `${intToIp(na)}/${p} and ${intToIp(nb)}/${p}`}</span>
+        <b>${head}</b>
+        <span>${detail}</span>
       </div>`;
   }
 
   const mk = (key, lbl) => {
     const n = h(`<label class="ac ac-text"><span class="ac-l">${lbl}</span>
-      <input type="text" value="${state[key]}" spellcheck="false" autocomplete="off"></label>`);
+      <input type="text" value="${state[key]}" spellcheck="false" autocomplete="off" aria-label="${lbl} address"></label>`);
     n.querySelector('input').addEventListener('input', (e) => { state[key] = e.target.value; paint(); note(); });
     return n;
   };
 
   controls.append(
     mk('a', 'Device A'), mk('b', 'Device B'),
-    slider('Mask', { min: 8, max: 30, step: 1, value: 24, fmt: (v) => `/${v}`, on: (v) => { state.p = v; paint(); note(); } }).node,
-    button('The Art-Net trap', () => {
-      state.a = '2.0.0.10'; state.b = '192.168.1.20'; state.p = 24;
-      controls.querySelectorAll('input[type=text]').forEach((i, n) => { i.value = n ? state.b : state.a; });
-      controls.querySelector('input[type=range]').value = 24;
-      paint(); note();
-    }).node
+    slider('A\u2019s mask', { min: 8, max: 30, step: 1, value: 24, fmt: (v) => `/${v}`, on: (v) => { state.pa = v; paint(); note(); } }).node,
+    slider('B\u2019s mask', { min: 8, max: 30, step: 1, value: 24, fmt: (v) => `/${v}`, on: (v) => { state.pb = v; paint(); note(); } }).node,
+    button('The Art-Net trap', () => { preset('2.0.0.10', '192.168.1.20', 24, 24); }).node,
+    button('The mismatched mask', () => { preset('10.101.1.10', '10.101.2.10', 8, 24); }).node
   );
+
+  // Both presets set four values, and the controls have to follow the state or
+  // the figure says one thing and the sliders say another.
+  function preset(a, b, pa, pb) {
+    state.a = a; state.b = b; state.pa = pa; state.pb = pb;
+    controls.querySelectorAll('input[type=text]').forEach((i, n) => { i.value = n ? b : a; });
+    const r = controls.querySelectorAll('input[type=range]');
+    if (r[0]) r[0].value = pa;
+    if (r[1]) r[1].value = pb;
+    controls.querySelectorAll('.ac-v').forEach((v, n) => { v.textContent = `/${n ? pb : pa}`; });
+    paint(); note();
+  }
 
   function note() {
     if (!validIp(state.a) || !validIp(state.b)) return;
-    const ok = ((ipToInt(state.a) & maskOf(state.p)) >>> 0) === ((ipToInt(state.b) & maskOf(state.p)) >>> 0);
-    if (state.a.startsWith('2.') || state.b.startsWith('2.')) {
+    const ia = ipToInt(state.a), ib = ipToInt(state.b);
+    const aLocal = ((ia & maskOf(state.pa)) >>> 0) === ((ib & maskOf(state.pa)) >>> 0);
+    const bLocal = ((ib & maskOf(state.pb)) >>> 0) === ((ia & maskOf(state.pb)) >>> 0);
+    if (aLocal !== bLocal) {
+      const wide = aLocal ? 'A' : 'B';
+      const narrow = aLocal ? 'B' : 'A';
+      setNote(`<b>A wider mask does not let you see more of the network. It only changes what one device believes.</b> ${wide} has the wider mask, so it decides ${narrow} is on this wire and speaks to it directly, and those frames really do arrive. ${narrow} has the narrower mask, decides ${wide} is somewhere else, and posts every reply to its gateway. If there is no gateway, or it has no route back, the replies never return. The symptom is the one that wastes an afternoon: you can see the packets arriving on ${narrow} in Wireshark, and the ping still fails. <b>A mask is a private opinion, not a shared setting</b>, and two devices on one wire with different masks is a fault even when one of them appears to work.`);
+    } else if (state.a.startsWith('2.') || state.b.startsWith('2.')) {
       setNote('<b>This is the number one reason a first year declares a node broken.</b> Art-Net gear has shipped on 2.x.x.x for decades. Same switch, same cable, link lights on both ends, and no possible path. Either move the laptop onto 2.x.x.x, or set the node into the show scheme. The second is the professional answer, and it goes on the IP schedule.');
-    } else if (ok) {
+    } else if (aLocal) {
       setNote('The network portions match, so a switch between them is enough. Note how widening the mask can make two devices reachable that were not: that also enlarges the broadcast domain, which is usually the opposite of what you want on a show. <b>Fix the address, not the mask.</b>');
     } else {
-      setNote('The network portions differ, so there is no direct path however good the cable is. They would need a router, and on a show network the usual answer is that you did not want them talking anyway.');
+      setNote('The network portions differ, so there is no direct path however good the cable is. They would need a router, and on a show network the usual answer is that you did not want them talking anyway. Both devices agree about this, which is why it fails cleanly and predictably in both directions.');
     }
   }
+
   paint(); note();
 });
 
@@ -725,4 +760,131 @@ register('device-roles', (host) => {
     setNote(notes[state.dev]);
   }
   update();
+});
+
+// ============================================================================
+// How a device that knows nothing gets an address
+// ============================================================================
+
+register('dhcp-lease', (host) => {
+  const STEPS = [
+    { k: 'D', name: 'Discover', from: 'the new device', to: 'everybody',
+      src: '0.0.0.0', dst: '255.255.255.255',
+      what: 'It has no address, so it cannot send to anyone in particular. It shouts to the whole broadcast domain: is there a DHCP server here?' },
+    { k: 'O', name: 'Offer', from: 'the server', to: 'the new device',
+      src: '10.101.10.1', dst: 'the device, by MAC',
+      what: 'A server that heard it picks a free address from its pool and offers it, along with the mask, the gateway and the DNS servers.' },
+    { k: 'R', name: 'Request', from: 'the new device', to: 'everybody',
+      src: '0.0.0.0', dst: '255.255.255.255',
+      what: 'It broadcasts again, naming the offer it is taking. Broadcast, not unicast, so any other server that also offered knows to put its address back.' },
+    { k: 'A', name: 'Acknowledge', from: 'the server', to: 'the new device',
+      src: '10.101.10.1', dst: '10.101.10.57',
+      what: 'Confirmed, with a lease time. The device now has an address it may use until roughly halfway through that lease, when it will ask to keep it.' },
+  ];
+  const st = { step: 0, servers: 1, lease: 86400 };
+  const { controls, stage, setNote } = figure(host, {
+    title: 'How a device with no address gets one',
+    sub: 'Four messages, and the first two have to be shouted because the device cannot yet address anybody. Discover, Offer, Request, Acknowledge.',
+    note: '&nbsp;',
+  });
+
+  let cv;
+  const fit = fitter(() => cv);
+  cv = canvas(stage, {
+    height: 320,
+    controls,
+    draw(g, w, hgt, t) {
+      const p = palette();
+      const W = Math.min(640, w - 24), ox = (w - W) / 2;
+      const S = STEPS[st.step];
+      const none = st.servers === 0;
+
+      // The device, the wire, the server or servers.
+      const devX = ox + 66, srvX = ox + W - 66, midY = 74;
+      const addr = none ? '169.254.11.7' : st.step >= 3 ? '10.101.10.57' : '0.0.0.0';
+      box(g, devX - 62, midY - 26, 124, 52, { fill: alpha(p.cyan, 0.14), stroke: p.cyan, r: 7 });
+      label(g, 'new device', devX, midY - 8, { color: p.cyan, size: 11, align: 'center', max: 116 });
+      label(g, addr, devX, midY + 10, { color: none ? p.red : p.ink2, size: 11, align: 'center', max: 116, ...mono });
+
+      if (none) {
+        box(g, srvX - 62, midY - 26, 124, 52, { fill: alpha(p.line, 0.3), stroke: p.line, r: 7 });
+        label(g, 'no server', srvX, midY, { color: p.muted, size: 11, align: 'center', max: 116 });
+      } else {
+        for (let i = 0; i < st.servers; i++) {
+          const sy = midY + (st.servers > 1 ? (i === 0 ? -32 : 32) : 0);
+          box(g, srvX - 62, sy - 22, 124, 44, {
+            fill: alpha(i === 0 ? p.green : p.red, 0.14), stroke: i === 0 ? p.green : p.red, r: 7,
+          });
+          label(g, i === 0 ? 'DHCP server' : 'a second one', srvX, sy - 4,
+            { color: i === 0 ? p.green : p.red, size: 10.5, align: 'center', max: 116 });
+          label(g, i === 0 ? '10.101.10.x' : '192.168.1.x', srvX, sy + 11,
+            { color: p.muted, size: 10, align: 'center', max: 116, ...mono });
+        }
+      }
+
+      // The message in flight for the step being looked at.
+      if (!none) {
+        const toServer = st.step === 0 || st.step === 2;
+        const u = (t * 0.6) % 1;
+        const x = toServer ? lerp(devX + 62, srvX - 62, u) : lerp(srvX - 62, devX + 62, u);
+        const bcast = st.step === 0 || st.step === 2;
+        g.fillStyle = bcast ? p.amber : p.green;
+        g.beginPath(); g.arc(x, midY, 6, 0, Math.PI * 2); g.fill();
+        if (bcast) {
+          // A broadcast reaches everything on the wire, so draw it doing that.
+          g.strokeStyle = alpha(p.amber, 0.35); g.lineWidth = 1;
+          for (const r of [12, 20, 28]) { g.beginPath(); g.arc(x, midY, r * (0.6 + u * 0.4), 0, Math.PI * 2); g.stroke(); }
+        }
+        line(g, devX + 62, midY, srvX - 62, midY, { color: alpha(p.line, 1), lw: 1.5 });
+      }
+
+      // The four letters, as a chain.
+      let y = 138;
+      const gap = 8;
+      const bw = (W - gap * 3) / 4;
+      STEPS.forEach((x2, i) => {
+        const bx = ox + i * (bw + gap), on = i === st.step && !none;
+        box(g, bx, y, bw, 42, {
+          fill: on ? alpha(p.amber, 0.16) : alpha(p.raised, 0.6),
+          stroke: on ? p.amber : p.line, r: 6, lw: on ? 2 : 1,
+        });
+        label(g, x2.k, bx + bw / 2, y + 15, { color: on ? p.amber : p.muted, size: 14, weight: 700, align: 'center', max: bw - 8, ...mono });
+        label(g, x2.name, bx + bw / 2, y + 32, { color: on ? p.ink2 : p.muted, size: 9.5, align: 'center', max: bw - 6 });
+      });
+      y += 54;
+
+      if (none) {
+        y += labelWrap(g, 'No server answered, so after a few seconds the device gives itself an address in 169.254. It can now talk to anything else that did the same, and to nothing else at all. That is what a 169.254 address means every single time you see one: the device asked and nobody replied.',
+          ox, y, { color: p.red, size: 12, max: W, maxLines: 4 });
+      } else {
+        label(g, `${S.from} → ${S.to}`, ox, y, { color: p.ink2, size: 11.5, weight: 650, max: W });
+        y += 18;
+        label(g, `src ${S.src}   dst ${S.dst}`, ox, y, { color: p.muted, size: 10.5, max: W, ...mono });
+        y += 18;
+        y += labelWrap(g, S.what, ox, y, { color: p.ink2, size: 11.5, max: W, maxLines: 3 }) + 6;
+        if (st.step === 3) {
+          const hrs = st.lease / 3600;
+          y += labelWrap(g, `Lease ${hrs >= 1 ? `${hrs} hours` : `${st.lease / 60} minutes`}. It will ask to renew at about half of that, and if the server has gone by then it keeps the address until the lease runs out and only then falls back to 169.254.`,
+            ox, y, { color: p.muted, size: 11, max: W, maxLines: 3 });
+        }
+      }
+      fit(y + 16);
+    },
+  });
+
+  const upd = () => {
+    if (st.servers === 0) setNote('<b>169.254 is not an address, it is a complaint.</b> The device asked four times, nobody answered, and it gave itself something so it could at least talk to other machines in the same position. On a show this is the single most common network fault and the fastest to diagnose: a 169.254 address means DHCP was expected and no server replied, so either the server is off, or you are on the wrong VLAN, or the link is not what you think it is.');
+    else if (st.servers === 2) setNote('<b>Two DHCP servers on one broadcast domain is a show-stopper, and an intermittent one.</b> Both hear the Discover and both offer; the device takes whichever arrives first, which is a race it wins differently every time it boots. Half the rig ends up on one subnet and half on the other, and the symptom is that some things can see each other and some cannot, apparently at random. It is almost always somebody plugging in a domestic router as a switch.');
+    else if (st.step === 0) setNote('<b>The first message is a shout because it has to be.</b> The device has no address, does not know the server\'s address, and does not know the gateway. All it can do is broadcast to the whole domain and hope something is listening. This is also why DHCP does not cross a router without help: a broadcast stops at the router, so a relay has to carry it over.');
+    else if (st.step === 2) setNote('<b>The Request is broadcast too, and that is deliberate.</b> The device names the offer it is accepting, out loud, so any other server that also offered an address hears that it was not chosen and returns that address to its pool. Sent quietly to one server, every other server would hold an address that nobody is using.');
+    else setNote('<b>Four messages: Discover, Offer, Request, Acknowledge.</b> At the end the device has an address, a mask, a gateway and a DNS server, and a lease saying how long it may keep them. It will try to renew at about halfway through. The whole exchange usually takes under a second, which is why it feels like plugging in simply works.');
+  };
+
+  controls.append(
+    choice('Step', STEPS.map((s, i) => [String(i), `${s.k} · ${s.name}`]), { value: '0', on: (v) => { st.step = +v; upd(); } }).node,
+    choice('On this wire', [['1', 'One DHCP server'], ['2', 'Two servers'], ['0', 'No server at all']],
+      { value: '1', on: (v) => { st.servers = +v; upd(); } }).node,
+    choice('Lease', [['600', '10 minutes'], ['86400', '24 hours']], { value: '86400', on: (v) => { st.lease = +v; upd(); } }).node
+  );
+  upd();
 });

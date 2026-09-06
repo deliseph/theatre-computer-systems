@@ -231,17 +231,46 @@ const STAMP = buildStamp();
 // Page shell
 // ---------------------------------------------------------------------------
 
-const NAV_RESOURCES = [
-  ['/prepare', 'Prepare', 'What to do before each class'],
-  ['/map', 'The map', 'Every figure and card, and the ones you have opened'],
-  ['/foundations', 'Foundations', 'The number skills the module assumes'],
-  ['/tools', 'Tools', 'Calculators used in class and in the exam'],
-  ['/practice', 'Practice', 'Drills, sorting, fault diagnosis'],
-  ['/glossary', 'Glossary', 'Bilingual term list'],
-  ['/numbers', 'Numbers', 'The reference card'],
-  ['/field', 'Field card', 'Commands and settings'],
-  ['/lineage', 'How we got here', 'Why each technology exists'],
-  ['/next', 'Where to go next', 'Certifications, courses and books'],
+// Who made this. Every link here is one Migu publishes himself, on showstack's
+// own README; nothing is inferred. `support` is deliberately empty: a donation
+// link has to be a real one, so it is a single edit here when there is a URL,
+// and the block simply omits the line until then.
+const AUTHOR = {
+  name: 'Migu Mianizt Leung',
+  links: [
+    ['LinkedIn', 'https://www.linkedin.com/in/mi2dev/'],
+    ['Medium', 'https://medium.com/@mi2dev'],
+    ['Instagram', 'https://instagram.com/mi2.dev'],
+  ],
+  work: [
+    ['showstack', 'https://showstack-inky.vercel.app/', 'the open index of live entertainment technology'],
+    ['showstack on GitHub', 'https://github.com/deliseph/showstack', 'MIT code, CC BY 4.0 data'],
+  ],
+  support: '',
+};
+
+// Resources, grouped. Ten links in one flat list is a list nobody reads: these
+// are four short lists with a heading each, in the order somebody actually
+// reaches for them, and each one says what it is for.
+const NAV_GROUPS = [
+  ['Before a class', [
+    ['/prepare', 'Prepare', 'What to do before each class'],
+    ['/foundations', 'Foundations', 'The number skills the module assumes'],
+  ]],
+  ['While you work', [
+    ['/tools', 'Tools', 'Calculators, with the working shown'],
+    ['/practice', 'Practice', 'Drills, claims, fault diagnosis'],
+    ['/map', 'The map', 'Every figure and card, and the ones you have opened'],
+  ]],
+  ['Look it up', [
+    ['/numbers', 'Numbers', 'The reference card, examinable'],
+    ['/field', 'Field card', 'Commands and settings for the floor'],
+    ['/glossary', 'Glossary', 'Bilingual term list'],
+  ]],
+  ['Going further', [
+    ['/lineage', 'How we got here', 'Why each technology exists'],
+    ['/next', 'Where to go next', 'Certifications, courses and books'],
+  ]],
 ];
 
 function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] }) {
@@ -252,9 +281,12 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
         </a>`
   ).join('');
 
-  const navRes = NAV_RESOURCES.map(
-    ([href, label]) => `<a class="nv nv-res${active === href ? ' on' : ''}" href="${href}">
-        <span class="nv-t">${esc(label)}</span></a>`
+  const navRes = NAV_GROUPS.map(
+    ([group, items]) => `<p class="side-g">${esc(group)}</p>${items.map(
+      ([href, label, desc]) => `<a class="nv nv-res${active === href ? ' on' : ''}" href="${href}">
+        <span class="nv-t">${esc(label)}</span>
+        <span class="nv-d">${esc(desc)}</span></a>`
+    ).join('')}`
   ).join('');
 
   return `<!doctype html>
@@ -292,11 +324,12 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
   <nav class="side" aria-label="Course navigation">
     <p class="side-h">Classes</p>
     ${navClasses}
-    <p class="side-h">Resources</p>
     ${navRes}
     <div class="side-foot">
       <p>Five taught classes. The production visit and the practical exam sit in the lecturer's
       own pack and are not published here.</p>
+      <p class="side-by">Built by <a href="${AUTHOR.links[0][1]}" rel="noopener" target="_blank">${AUTHOR.name}</a>
+        · ${AUTHOR.links.slice(1).map(([n, u]) => `<a href="${u}" rel="noopener" target="_blank">${n}</a>`).join(' · ')}</p>
       <p class="side-build" title="Which commit is serving, and how it got here">
         build <code>${STAMP.commit}</code>${STAMP.branch ? ` · ${esc(STAMP.branch)}` : ''} · via ${STAMP.source}</p>
     </div>
@@ -910,6 +943,22 @@ write('/', shell({
   </section>
 
   <section class="progress-strip" id="progress-strip"></section>
+
+  <section class="byline" id="who">
+    <h2 class="sched-h">Who made this, and what else there is</h2>
+    <p class="byline-p">This site is built and maintained by
+      <a href="${AUTHOR.links[0][1]}" rel="noopener" target="_blank">${AUTHOR.name}</a>, who teaches the
+      module it belongs to. If something here is wrong, or you want to argue with it, that is the
+      quickest way to reach him.</p>
+    <p class="byline-links">${AUTHOR.links.map(([n, u]) => `<a href="${u}" rel="noopener" target="_blank">${n}</a>`).join('')}</p>
+    <ul class="byline-work">
+      ${AUTHOR.work.map(([n, u, d]) => `<li><a href="${u}" rel="noopener" target="_blank">${n}</a> <span>${d}</span></li>`).join('')}
+    </ul>
+    <p class="byline-p">Several of the numbers on this site, the port assignments, the standard dates
+      and the bilingual terms, are checked against showstack, which is his open dataset of the same
+      subject. It is free, it is cited on every field, and it takes contributions.</p>
+    ${AUTHOR.support ? `<p class="byline-p"><a class="btn" href="${AUTHOR.support}" rel="noopener" target="_blank">Support this work</a></p>` : ''}
+  </section>
 
   <h2 class="hd hd-2" id="classes">The five classes</h2>
   <div class="cards">${classCards}</div>

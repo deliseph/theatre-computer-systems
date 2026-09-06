@@ -573,6 +573,14 @@ LED fixture possible, and it is why lighting and video colour are the same subje
 
 <!--anim:additive-mixing-->
 
+**And the other half of the sentence, which lighting students meet first.** Additive starts with
+darkness and adds light; subtractive starts with all of it and takes light away. A gel, a CMY
+colour mixing head and a printer all subtract. Same colours, opposite arithmetic, and only one of
+them costs you output: a deep colour out of a subtractive fixture is a dim colour, always, because
+the colour was made by throwing the rest of the light away.
+
+<!--anim:subtractive-mix-->
+
 Three bytes, one colour. On a screen those bytes are a pixel. On a rig they are three DMX slots.
 The arithmetic does not change when the job title does.
 

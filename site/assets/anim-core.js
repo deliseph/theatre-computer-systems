@@ -95,10 +95,21 @@ export function palette() {
   };
   return paletteCache;
 }
-// The theme button rewrites data-theme; drop the cache so the next frame repaints.
-new MutationObserver(() => { paletteCache = null; })
+// The theme button rewrites data-theme; drop the cache so the next frame
+// repaints. An animated figure gets that for free on its next frame. A still
+// one has no next frame, so it would sit there in the palette of the theme you
+// just left until something else happened to redraw it.
+function rethemeAll() {
+  paletteCache = null;
+  requestAnimationFrame(() => {
+    for (const c of document.querySelectorAll('canvas.anim-canvas')) {
+      if (c.__anim && !c.__anim.running) c.__anim.once();
+    }
+  });
+}
+new MutationObserver(rethemeAll)
   .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { paletteCache = null; });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rethemeAll);
 
 export const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
