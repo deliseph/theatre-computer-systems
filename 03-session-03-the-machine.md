@@ -674,6 +674,95 @@ one frame  =  width × height × channels × bit depth ÷ 8   bytes
 data rate  =  that × frame rate
 ```
 
+### Raster and vector, and why one of them survives the wall
+
+Everything above describes a **raster**: measurements on a grid. There is a second way to store a
+picture that is not a picture at all, and confusing the two is the most common avoidable disaster
+in an art pack a video department receives.
+
+A **vector** file holds instructions. Move to this point, curve to that one, fill with this
+colour. It has no resolution, because it is not a measurement of anything; it is a description.
+When you display it, the machine carries out the instructions at whatever size you asked for, at
+the moment you asked, and that is called **rasterising**. Nothing is ever displayed as a vector.
+Every screen is a grid. The difference is only whether the grid was decided when the file was made
+or when it was shown.
+
+<!--anim:raster-vector-->
+
+That single difference decides everything else:
+
+| | Raster | Vector |
+|---|---|---|
+| What is stored | a value per pixel | shapes, curves, fills |
+| Formats | PNG, JPEG, TIFF, EXR | SVG, PDF, AI, EPS |
+| Scaling up | invents the pixels nobody measured | redrawn correctly at any size |
+| Photographs | the only option | impossible |
+| Text and logos | loses its edges | stays exact |
+| File size grows with | resolution | complexity |
+
+**The arithmetic that makes it concrete.** A 1024 × 1024 logo put on a 4096 × 4096 area has
+1,048,576 measurements to cover 16,777,216 pixels. Fifteen out of every sixteen pixels have to be
+invented from their neighbours. Interpolation is good at guessing and it cannot do anything else:
+**no amount of processing adds information nobody recorded.** So ask for logos, wayfinding,
+lower thirds and gobo artwork as vector, and accept that a photograph can only ever be a raster,
+which is why you ask for the photograph at the size you need instead.
+
+### The fourth channel, and why JPEG cannot do it
+
+RGB is three numbers a pixel. **RGBA** is four, and the fourth says how much of that pixel is
+there at all: 0 is absent, 255 is solid, and everything between is a partly covered pixel, which
+is what the soft edge of any shape actually is.
+
+**Why JPEG has none and PNG does** is history rather than a deep principle. JPEG was designed in
+1992 for photographs, and in a photograph nothing is transparent, so the format has no channel for
+it and never has. PNG arrived in 1996 as a lossless replacement for GIF and was given a full 8 or
+16 bit alpha channel from the start. GIF is worth a sentence because it explains the ugly artwork
+you will be sent: GIF has **one bit** of transparency, a pixel is either there or not, so a soft
+edge has to be faked and a GIF logo on a background it was not made for has a visible jagged
+fringe.
+
+| Format | Alpha | Where you meet it |
+|---|---|---|
+| JPEG | none | photographs, camera stills, anything from a phone |
+| PNG | full, 8 or 16 bit | logos, screen grabs, artwork with a soft edge |
+| GIF | one bit, on or off | old artwork, and the reason it looks jagged |
+| WebP | full | web delivery, increasingly the default |
+| TIFF, EXR | full | print, and the grading and VFX end of the trade |
+
+**And the fault that will actually cost you an afternoon.** There are two ways of writing an alpha
+image down and they are not interchangeable.
+
+- **Straight**, also called unassociated: the colour is the pure colour, coverage is kept
+  separately. Compositing is `out = src × a + dst × (1 − a)`.
+- **Premultiplied**, also called associated: the colour has already been multiplied by the
+  coverage before it was written down. Compositing is `out = src + dst × (1 − a)`.
+
+<!--anim:alpha-composite-->
+
+Read a premultiplied file as straight and you multiply twice, which squares a number below one and
+makes it smaller, so the soft edge goes **dark**. Read a straight file as premultiplied and you
+put full strength colour into a pixel that is only partly covered, so the edge goes **bright**.
+Both faults live on the edge and nowhere else, and the middle of the graphic always looks fine,
+which is the tell. The usual first guess, that the key is wrong or the artwork has a background
+baked into it, sends people down the wrong road for an hour.
+
+**What alpha costs, in the numbers this class uses.** Four channels instead of three is a third
+more data:
+
+```
+1920 × 1080 × 3 bytes = 6,220,800 bytes per frame
+1920 × 1080 × 4 bytes = 8,294,400 bytes per frame
+```
+
+In video it costs more than that, because most delivery codecs have no alpha channel at all. H.264
+in the profiles anyone actually ships does not carry one. If a video cue has to have a genuine
+transparent background, you are choosing from a much shorter list, and the shape of that list is
+the practical thing to remember: **ProRes 4444, DNxHR 444, HAP Alpha, NotchLC, VP9 or HEVC in the
+configurations that support it.** All of them are larger and most of them are intraframe, which
+takes you straight back to the storage and bandwidth arithmetic in the block above. The other
+route is to carry the matte as a separate luma channel and combine it at playback, which is why
+you will be handed two files and told they go together.
+
 ### Colour: what the three numbers actually mean
 
 This belongs to all three specialisms at once. A pixel on an LED wall and a colour mixing fixture

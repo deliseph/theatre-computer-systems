@@ -1313,3 +1313,11 @@ body.wb-on { overflow: hidden; }
   .wb-close kbd { display: none; }
 }
 @media print { .wb { display: none !important; } }
+
+/* The block clock sits beside the class clock, quieter, because the question
+   it answers ("am I overrunning this block") is the second question. */
+.teach-bclock {
+  font: 600 12px/1 var(--mono); color: var(--muted); white-space: nowrap;
+  padding: 3px 7px; border-radius: 6px; background: var(--raised);
+}
+@media (max-width: 900px) { .teach-bclock { display: none; } }

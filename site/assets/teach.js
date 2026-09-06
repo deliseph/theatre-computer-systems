@@ -15,6 +15,7 @@ if (track) {
   const slides = [...track.querySelectorAll('.slide')];
   const dots = $('#tdots');
   const clock = $('#tclock');
+  const bclock = $('#tbclock');
   const blockLbl = $('#tblock');
   const posLbl = $('#tpos');
   const subLbl = $('#tsub');
@@ -35,8 +36,31 @@ if (track) {
   try { answersShown = localStorage.getItem(ANSWERS_KEY) === 'shown'; } catch { /* private window */ }
 
   let i = 0;
-  let started = null;       // epoch ms when the current block's stopwatch began
-  let timedBlock = null;    // which block that stopwatch is timing
+  // Two clocks, because a lecturer needs two different answers. The class clock
+  // says how far into the session you are and never resets. The block clock
+  // says how long you have been on this block and resets when the block does.
+  // One clock cannot do both: a block timer that has been running since the
+  // start is useless, and a class timer that restarts is worse than none.
+  let started = null;       // epoch ms when the class stopwatch began
+  let blockAt = null;       // epoch ms when the current block began
+  let timedBlock = null;    // which block the block clock is timing
+  const CKEY = `tcs-clock-${document.body.dataset.cls || location.pathname}`;
+
+  // A four hour class and one stray refresh should not lose the timing, so the
+  // start is written down rather than held only in memory.
+  const saveClock = () => {
+    try {
+      if (started) localStorage.setItem(CKEY, JSON.stringify({ started, blockAt, timedBlock }));
+      else localStorage.removeItem(CKEY);
+    } catch { /* private window */ }
+  };
+  try {
+    const raw = JSON.parse(localStorage.getItem(CKEY) || 'null');
+    // Anything older than twelve hours is last week's class, not this one.
+    if (raw && raw.started && Date.now() - raw.started < 12 * 3600e3) {
+      started = raw.started; blockAt = raw.blockAt || raw.started; timedBlock = raw.timedBlock ?? null;
+    }
+  } catch { /* private window */ }
 
   // Thirty seven identical dots are not navigation. Group them by block, so
   // the row reads as the shape of the class rather than as a progress bar.
@@ -169,36 +193,56 @@ if (track) {
     const same = slides.filter((s) => (s.dataset.block || s.dataset.title) === block);
     subLbl.textContent = same.length > 1 ? `${same.indexOf(slides[i]) + 1}/${same.length} in block` : '';
 
-    // A new block restarts the block clock. Moving between the screens inside
-    // one block must not, or the timer is useless for the thing it measures.
-    if (started && block !== timedBlock) { started = Date.now(); timedBlock = block; }
+    // A new block restarts the block clock, and only the block clock. Moving
+    // between screens inside one block must not restart even that, or the
+    // timer is useless for the thing it measures.
+    if (started && block !== timedBlock) { blockAt = Date.now(); timedBlock = block; saveClock(); }
     holdAll();
     track.scrollTop = 0;
     paintClock();
   }
 
+  // Past an hour the display gains an hours field rather than counting to 240
+  // minutes, because a four hour class is the normal case here.
+  function hms(ms) {
+    const s = Math.floor(ms / 1000);
+    const two = (n) => String(n).padStart(2, '0');
+    return s >= 3600
+      ? `${Math.floor(s / 3600)}:${two(Math.floor((s % 3600) / 60))}:${two(s % 60)}`
+      : `${two(Math.floor(s / 60))}:${two(s % 60)}`;
+  }
   function paintClock() {
     if (!started) {
       clock.textContent = '00:00';
       clock.className = 'teach-clock';
+      if (bclock) { bclock.textContent = ''; bclock.hidden = true; }
       return;
     }
-    const s = Math.floor((Date.now() - started) / 1000);
-    const mm = String(Math.floor(s / 60)).padStart(2, '0');
-    const ss = String(s % 60).padStart(2, '0');
-    clock.textContent = `${mm}:${ss}`;
+    const now = Date.now();
+    clock.textContent = hms(now - started);
     clock.className = 'teach-clock';
+    if (bclock) {
+      bclock.hidden = false;
+      bclock.textContent = `block ${hms(now - (blockAt || started))}`;
+    }
   }
   // Four times a second, not once. The stopwatch starts at an arbitrary point
   // in the tick, so at one tick a second the display could sit on 00:00 for
   // most of the first two seconds after the lecturer pressed it.
   setInterval(paintClock, 250);
 
+  const paintBtn = () => { startBtn.textContent = started ? '■ Stop' : '▶ Start stopwatch'; };
   startBtn.addEventListener('click', () => {
-    if (started) { started = null; timedBlock = null; startBtn.textContent = '▶ Start stopwatch'; }
-    else { started = Date.now(); timedBlock = slides[i].dataset.block || slides[i].dataset.title; startBtn.textContent = '■ Stop'; }
+    if (started) { started = blockAt = null; timedBlock = null; }
+    else {
+      started = blockAt = Date.now();
+      timedBlock = slides[i].dataset.block || slides[i].dataset.title;
+    }
+    saveClock();
+    paintBtn();
     paintClock();
   });
+  paintBtn();
 
   $('#tgrid')?.addEventListener('click', toggleGrid);
 

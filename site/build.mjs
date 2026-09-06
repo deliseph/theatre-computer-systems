@@ -237,7 +237,9 @@ const STAMP = buildStamp();
 // and the block simply omits the line until then.
 const AUTHOR = {
   name: 'Migu Mianizt Leung',
+  // His own site goes first: it is the one that is his rather than a platform's.
   links: [
+    ['mi2.dev', 'https://www.mi2.dev'],
     ['LinkedIn', 'https://www.linkedin.com/in/mi2dev/'],
     ['Medium', 'https://medium.com/@mi2dev'],
     ['Instagram', 'https://instagram.com/mi2.dev'],
@@ -273,7 +275,7 @@ const NAV_GROUPS = [
   ]],
 ];
 
-function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] }) {
+function shell({ title, desc, body, active = '', bodyClass = '', bodyAttrs = '', scripts = [] }) {
   const navClasses = CLASSES.map(
     (c) => `<a class="nv${active === `class-${c.n}` ? ' on' : ''}" href="/class/${c.n}">
         <span class="nv-n">${c.n}</span>
@@ -302,7 +304,7 @@ function shell({ title, desc, body, active = '', bodyClass = '', scripts = [] })
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0d0f13"/><circle cx="16" cy="12" r="5" fill="#f0a038"/><path d="M8 26c1.6-4.6 4.4-7 8-7s6.4 2.4 8 7z" fill="#4fb3c8"/></svg>'
   )}">
 </head>
-<body class="${bodyClass}">
+<body class="${bodyClass}"${bodyAttrs}>
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
@@ -626,8 +628,9 @@ for (const c of classData) {
     <span class="teach-block" id="tblock"></span>
     <span class="teach-sub" id="tsub"></span>
     <div class="teach-sp"></div>
-    <button class="teach-btn" id="tstart">▶ Start stopwatch</button>
+    <button class="teach-btn" id="tstart" title="Runs for the whole class. The block figure beside it restarts at each block.">▶ Start stopwatch</button>
     <span class="teach-clock" id="tclock">00:00</span>
+    <span class="teach-bclock" id="tbclock" hidden></span>
     <span class="teach-pos" id="tpos"></span>
     <button class="teach-btn" id="tfull" title="Full screen">⛶</button>
   </header>
@@ -649,6 +652,7 @@ for (const c of classData) {
     desc: `Projector view for Class ${c.n}`,
     body,
     bodyClass: 'teach-mode',
+    bodyAttrs: ` data-cls="${c.n}"`,
     scripts: ['/assets/teach.js', '/assets/anim.js'],
   }));
 }
