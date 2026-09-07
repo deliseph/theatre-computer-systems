@@ -9,6 +9,20 @@
    Accent choice is not decorative. Amber is tungsten, roughly 3200 K, the
    colour of a theatre lamp. Cyan reads as data. The two are used consistently:
    amber for the human and the interactive, cyan for the network and the number.
+
+   The dark ground, the warm ink and the ember are the author's own palette,
+   shared with mi2.dev and with the other three modules in this programme, so a
+   student moving between them is visibly inside one body of work rather than
+   four sites that happen to share an author. The four figure roles (energy,
+   signal, safe, fault) keep their separation, because that separation is
+   load-bearing in every explainer on every one of these sites.
+
+   No web fonts, deliberately. The author's display face is named first and the
+   system stack carries it when it is absent, because a class page open on a
+   projector should make no third-party request before somebody presses play.
+
+   --ease-resolve is the motion signature: a system settling into place rather
+   than a thing sliding in. It is the same curve as the portfolio's.
    ========================================================================== */
 
 :root {
@@ -17,10 +31,10 @@
   --raised: #f3efe9;
   --line: #e0dbd2;
   --line-soft: #ece7df;
-  --ink: #14171c;
-  --ink-2: #454c58;
-  --muted: #6b7280;
-  --amber: #a8620a;
+  --ink: #16191a;
+  --ink-2: #4a5150;
+  --muted: #6d7472;
+  --amber: #9c6216;
   --amber-soft: #f6ecdc;
   --cyan: #17697e;
   --cyan-soft: #e2f0f3;
@@ -30,8 +44,11 @@
   --radius: 10px;
   --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Noto Sans Mono CJK TC", monospace;
+  --display: Fraunces, "Noto Serif TC", var(--sans);
+  --ease-resolve: cubic-bezier(.16, 1, .3, 1);
+  --dur-settle: .45s;
   --side-w: 258px;
 }
 
@@ -41,18 +58,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground: #0d0f13;
-    --surface: #14171d;
-    --raised: #1b1f27;
-    --line: #272d38;
-    --line-soft: #1e232c;
-    --ink: #e7e9ee;
-    --ink-2: #b9c0cc;
-    --muted: #8b94a3;
-    --amber: #f0a038;
-    --amber-soft: #2a2015;
-    --cyan: #5cbdd2;
-    --cyan-soft: #10262c;
+    --ground: #0a0e10;
+    --surface: #12181a;
+    --raised: #181f21;
+    --line: #2a3234;
+    --line-soft: #1d2427;
+    --ink: #ece7dc;
+    --ink-2: #b6bdb9;
+    --muted: #8b9391;
+    --amber: #e0a44f;
+    --amber-soft: #241d13;
+    --cyan: #66c3cd;
+    --cyan-soft: #0e2427;
     --green: #6cc47f;
     --red: #e2685f;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .3);
@@ -61,18 +78,18 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ground: #0d0f13;
-  --surface: #14171d;
-  --raised: #1b1f27;
-  --line: #272d38;
-  --line-soft: #1e232c;
-  --ink: #e7e9ee;
-  --ink-2: #b9c0cc;
-  --muted: #8b94a3;
-  --amber: #f0a038;
-  --amber-soft: #2a2015;
-  --cyan: #5cbdd2;
-  --cyan-soft: #10262c;
+  --ground: #0a0e10;
+  --surface: #12181a;
+  --raised: #181f21;
+  --line: #2a3234;
+  --line-soft: #1d2427;
+  --ink: #ece7dc;
+  --ink-2: #b6bdb9;
+  --muted: #8b9391;
+  --amber: #e0a44f;
+  --amber-soft: #241d13;
+  --cyan: #66c3cd;
+  --cyan-soft: #0e2427;
   --green: #6cc47f;
   --red: #e2685f;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .3);
@@ -296,6 +313,9 @@ td code { white-space: nowrap; }
 .page-head h1, .hero h1 {
   margin: 0 0 12px; font-size: clamp(30px, 4.4vw, 42px);
   line-height: 1.12; letter-spacing: -.028em; font-weight: 680;
+  /* The author's display face when the reader has it, and the same system
+     stack as everything else when they do not. Nothing is fetched either way. */
+  font-family: var(--display);
 }
 .strap { font-size: 17.5px; line-height: 1.55; color: var(--ink-2); max-width: 62ch; }
 
@@ -325,7 +345,7 @@ td code { white-space: nowrap; }
   border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
 }
 .pbar-track { flex: 1; height: 7px; border-radius: 99px; background: var(--raised); overflow: hidden; }
-.pbar-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--cyan)); transition: width .4s ease; }
+.pbar-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--cyan)); transition: width var(--dur-settle) var(--ease-resolve); }
 .pbar-lbl { font: 600 12.5px/1 var(--mono); color: var(--muted); white-space: nowrap; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 14px; margin: 20px 0 26px; }
@@ -601,7 +621,7 @@ body.teach-mode main { padding: 0; }
   .side {
     position: fixed; top: 58px; left: 0; width: 280px; z-index: 39;
     background: var(--surface); transform: translateX(-100%);
-    transition: transform .22s ease; box-shadow: var(--shadow);
+    transition: transform var(--dur-settle) var(--ease-resolve); box-shadow: var(--shadow);
   }
   .side.open { transform: none; }
   .doc { padding: 24px 16px 0; }
@@ -1038,7 +1058,7 @@ body.teach-mode.answers-shown .anim-note.is-held .anim-note-key { display: none;
 
 /* Prepare: five classes of preparation at once is four fifths noise. */
 .prep-toggle { margin-left: 8px; }
-.prep-block { transition: border-color .15s; }
+.prep-block { transition: border-color var(--dur-settle) var(--ease-resolve); }
 .prep-block.open > .prep-head { border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 4px; }
 @media (max-width: 620px) {
   .prep-head { flex-wrap: wrap; }
@@ -1238,6 +1258,33 @@ a.chip { text-decoration: none; display: inline-block; }
 .side-by a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--line); }
 .side-by a:hover { color: var(--amber); border-bottom-color: var(--amber); }
 
+/* --- The programme ------------------------------------------------------
+   The four modules and the index, rendered identically on every site. It is
+   navigation between siblings, not a promotional strip: the row you are on is
+   marked and is not a link, because a link to where you already are is noise. */
+
+.programme { margin: 44px 0 8px; padding-top: 26px; border-top: 1px solid var(--line); }
+.programme-sub { margin: 0 0 18px; color: var(--ink-2); font-size: 15px; max-width: 66ch; }
+.programme-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.programme-row {
+  display: grid; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 14px; align-items: baseline; padding: 11px 12px; border-radius: 8px;
+  transition: background var(--dur-settle) var(--ease-resolve);
+}
+.programme-row:hover { background: var(--raised); }
+.programme-row.on { background: var(--amber-soft); }
+.programme-n {
+  font: 600 10.5px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted);
+}
+.programme-row.on .programme-n { color: var(--amber); }
+.programme-t { font-weight: 620; font-size: 15px; color: var(--ink); text-decoration: none; }
+a.programme-t:hover { color: var(--amber); text-decoration: underline; }
+.programme-w { font-size: 13.5px; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .programme-row { grid-template-columns: 1fr; gap: 4px; }
+}
+
 .byline { margin: 34px 0 8px; border-top: 1px solid var(--line); padding-top: 18px; }
 .byline-p { margin: 0 0 12px; max-width: 66ch; font-size: 14.5px; line-height: 1.65; color: var(--ink-2); }
 .byline-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
@@ -1321,3 +1368,16 @@ body.wb-on { overflow: hidden; }
   padding: 3px 7px; border-radius: 6px; background: var(--raised);
 }
 @media (max-width: 900px) { .teach-bclock { display: none; } }
+
+/* The author's own line, quoted rather than paraphrased, on every site in the
+   programme. It is the test every figure and every class here was built to. */
+.byline-line {
+  margin: 0 0 18px; padding: 14px 18px; border-left: 3px solid var(--amber);
+  background: var(--amber-soft); border-radius: 0 var(--radius) var(--radius) 0;
+}
+.byline-line p {
+  margin: 0 0 6px; font-family: var(--display);
+  font-size: 17px; line-height: 1.45; color: var(--ink);
+}
+.byline-line cite { font-style: normal; font-size: 12.5px; color: var(--muted); }
+.byline-line cite a { color: var(--amber); }

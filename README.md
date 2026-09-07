@@ -140,6 +140,29 @@ leaves the device.
 
 ---
 
+## The other courses
+
+Four separate courses, taught by the same person. **They are not a programme and they do not run in
+an order.** Each takes a position in the signal path and goes deep from there, so the same idea looks
+different in each; where two of them touch, they say so and point at the one that goes furthest.
+
+- [Electronics for Theatre](https://github.com/deliseph/electronics-for-theatre), what happens below
+  the connector, with a bench and a meter
+- [Computer Systems and Networking for Theatre](https://github.com/deliseph/theatre-computer-systems),
+  the machine and the network under the show
+- [Computer Science for Theatre](https://github.com/deliseph/Computer-Science), the instructions
+  themselves: code, AI, and animation as a program
+- [Show Networking and Control Systems](https://github.com/deliseph/show-netoworking-control-system),
+  the agreements between devices, protocol by protocol
+- [showstack](https://showstack-inky.vercel.app/), the open index every number and bilingual term is
+  checked against
+
+They are built on the same engine, the bilingual glossaries agree with each other deliberately, and
+[Computer Science for Theatre](https://github.com/deliseph/Computer-Science)'s `alignment.md` is the
+audit of which one goes deepest on what.
+
+---
+
 ## Licence
 
 Not yet chosen. Until one is added here, treat this as **all rights reserved**: readable, not

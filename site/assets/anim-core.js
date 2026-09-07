@@ -206,10 +206,15 @@ export function figure(host, { title, sub, note }) {
   // holds: the setup sentences stay up, the sentence that lands the point waits
   // for the lecturer's n. Class pages are untouched, so a student alone on a
   // phone never has anything withheld.
-  const noteEl = note ? h(`<p class="anim-note">${note}</p>`) : null;
+  //
+  // The element is created whether or not a note was passed in, because most
+  // figures build their conclusion from their own state and call setNote()
+  // once they have one. Creating it lazily meant every such figure silently
+  // dropped its conclusion, on the page and on the projector alike; it is
+  // hidden while it has nothing to say instead.
+  const noteEl = h('<p class="anim-note"></p>');
   let leadEl = null, heldEl = null;
   const buildFold = () => {
-    if (!noteEl) return;
     noteEl.innerHTML = '';
     noteEl.classList.remove('has-lead', 'is-held');
     noteEl.removeAttribute('data-fold');
@@ -227,7 +232,7 @@ export function figure(host, { title, sub, note }) {
     noteEl.append(leadEl, key, heldEl);
   };
   buildFold();
-  if (noteEl) fig.append(noteEl);
+  fig.append(noteEl);
   host.append(fig);
 
   // A still figure has no animation loop to pick up a state change, so any
@@ -294,10 +299,12 @@ export function figure(host, { title, sub, note }) {
   }
 
   const setNote = (t) => {
-    if (!noteEl) return;
-    if (!folding()) { noteEl.innerHTML = t; return; }
+    const html = t == null ? '' : String(t);
+    // A figure with nothing to conclude yet shows no empty panel.
+    noteEl.hidden = !html.trim();
+    if (!folding()) { noteEl.innerHTML = html; return; }
     let s;
-    try { s = splitNote(t); } catch { s = { lead: '', held: String(t), foldable: true }; }
+    try { s = splitNote(html); } catch { s = { lead: '', held: html, foldable: true }; }
     leadEl.innerHTML = s.lead;
     heldEl.innerHTML = s.held;
     noteEl.classList.toggle('has-lead', !!s.lead);
@@ -310,6 +317,8 @@ export function figure(host, { title, sub, note }) {
       noteEl.classList.add('is-held');
     }
   };
+
+  setNote(note ?? '');
 
   return { fig, controls, stage, repaint, challenge, setNote };
 }

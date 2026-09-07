@@ -247,6 +247,7 @@ const AUTHOR = {
   work: [
     ['showstack', 'https://showstack-inky.vercel.app/', 'the open index of live entertainment technology'],
     ['showstack on GitHub', 'https://github.com/deliseph/showstack', 'MIT code, CC BY 4.0 data'],
+    ['mi2.dev', 'https://www.mi2.dev', 'the practice these modules come out of'],
   ],
   support: '',
 };
@@ -274,6 +275,48 @@ const NAV_GROUPS = [
     ['/next', 'Where to go next', 'Certifications, courses and books'],
   ]],
 ];
+
+// ---------------------------------------------------------------------------
+// The other courses
+//
+// Four separate courses, taught by the same person, plus the open index they
+// all check their numbers against. They are not one programme and none of them
+// requires another: each takes the same body of knowledge and goes deeper from
+// its own position in the signal path. Rendering the list on every site means
+// a student who wants the same idea from a different angle can find where that
+// angle is taught, rather than discovering three years later that it existed.
+// ---------------------------------------------------------------------------
+
+const PROGRAMME = [
+  { id: 'electronics', name: 'Electronics for Theatre', href: 'https://github.com/deliseph/electronics-for-theatre',
+    what: 'What happens below the connector, with a bench and a meter. 64 hours.' },
+  { id: 'systems', name: 'Computer Systems and Networking', href: 'https://github.com/deliseph/theatre-computer-systems',
+    what: 'The machine and the network under the show, for first year media design students.' },
+  { id: 'compsci', name: 'Computer Science for Theatre', href: 'https://github.com/deliseph/Computer-Science',
+    what: 'The instructions themselves: code, AI, and animation as a program, for technical direction.' },
+  { id: 'shownet', name: 'Show Networking and Control Systems', href: 'https://github.com/deliseph/show-netoworking-control-system',
+    what: 'The agreements between devices, protocol by protocol, against the standard text.' },
+  { id: 'showstack', name: 'showstack', href: 'https://showstack-inky.vercel.app/',
+    what: 'The open index the numbers and the bilingual terms are checked against.' },
+];
+
+function programmeHtml(here) {
+  return `<section class="programme">
+    <h2 class="sched-h">The same knowledge, from four positions</h2>
+    <p class="programme-sub">Four separate courses, taught by the same person. None of them requires
+      another and none is a sequel: each takes a position in the signal path and goes deep from
+      there, so the same idea looks different in each. Where two of them touch, they say so and point
+      at the one that goes furthest, rather than repeating it in a worse form.</p>
+    <ul class="programme-list">
+      ${PROGRAMME.map((m) => (m.id === here
+    ? `<li class="programme-row on"><span class="programme-n">This one</span>
+        <span class="programme-t">${esc(m.name)}</span><span class="programme-w">${esc(m.what)}</span></li>`
+    : `<li class="programme-row"><span class="programme-n">→</span>
+        <a class="programme-t" href="${m.href}" rel="noopener" target="_blank">${esc(m.name)}</a>
+        <span class="programme-w">${esc(m.what)}</span></li>`)).join('')}
+    </ul>
+  </section>`;
+}
 
 function shell({ title, desc, body, active = '', bodyClass = '', bodyAttrs = '', scripts = [] }) {
   const navClasses = CLASSES.map(
@@ -951,8 +994,12 @@ write('/', shell({
 
   <section class="progress-strip" id="progress-strip"></section>
 
+  ${programmeHtml('systems')}
+
   <section class="byline" id="who">
     <h2 class="sched-h">Who made this, and what else there is</h2>
+    <blockquote class="byline-line"><p>The design test &mdash; if an ordinary person can&rsquo;t feel it,
+      it failed.</p><cite>Migu Mianizt Leung, <a href="https://www.mi2.dev" rel="noopener" target="_blank">mi2.dev</a></cite></blockquote>
     <p class="byline-p">This site is built and maintained by
       <a href="${AUTHOR.links[0][1]}" rel="noopener" target="_blank">${AUTHOR.name}</a>, who teaches the
       module it belongs to. Questions are welcome, and so is a correction: if something here does not
