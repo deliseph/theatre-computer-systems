@@ -99,6 +99,90 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rethemeAll
 
 export const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// --- Motion -----------------------------------------------------------------
+//
+// Two easing primitives and a spring, so a figure that changes state settles
+// into it rather than snapping. The technique is borrowed from frame-based
+// animation, where every value is a pure function of time: nothing here holds
+// state between frames, so a still figure that is repainted once still lands on
+// the right value, and a figure that is scrubbed backwards behaves.
+//
+// This exists because a figure that jumps has already finished moving by the
+// time the eye arrives, so the reader sees two pictures and has to work out
+// what changed. A settle of a few hundred milliseconds shows them.
+
+/** Decelerating, for a value arriving somewhere. The default for almost everything. */
+export const easeOut = (t) => 1 - (1 - Math.max(0, Math.min(1, t))) ** 3;
+
+/** Accelerate away and decelerate in, for a move between two resting states. */
+export const easeInOut = (t) => {
+  const x = Math.max(0, Math.min(1, t));
+  return x < 0.5 ? 4 * x * x * x : 1 - ((-2 * x + 2) ** 3) / 2;
+};
+
+/**
+ * A damped spring, evaluated at a time rather than integrated over frames.
+ *
+ * Pure in `t`, so it is safe in a still figure, in a scrubbed figure and in a
+ * paused one. Default damping is a small overshoot, which is what makes a thing
+ * read as an object rather than a value being set.
+ */
+export function springAt(t, { stiffness = 120, damping = 14 } = {}) {
+  if (t <= 0) return 0;
+  const w0 = Math.sqrt(stiffness);
+  const zeta = damping / (2 * Math.sqrt(stiffness));
+  if (zeta < 1) {
+    const wd = w0 * Math.sqrt(1 - zeta * zeta);
+    return 1 - Math.exp(-zeta * w0 * t) * (Math.cos(wd * t) + (zeta * w0 / wd) * Math.sin(wd * t));
+  }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t);
+}
+
+/**
+ * A value that eases towards whatever it is set to.
+ *
+ * Give it a repaint function and it drives its own frames until it settles,
+ * then stops, so an idle figure costs nothing. Reduced motion jumps straight
+ * to the target, because somebody who asked for no motion meant it.
+ */
+export function eased(initial, { duration = 0.42, ease = easeOut, onFrame } = {}) {
+  let from = initial, to = initial, start = 0, raf = 0, running = false;
+  const now = () => performance.now() / 1000;
+
+  const tick = () => {
+    const t = (now() - start) / duration;
+    if (t >= 1 || REDUCED) {
+      from = to; running = false; raf = 0;
+      onFrame?.(to);
+      return;
+    }
+    onFrame?.(from + (to - from) * ease(t));
+    raf = requestAnimationFrame(tick);
+  };
+
+  return {
+    get value() {
+      if (!running) return to;
+      const t = (now() - start) / duration;
+      return t >= 1 ? to : from + (to - from) * ease(t);
+    },
+    /** Move towards a new target. Called again mid-flight, it eases from where it is. */
+    set(v) {
+      if (v === to) return;
+      from = this.value;
+      to = v;
+      start = now();
+      if (REDUCED) { from = to; onFrame?.(to); return; }
+      if (!running) { running = true; raf = requestAnimationFrame(tick); }
+    },
+    /** Jump, with no motion. For a reset, or for the first paint. */
+    jump(v) { from = to = v; running = false; cancelAnimationFrame(raf); onFrame?.(v); },
+    get settled() { return !running; },
+    stop() { running = false; cancelAnimationFrame(raf); },
+  };
+}
+
+
 // --- Controls ---------------------------------------------------------------
 
 export function slider(label, { min = 0, max = 100, step = 1, value = 50, fmt = (v) => v, on }) {

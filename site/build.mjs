@@ -292,7 +292,7 @@ const PROGRAMME = [
     what: 'What happens below the connector, with a bench and a meter. 64 hours.' },
   { id: 'systems', name: 'Computer Systems and Networking', href: 'https://github.com/deliseph/theatre-computer-systems',
     what: 'The machine and the network under the show, for first year media design students.' },
-  { id: 'compsci', name: 'Computer Science for Theatre', href: 'https://github.com/deliseph/Computer-Science',
+  { id: 'compsci', name: 'Computer Science for Theatre', href: 'https://computer-science-theatre.vercel.app/',
     what: 'The instructions themselves: code, AI, and animation as a program, for technical direction.' },
   { id: 'shownet', name: 'Show Networking and Control Systems', href: 'https://github.com/deliseph/show-netoworking-control-system',
     what: 'The agreements between devices, protocol by protocol, against the standard text.' },

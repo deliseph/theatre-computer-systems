@@ -26,7 +26,7 @@ These cost nothing and they map directly onto what this module covered.
 | **ETC training resources** | ETC, `etcconnect.com` | Class 4 | Free tutorials on Eos family consoles, and their networking documentation is unusually honest about failure modes. |
 | **Ben Eater, building an 8 bit computer** | `eater.net` | Class 2 | If "what a computer actually is" was the part that landed, this is that question answered at the level of individual wires. Free, and outstanding. |
 | **The IETF RFCs** | `rfc-editor.org` | Class 3 | Every internet protocol, free, forever. RFC 791 is IP and RFC 768 is UDP. Dry, short, and the actual source. |
-| **[Computer Science for Theatre](https://github.com/deliseph/Computer-Science)** | The same author | Class 2 | If "what the machine is doing with the numbers" was the part that landed, this is the same question asked about the instructions rather than the hardware: reading code, version control, working with AI, and animation generated from data. A separate course, and it does not assume this one. |
+| **[Computer Science for Theatre](https://computer-science-theatre.vercel.app)** | The same author | Class 2 | If "what the machine is doing with the numbers" was the part that landed, this is the same question asked about the instructions rather than the hardware: reading code, version control, working with AI, and animation generated from data. A separate course, and it does not assume this one. |
 
 ---
 

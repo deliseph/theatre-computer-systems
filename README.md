@@ -150,7 +150,7 @@ different in each; where two of them touch, they say so and point at the one tha
   the connector, with a bench and a meter
 - [Computer Systems and Networking for Theatre](https://github.com/deliseph/theatre-computer-systems),
   the machine and the network under the show
-- [Computer Science for Theatre](https://github.com/deliseph/Computer-Science), the instructions
+- [Computer Science for Theatre](https://computer-science-theatre.vercel.app), the instructions
   themselves: code, AI, and animation as a program
 - [Show Networking and Control Systems](https://github.com/deliseph/show-netoworking-control-system),
   the agreements between devices, protocol by protocol
