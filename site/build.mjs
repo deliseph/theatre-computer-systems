@@ -293,10 +293,10 @@ const NAV_GROUPS = [
 // ---------------------------------------------------------------------------
 
 const PROGRAMME = [
-  { id: 'electronics', name: 'Electronics for Theatre', href: 'https://github.com/deliseph/electronics-for-theatre',
+  { id: 'electronics', name: 'Electronics for Theatre', href: 'https://electronics-for-theatre.vercel.app',
     who: 'Technical Direction, year 1 · core',
     what: 'Below the connector: what electricity does in a building, proved with a meter.' },
-  { id: 'systems', name: 'Computer Systems and Networking', href: 'https://github.com/deliseph/theatre-computer-systems',
+  { id: 'systems', name: 'Computer Systems and Networking', href: 'https://theatre-computer-systems.vercel.app',
     who: 'Media Design and Technology, year 1 · core',
     what: 'The machine and the network under the show, for audio, lighting and video artists.' },
   { id: 'compsci', name: 'Computer Science for Theatre', href: 'https://computer-science-theatre.vercel.app/',

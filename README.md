@@ -4,6 +4,10 @@ An interactive teaching platform for a module taught to year one BFA students in
 **Media Design and Technology (MDT)**, specialising in audio, lighting and video: five taught
 classes, a production visit and a practical exam.
 
+**Live at [theatre-computer-systems.vercel.app](https://theatre-computer-systems.vercel.app/)**
+— the five classes, the calculators, the practice decks and teach mode, generated from the
+markdown in this repository on every deploy.
+
 ## When it meets
 
 Seven Saturdays. The module's own course map calls for 2 hours of intro, 2 on a visit, 16 of
@@ -154,7 +158,7 @@ The other three are for other rooms:
 
 | Course | Who is in it |
 |---|---|
-| [Electronics for Theatre](https://github.com/deliseph/electronics-for-theatre) | Technical Direction, year 1. Below the connector, with a bench |
+| [Electronics for Theatre](https://electronics-for-theatre.vercel.app) | Technical Direction, year 1. Below the connector, with a bench |
 | [Computer Science for Theatre](https://computer-science-theatre.vercel.app/) | Technical Direction, year 2. The instructions themselves |
 | [Show Networking and Control Systems](https://show-networking-control-system.vercel.app) | An elective, open to anyone, assuming none of the others |
 | [showstack](https://showstack-inky.vercel.app/) | Not a course: the open index all four check their numbers and bilingual terms against |
