@@ -239,7 +239,7 @@ const AUTHOR = {
   name: 'Migu Mianizt Leung',
   // His own site goes first: it is the one that is his rather than a platform's.
   links: [
-    ['mi2.dev', 'https://www.mi2.dev'],
+    ['mi2.dev', 'https://migu-leung-portfolio.vercel.app'],
     ['LinkedIn', 'https://www.linkedin.com/in/mi2dev/'],
     ['Medium', 'https://medium.com/@mi2dev'],
     ['Instagram', 'https://instagram.com/mi2.dev'],
@@ -247,7 +247,7 @@ const AUTHOR = {
   work: [
     ['showstack', 'https://showstack-inky.vercel.app/', 'the open index of live entertainment technology'],
     ['showstack on GitHub', 'https://github.com/deliseph/showstack', 'MIT code, CC BY 4.0 data'],
-    ['mi2.dev', 'https://www.mi2.dev', 'the practice these modules come out of'],
+    ['mi2.dev', 'https://migu-leung-portfolio.vercel.app', 'the practice these modules come out of'],
   ],
   support: '',
 };
@@ -1015,7 +1015,7 @@ write('/', shell({
   <section class="byline" id="who">
     <h2 class="sched-h">Who made this, and what else there is</h2>
     <blockquote class="byline-line"><p>The design test &mdash; if an ordinary person can&rsquo;t feel it,
-      it failed.</p><cite>Migu Mianizt Leung, <a href="https://www.mi2.dev" rel="noopener" target="_blank">mi2.dev</a></cite></blockquote>
+      it failed.</p><cite>Migu Mianizt Leung, <a href="https://migu-leung-portfolio.vercel.app" rel="noopener" target="_blank">mi2.dev</a></cite></blockquote>
     <p class="byline-p">This site is built and maintained by
       <a href="${AUTHOR.links[0][1]}" rel="noopener" target="_blank">${AUTHOR.name}</a>, who teaches the
       module it belongs to. Questions are welcome, and so is a correction: if something here does not
