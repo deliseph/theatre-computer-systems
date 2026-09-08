@@ -140,26 +140,29 @@ leaves the device.
 
 ---
 
-## The other courses
+## Where this sits, and the other three courses
 
-Four separate courses, taught by the same person. **They are not a programme and they do not run in
-an order.** Each takes a position in the signal path and goes deep from there, so the same idea looks
-different in each; where two of them touch, they say so and point at the one that goes furthest.
+**This is a first year core course for Media Design and Technology**, and it assumes nothing
+technical. It is written for audio, lighting and video artists, and it is the only one of these four
+that cohort takes.
 
-- [Electronics for Theatre](https://github.com/deliseph/electronics-for-theatre), what happens below
-  the connector, with a bench and a meter
-- [Computer Systems and Networking for Theatre](https://github.com/deliseph/theatre-computer-systems),
-  the machine and the network under the show
-- [Computer Science for Theatre](https://computer-science-theatre.vercel.app), the instructions
-  themselves: code, AI, and animation as a program
-- [Show Networking and Control Systems](https://github.com/deliseph/show-netoworking-control-system),
-  the agreements between devices, protocol by protocol
-- [showstack](https://showstack-inky.vercel.app/), the open index every number and bilingual term is
-  checked against
+That is worth stating because of what follows from it: **nothing here may lean on the Technical
+Direction courses**, since these students never sit in them. The foundations page is complete on its
+own for the same reason.
 
-They are built on the same engine, the bilingual glossaries agree with each other deliberately, and
-[Computer Science for Theatre](https://github.com/deliseph/Computer-Science)'s `alignment.md` is the
-audit of which one goes deepest on what.
+The other three are for other rooms:
+
+| Course | Who is in it |
+|---|---|
+| [Electronics for Theatre](https://github.com/deliseph/electronics-for-theatre) | Technical Direction, year 1. Below the connector, with a bench |
+| [Computer Science for Theatre](https://computer-science-theatre.vercel.app/) | Technical Direction, year 2. The instructions themselves |
+| [Show Networking and Control Systems](https://github.com/deliseph/show-netoworking-control-system) | An elective, open to anyone, assuming none of the others |
+| [showstack](https://showstack-inky.vercel.app/) | Not a course: the open index all four check their numbers and bilingual terms against |
+
+Where two of them reach the same object they reach it from different positions. DMX here is a
+quantity of data with a deadline; in Electronics it is a differential pair on a scope; in the
+elective it is a standard. The full map is
+[how the four relate](https://computer-science-theatre.vercel.app/alignment).
 
 ---
 

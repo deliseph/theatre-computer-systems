@@ -1268,9 +1268,13 @@ a.chip { text-decoration: none; display: inline-block; }
 .programme-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .programme-row {
   display: grid; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1.5fr);
-  gap: 14px; align-items: baseline; padding: 11px 12px; border-radius: 8px;
+  gap: 14px; align-items: baseline; padding: 13px 12px; border-radius: 8px;
   transition: background var(--dur-settle) var(--ease-resolve);
 }
+/* Who the course is for matters more than what it covers, because the first
+   thing a student needs to know is whether it was written for their room. */
+.programme-w b { color: var(--ink-2); font-weight: 620; }
+.programme-w br { line-height: 1.9; }
 .programme-row:hover { background: var(--raised); }
 .programme-row.on { background: var(--amber-soft); }
 .programme-n {

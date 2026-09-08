@@ -279,41 +279,52 @@ const NAV_GROUPS = [
 // ---------------------------------------------------------------------------
 // The other courses
 //
-// Four separate courses, taught by the same person, plus the open index they
-// all check their numbers against. They are not one programme and none of them
-// requires another: each takes the same body of knowledge and goes deeper from
-// its own position in the signal path. Rendering the list on every site means
-// a student who wants the same idea from a different angle can find where that
-// angle is taught, rather than discovering three years later that it existed.
+// Three cohorts, four courses, and no student who takes all four. Technical
+// Direction takes Electronics in year one and Computer Science in year two, and
+// that is the only real progression here. Media Design and Technology takes
+// Computer Systems in year one and neither of the others. Show Networking is an
+// elective and assumes none of them.
+//
+// So the list is not a curriculum and must not read like one. It says who each
+// course is for, so a student can tell at a glance which of these was written
+// for a room they will never sit in, and can still find the one that takes an
+// idea they have met from a different position.
 // ---------------------------------------------------------------------------
 
 const PROGRAMME = [
   { id: 'electronics', name: 'Electronics for Theatre', href: 'https://github.com/deliseph/electronics-for-theatre',
-    what: 'What happens below the connector, with a bench and a meter. 64 hours.' },
+    who: 'Technical Direction, year 1 · core',
+    what: 'Below the connector: what electricity does in a building, proved with a meter.' },
   { id: 'systems', name: 'Computer Systems and Networking', href: 'https://github.com/deliseph/theatre-computer-systems',
-    what: 'The machine and the network under the show, for first year media design students.' },
+    who: 'Media Design and Technology, year 1 · core',
+    what: 'The machine and the network under the show, for audio, lighting and video artists.' },
   { id: 'compsci', name: 'Computer Science for Theatre', href: 'https://computer-science-theatre.vercel.app/',
-    what: 'The instructions themselves: code, AI, and animation as a program, for technical direction.' },
+    who: 'Technical Direction, year 2 · core',
+    what: 'The instructions themselves: code, AI, and what your program does when it is alone.' },
   { id: 'shownet', name: 'Show Networking and Control Systems', href: 'https://github.com/deliseph/show-netoworking-control-system',
-    what: 'The agreements between devices, protocol by protocol, against the standard text.' },
+    who: 'Elective · assumes none of the others',
+    what: 'The agreements between two devices, protocol by protocol, against the standard text.' },
   { id: 'showstack', name: 'showstack', href: 'https://showstack-inky.vercel.app/',
-    what: 'The open index the numbers and the bilingual terms are checked against.' },
+    who: 'Open index · not a course',
+    what: 'Where all four check their numbers and their bilingual terms, with a citation on each.' },
 ];
 
 function programmeHtml(here) {
   return `<section class="programme">
-    <h2 class="sched-h">The same knowledge, from four positions</h2>
-    <p class="programme-sub">Four separate courses, taught by the same person. None of them requires
-      another and none is a sequel: each takes a position in the signal path and goes deep from
-      there, so the same idea looks different in each. Where two of them touch, they say so and point
-      at the one that goes furthest, rather than repeating it in a worse form.</p>
+    <h2 class="sched-h">The other courses, and who they are for</h2>
+    <p class="programme-sub">Three cohorts and four courses, and nobody takes all four. Technical
+      Direction takes Electronics then Computer Science; Media Design and Technology takes Computer
+      Systems; the elective assumes neither. Where two of these reach the same object they reach it
+      from different positions and ask different questions of it, which is set out in full on
+      <a href="https://computer-science-theatre.vercel.app/alignment" rel="noopener" target="_blank">how the four relate</a>.</p>
     <ul class="programme-list">
       ${PROGRAMME.map((m) => (m.id === here
     ? `<li class="programme-row on"><span class="programme-n">This one</span>
-        <span class="programme-t">${esc(m.name)}</span><span class="programme-w">${esc(m.what)}</span></li>`
-    : `<li class="programme-row"><span class="programme-n">→</span>
+        <span class="programme-t">${esc(m.name)}</span>
+        <span class="programme-w"><b>${esc(m.who)}</b><br>${esc(m.what)}</span></li>`
+    : `<li class="programme-row"><span class="programme-n">\u2192</span>
         <a class="programme-t" href="${m.href}" rel="noopener" target="_blank">${esc(m.name)}</a>
-        <span class="programme-w">${esc(m.what)}</span></li>`)).join('')}
+        <span class="programme-w"><b>${esc(m.who)}</b><br>${esc(m.what)}</span></li>`)).join('')}
     </ul>
   </section>`;
 }
