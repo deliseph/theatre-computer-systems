@@ -261,7 +261,7 @@ const NAV_GROUPS = [
     ['/foundations', 'Foundations', 'The number skills the module assumes'],
   ]],
   ['While you work', [
-    ['/tools', 'Tools', 'Calculators, with the working shown'],
+    ['/tools', 'Calculators', 'Calculators, with the working shown'],
     ['/practice', 'Practice', 'Drills, claims, fault diagnosis'],
     ['/map', 'The map', 'Every figure and card, and the ones you have opened'],
   ]],
@@ -272,6 +272,7 @@ const NAV_GROUPS = [
   ]],
   ['Going further', [
     ['/lineage', 'How we got here', 'Why each technology exists'],
+    ['https://computer-science-theatre.vercel.app/alignment', 'The four courses', 'Who each is for, and which goes deepest on what'],
     ['/next', 'Where to go next', 'Certifications, courses and books'],
   ]],
 ];
@@ -301,7 +302,7 @@ const PROGRAMME = [
   { id: 'compsci', name: 'Computer Science for Theatre', href: 'https://computer-science-theatre.vercel.app/',
     who: 'Technical Direction, year 2 · core',
     what: 'The instructions themselves: code, AI, and what your program does when it is alone.' },
-  { id: 'shownet', name: 'Show Networking and Control Systems', href: 'https://github.com/deliseph/show-netoworking-control-system',
+  { id: 'shownet', name: 'Show Networking and Control Systems', href: 'https://show-networking-control-system.vercel.app',
     who: 'Elective · assumes none of the others',
     what: 'The agreements between two devices, protocol by protocol, against the standard text.' },
   { id: 'showstack', name: 'showstack', href: 'https://showstack-inky.vercel.app/',
@@ -376,7 +377,7 @@ function shell({ title, desc, body, active = '', bodyClass = '', bodyAttrs = '',
 
 <div class="layout">
   <nav class="side" aria-label="Course navigation">
-    <p class="side-h">Classes</p>
+    <p class="side-h">Five classes</p>
     ${navClasses}
     ${navRes}
     <div class="side-foot">
@@ -568,10 +569,16 @@ for (const c of classData) {
     `$1<p class="note">Reading a wrong belief with its correction attached does very little. <a href="#myths">Spot the myth</a>, on the Practice tab, puts each of these claims in front of you bare and asks you to commit before the correction appears.</p>`
   );
 
+  // Tab order follows the other three courses: the class first, because that is
+  // what somebody who has arrived is here for, then what to do before it, then
+  // the working surfaces. A deep link to #tab=prepare still lands on Prepare.
+  const tocInPanel = `<nav class="toc" aria-label="On this page">` +
+    `<span class="toc-h">On this page</span>${toc}</nav>`;
+
   const tabs = [
+    ['content', 'The class', tocInPanel + learnHtml],
     ['prepare', 'Prepare', c.prep.html],
-    ['content', 'Learn', learnHtml],
-    ['tools', 'Tools', toolsHtml(c.tools)],
+    ['tools', 'Calculators', toolsHtml(c.tools)],
     ['practice', 'Practice', practiceHtml(c.practice, c.n)],
     ['study', 'Test yourself', c.study.html + selfTestHtml(c.n)],
     ['numbers', 'Numbers', c.numbers.html],
@@ -596,14 +603,12 @@ for (const c of classData) {
       Entertainment Arts · Class ${c.n} of 5 · Week ${c.slot.week}, ${longDate(c.slot.date)}<br>
       Prepared by ${esc(AUTHOR.name)}</p>
     <div class="head-actions">
-      <a class="btn btn-primary" href="#tab=prepare">Prepare for this class</a>
-      <a class="btn" href="#tab=content">Start learning</a>
-      <a class="btn" href="/teach/${c.n}">▶ Teach mode</a>
-      <button class="btn js-print" data-class="${c.n}">Print study notes</button>
+      <a class="btn btn-primary" href="/teach/${c.n}">Teach mode</a>
       <button class="btn js-done" data-class="${c.n}">Mark as studied</button>
+      <a class="btn" href="#tab=prepare">Prepare for this class</a>
+      <button class="btn js-print" data-class="${c.n}">Print study notes</button>
     </div>
   </header>
-  <nav class="toc" aria-label="On this page"><span class="toc-h">On this page</span>${toc}</nav>
   <div class="tabs" role="tablist">${tabBtns}</div>
   ${tabPanels}
 </article>`;

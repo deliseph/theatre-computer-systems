@@ -156,7 +156,7 @@ The other three are for other rooms:
 |---|---|
 | [Electronics for Theatre](https://github.com/deliseph/electronics-for-theatre) | Technical Direction, year 1. Below the connector, with a bench |
 | [Computer Science for Theatre](https://computer-science-theatre.vercel.app/) | Technical Direction, year 2. The instructions themselves |
-| [Show Networking and Control Systems](https://github.com/deliseph/show-netoworking-control-system) | An elective, open to anyone, assuming none of the others |
+| [Show Networking and Control Systems](https://show-networking-control-system.vercel.app) | An elective, open to anyone, assuming none of the others |
 | [showstack](https://showstack-inky.vercel.app/) | Not a course: the open index all four check their numbers and bilingual terms against |
 
 Where two of them reach the same object they reach it from different positions. DMX here is a
